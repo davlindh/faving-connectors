@@ -2,15 +2,16 @@ import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import SkillList from './SkillList.jsx';
 import ServiceList from './ServiceList.jsx';
-import { useProfile } from '@/integrations/supabase';
+import { useProfileContext } from '@/contexts/ProfileContext';
 import { useParams } from 'react-router-dom';
 
 const ProfilePage = () => {
   const { profileId } = useParams();
-  const { data: profile, isLoading, error } = useProfile(profileId);
+  const { profile, isLoading, error } = useProfileContext();
 
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
+  if (!profile) return <div>No profile found</div>;
 
   return (
     <div className="max-w-4xl mx-auto p-4">
