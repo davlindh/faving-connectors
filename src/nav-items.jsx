@@ -1,9 +1,9 @@
 import { HomeIcon, UserIcon, BriefcaseIcon, BookOpenIcon, MessageSquareIcon } from "lucide-react";
-import Index from "./pages/Index";
-import ProfilePage from "./components/profile/ProfilePage";
-import ProjectListPage from "./components/project/ProjectListPage";
-import ArticleListPage from "./components/knowledgeBase/ArticleListPage";
-import MessagingInterface from "./components/messaging/MessagingInterface";
+import Index from "./pages/Index.jsx";
+import ProfilePage from "./components/profile/ProfilePage.jsx";
+import ProjectListPage from "./components/project/ProjectListPage.jsx";
+import ArticleListPage from "./components/knowledgeBase/ArticleListPage.jsx";
+import MessagingInterface from "./components/messaging/MessagingInterface.jsx";
 
 /**
  * Central place for defining the navigation items. Used for navigation components and routing.
