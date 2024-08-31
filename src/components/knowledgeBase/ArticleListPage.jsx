@@ -1,6 +1,6 @@
 import React from 'react';
-import ArticleCard from './ArticleCard';
-import SearchBar from '../shared/SearchBar';
+import ArticleCard from './ArticleCard.jsx';
+import SearchBar from '../shared/SearchBar.jsx';
 
 const ArticleListPage = ({ articles }) => {
   const handleSearch = (searchTerm) => {
