@@ -1,6 +1,6 @@
 import React from 'react';
 import { useProjects } from '@/integrations/supabase';
-import ProjectCard from '@/components/project/ProjectCard.jsx';
+import ProjectCard from '@/components/project/ProjectCard';
 
 const Index = () => {
   const { data: projects, isLoading, error } = useProjects();
