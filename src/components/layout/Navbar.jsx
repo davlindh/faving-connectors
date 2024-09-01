@@ -1,10 +1,18 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { useSupabaseAuth } from '@/integrations/supabase/auth';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { session, signOut } = useSupabaseAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
 
   return (
     <nav className="bg-gray-800 text-white p-4">
@@ -13,8 +21,18 @@ const Navbar = () => {
         <div className="hidden md:flex space-x-4">
           <Link to="/projects">Projects</Link>
           <Link to="/knowledge-base">Knowledge Base</Link>
-          <Link to="/profile">Profile</Link>
-          <Link to="/messages">Messages</Link>
+          {session ? (
+            <>
+              <Link to="/profile">Profile</Link>
+              <Link to="/messages">Messages</Link>
+              <Button variant="ghost" onClick={handleSignOut}>Sign Out</Button>
+            </>
+          ) : (
+            <>
+              <Link to="/login">Login</Link>
+              <Link to="/register">Register</Link>
+            </>
+          )}
         </div>
         <Button
           variant="ghost"
@@ -29,8 +47,18 @@ const Navbar = () => {
         <div className="md:hidden mt-4 space-y-2">
           <Link to="/projects" className="block py-2">Projects</Link>
           <Link to="/knowledge-base" className="block py-2">Knowledge Base</Link>
-          <Link to="/profile" className="block py-2">Profile</Link>
-          <Link to="/messages" className="block py-2">Messages</Link>
+          {session ? (
+            <>
+              <Link to="/profile" className="block py-2">Profile</Link>
+              <Link to="/messages" className="block py-2">Messages</Link>
+              <Button variant="ghost" onClick={handleSignOut} className="block py-2 w-full text-left">Sign Out</Button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="block py-2">Login</Link>
+              <Link to="/register" className="block py-2">Register</Link>
+            </>
+          )}
         </div>
       )}
     </nav>
