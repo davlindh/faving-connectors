@@ -18,7 +18,7 @@ const Index = () => {
         </Button>
       </section>
 
-      <section className="grid md:grid-cols-3 gap-8 mb-16">
+      <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 mb-16">
         <div className="text-center">
           <Briefcase className="mx-auto h-12 w-12 text-primary mb-4" />
           <h3 className="text-xl font-semibold mb-2">Find Projects</h3>
@@ -37,11 +37,11 @@ const Index = () => {
       </section>
 
       <section>
-        <h2 className="text-3xl font-semibold mb-6">Featured Projects</h2>
+        <h2 className="text-2xl sm:text-3xl font-semibold mb-6">Featured Projects</h2>
         {isLoading && <div>Loading projects...</div>}
         {error && <div>Error loading projects: {error.message}</div>}
         {projects && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {projects.slice(0, 6).map((project) => (
               <ProjectCard key={project.project_id} project={project} />
             ))}
