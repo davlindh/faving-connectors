@@ -1,17 +1,37 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useSupabaseAuth } from '@/integrations/supabase/auth';
+import { navItems } from '@/nav-items';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { session, signOut } = useSupabaseAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
+  };
+
+  const renderNavLink = (item) => {
+    if ((item.title === 'Login' || item.title === 'Register') && session) {
+      return null;
+    }
+    if ((item.title === 'Profile' || item.title === 'Messages') && !session) {
+      return null;
+    }
+    return (
+      <Link
+        key={item.to}
+        to={item.to}
+        className={`block py-2 ${location.pathname === item.to ? 'text-primary' : ''}`}
+      >
+        {item.title}
+      </Link>
+    );
   };
 
   return (
@@ -19,19 +39,9 @@ const Navbar = () => {
       <div className="container mx-auto flex justify-between items-center">
         <Link to="/" className="text-xl font-bold">Faving</Link>
         <div className="hidden md:flex space-x-4">
-          <Link to="/projects">Projects</Link>
-          <Link to="/knowledge-base">Knowledge Base</Link>
-          {session ? (
-            <>
-              <Link to="/profile">Profile</Link>
-              <Link to="/messages">Messages</Link>
-              <Button variant="ghost" onClick={handleSignOut}>Sign Out</Button>
-            </>
-          ) : (
-            <>
-              <Link to="/login">Login</Link>
-              <Link to="/register">Register</Link>
-            </>
+          {navItems.map(renderNavLink)}
+          {session && (
+            <Button variant="ghost" onClick={handleSignOut}>Sign Out</Button>
           )}
         </div>
         <Button
@@ -45,19 +55,9 @@ const Navbar = () => {
       </div>
       {isMenuOpen && (
         <div className="md:hidden mt-4 space-y-2">
-          <Link to="/projects" className="block py-2">Projects</Link>
-          <Link to="/knowledge-base" className="block py-2">Knowledge Base</Link>
-          {session ? (
-            <>
-              <Link to="/profile" className="block py-2">Profile</Link>
-              <Link to="/messages" className="block py-2">Messages</Link>
-              <Button variant="ghost" onClick={handleSignOut} className="block py-2 w-full text-left">Sign Out</Button>
-            </>
-          ) : (
-            <>
-              <Link to="/login" className="block py-2">Login</Link>
-              <Link to="/register" className="block py-2">Register</Link>
-            </>
+          {navItems.map(renderNavLink)}
+          {session && (
+            <Button variant="ghost" onClick={handleSignOut} className="block py-2 w-full text-left">Sign Out</Button>
           )}
         </div>
       )}
