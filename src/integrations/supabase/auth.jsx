@@ -31,7 +31,7 @@ export const SupabaseAuthProvider = ({ children }) => {
     session,
     loading,
     signUp: (data) => supabase.auth.signUp(data),
-    signIn: (data) => supabase.auth.signIn(data),
+    signInWithPassword: (data) => supabase.auth.signInWithPassword(data),
     signOut: () => supabase.auth.signOut(),
   };
 

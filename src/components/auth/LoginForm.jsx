@@ -9,14 +9,14 @@ const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
-  const { signIn } = useSupabaseAuth();
+  const { signInWithPassword } = useSupabaseAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     try {
-      const { error } = await signIn({ email, password });
+      const { error } = await signInWithPassword({ email, password });
       if (error) throw error;
       navigate('/');
     } catch (error) {
