@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useNavigate } from 'react-router-dom';
-import { useCreateProject, useProfile } from '@/integrations/supabase';
+import { useUpdateProject, useProject } from '@/integrations/supabase';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,7 +16,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
-import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 
 const projectSchema = z.object({
   project_name: z.string().min(1, 'Project name is required').max(100, 'Project name must be 100 characters or less'),
@@ -25,7 +24,7 @@ const projectSchema = z.object({
   budget: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
     message: "Budget must be a positive number",
   }),
-  start_date: z.date().min(new Date(), 'Start date must be in the future'),
+  start_date: z.date(),
   end_date: z.date(),
   location: z.string().optional(),
   required_skills: z.array(z.string()).min(1, 'At least one skill is required'),
@@ -34,11 +33,10 @@ const projectSchema = z.object({
   path: ["end_date"],
 });
 
-const ProjectCreationForm = () => {
+const ProjectEditForm = ({ projectId }) => {
   const navigate = useNavigate();
-  const createProject = useCreateProject();
-  const { session } = useSupabase();
-  const { data: profile } = useProfile(session?.user?.id);
+  const updateProject = useUpdateProject();
+  const { data: project, isLoading, error } = useProject(projectId);
 
   const form = useForm({
     resolver: zodResolver(projectSchema),
@@ -54,31 +52,42 @@ const ProjectCreationForm = () => {
     },
   });
 
-  const onSubmit = async (data) => {
-    if (!profile) {
-      toast.error('User profile not found');
-      return;
-    }
-
-    try {
-      await createProject.mutateAsync({
-        ...data,
-        budget: parseFloat(data.budget),
-        creator_id: profile.profile_id,
+  useEffect(() => {
+    if (project) {
+      form.reset({
+        ...project,
+        start_date: new Date(project.start_date),
+        end_date: new Date(project.end_date),
+        budget: project.budget.toString(),
       });
-      toast.success('Project created successfully');
-      navigate('/projects');
+    }
+  }, [project, form]);
+
+  const onSubmit = async (data) => {
+    try {
+      await updateProject.mutateAsync({
+        projectId,
+        updates: {
+          ...data,
+          budget: parseFloat(data.budget),
+        },
+      });
+      toast.success('Project updated successfully');
+      navigate(`/projects/${projectId}`);
     } catch (error) {
-      toast.error('Failed to create project');
-      console.error('Create project error:', error);
+      toast.error('Failed to update project');
+      console.error('Update project error:', error);
     }
   };
+
+  if (isLoading) return <div>Loading project details...</div>;
+  if (error) return <div>Error loading project: {error.message}</div>;
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle>Create New Project</CardTitle>
-        <CardDescription>Fill in the details for your new project</CardDescription>
+        <CardTitle>Edit Project</CardTitle>
+        <CardDescription>Update the details of your project</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -115,7 +124,7 @@ const ProjectCreationForm = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Category</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a category" />
@@ -176,9 +185,6 @@ const ProjectCreationForm = () => {
                         mode="single"
                         selected={field.value}
                         onSelect={field.onChange}
-                        disabled={(date) =>
-                          date < new Date() || date < new Date("1900-01-01")
-                        }
                         initialFocus
                       />
                     </PopoverContent>
@@ -218,7 +224,7 @@ const ProjectCreationForm = () => {
                         selected={field.value}
                         onSelect={field.onChange}
                         disabled={(date) =>
-                          date <= form.getValues('start_date') || date < new Date("1900-01-01")
+                          date <= form.getValues('start_date')
                         }
                         initialFocus
                       />
@@ -250,6 +256,7 @@ const ProjectCreationForm = () => {
                   <FormControl>
                     <Input
                       placeholder="Enter skills (comma-separated)"
+                      value={field.value.join(', ')}
                       onChange={(e) => field.onChange(e.target.value.split(',').map(skill => skill.trim()))}
                     />
                   </FormControl>
@@ -257,8 +264,8 @@ const ProjectCreationForm = () => {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={createProject.isPending}>
-              {createProject.isPending ? 'Creating...' : 'Create Project'}
+            <Button type="submit" className="w-full" disabled={updateProject.isPending}>
+              {updateProject.isPending ? 'Updating...' : 'Update Project'}
             </Button>
           </form>
         </Form>
@@ -267,4 +274,4 @@ const ProjectCreationForm = () => {
   );
 };
 
-export default ProjectCreationForm;
+export default ProjectEditForm;

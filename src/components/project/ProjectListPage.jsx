@@ -6,13 +6,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { X, Search, Plus, Filter } from 'lucide-react';
+import { X, Search, Plus, Filter, Edit } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 
 const ProjectListPage = () => {
   const { data: projects, isLoading, error } = useProjects();
@@ -26,6 +27,7 @@ const ProjectListPage = () => {
   const [sortBy, setSortBy] = useState('latest');
   const [displayedProjects, setDisplayedProjects] = useState([]);
   const navigate = useNavigate();
+  const { session } = useSupabase();
 
   useEffect(() => {
     if (projects) {
@@ -62,6 +64,10 @@ const ProjectListPage = () => {
       ...filters,
       skills: filters.skills.filter(skill => skill !== skillToRemove)
     });
+  };
+
+  const isProjectOwner = (project) => {
+    return session?.user?.id === project.creator_id;
   };
 
   return (
@@ -176,7 +182,19 @@ const ProjectListPage = () => {
       {!isLoading && !error && displayedProjects.length > 0 ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {displayedProjects.map((project) => (
-            <ProjectCard key={project.project_id} project={project} />
+            <div key={project.project_id} className="relative">
+              <ProjectCard project={project} />
+              {isProjectOwner(project) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="absolute top-2 right-2"
+                  onClick={() => navigate(`/projects/edit/${project.project_id}`)}
+                >
+                  <Edit className="mr-2 h-4 w-4" /> Edit
+                </Button>
+              )}
+            </div>
           ))}
         </div>
       ) : (
