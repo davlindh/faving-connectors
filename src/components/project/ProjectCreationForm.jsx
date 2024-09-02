@@ -67,7 +67,7 @@ const ProjectCreationForm = () => {
         ...project,
         start_date: new Date(project.start_date),
         end_date: new Date(project.end_date),
-        budget: project.budget.toString(),
+        budget: project.budget ? project.budget.toString() : '',
         required_skills: project.required_skills || [],
       });
     }
@@ -91,27 +91,29 @@ const ProjectCreationForm = () => {
         });
       }
 
+      const projectData = {
+        ...data,
+        budget: parseFloat(data.budget),
+        creator_id: session.user.id,
+        start_date: data.start_date.toISOString(),
+        end_date: data.end_date.toISOString(),
+        interested_users: [],
+      };
+
       if (isEditing) {
         await updateProject.mutateAsync({
           projectId,
-          updates: {
-            ...data,
-            budget: parseFloat(data.budget),
-          },
+          updates: projectData,
         });
         toast.success('Project updated successfully');
       } else {
-        await createProject.mutateAsync({
-          ...data,
-          budget: parseFloat(data.budget),
-          creator_id: session.user.id,
-        });
+        await createProject.mutateAsync(projectData);
         toast.success('Project created successfully');
       }
       navigate('/projects');
     } catch (error) {
-      toast.error(isEditing ? 'Failed to update project' : 'Failed to create project');
       console.error('Project operation error:', error);
+      toast.error(isEditing ? 'Failed to update project' : 'Failed to create project');
     }
   };
 
