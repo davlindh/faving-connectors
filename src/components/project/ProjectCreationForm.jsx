@@ -133,7 +133,7 @@ const ProjectCreationForm = () => {
                   <FormItem>
                     <FormLabel>Project Name</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Enter project name" />
+                      <Input {...field} id="project_name" placeholder="Enter project name" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -146,7 +146,7 @@ const ProjectCreationForm = () => {
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Textarea {...field} placeholder="Describe your project" rows={4} />
+                      <Textarea {...field} id="description" placeholder="Describe your project" rows={4} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -160,7 +160,7 @@ const ProjectCreationForm = () => {
                     <FormLabel>Category</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger id="category">
                           <SelectValue placeholder="Select a category" />
                         </SelectTrigger>
                       </FormControl>
@@ -183,7 +183,7 @@ const ProjectCreationForm = () => {
                   <FormItem>
                     <FormLabel>Budget</FormLabel>
                     <FormControl>
-                      <Input {...field} type="text" placeholder="Enter budget" />
+                      <Input {...field} id="budget" type="text" placeholder="Enter budget" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -205,6 +205,7 @@ const ProjectCreationForm = () => {
                                 "w-full pl-3 text-left font-normal",
                                 !field.value && "text-muted-foreground"
                               )}
+                              id="start_date"
                             >
                               {field.value ? (
                                 format(field.value, "PPP")
@@ -246,6 +247,7 @@ const ProjectCreationForm = () => {
                                 "w-full pl-3 text-left font-normal",
                                 !field.value && "text-muted-foreground"
                               )}
+                              id="end_date"
                             >
                               {field.value ? (
                                 format(field.value, "PPP")
@@ -280,7 +282,7 @@ const ProjectCreationForm = () => {
                   <FormItem>
                     <FormLabel>Location (Optional)</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Enter project location" />
+                      <Input {...field} id="location" placeholder="Enter project location" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -294,6 +296,7 @@ const ProjectCreationForm = () => {
                     <FormLabel>Required Skills</FormLabel>
                     <FormControl>
                       <Input
+                        id="required_skills"
                         placeholder="Enter skills (comma-separated)"
                         value={field.value.join(', ')}
                         onChange={(e) => field.onChange(e.target.value.split(',').map(skill => skill.trim()))}
