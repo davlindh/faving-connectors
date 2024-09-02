@@ -32,6 +32,13 @@ const ProjectListPage = () => {
   const { session } = useSupabase();
   const [activeTab, setActiveTab] = useState('all');
 
+  const handleSearch = () => {
+    // This function will trigger the search based on the current searchTerm
+    // The actual filtering is already handled in the filteredAndSortedProjects memo
+    console.log('Searching for:', searchTerm);
+    // You can add additional logic here if needed
+  };
+
   const filteredAndSortedProjects = useMemo(() => {
     if (!projects) return [];
 
@@ -100,16 +107,19 @@ const ProjectListPage = () => {
       <Card className="mb-6">
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="flex-grow">
-              <div className="relative">
+            <div className="flex-grow flex gap-2">
+              <div className="relative flex-grow">
                 <Input
                   placeholder="Search projects..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 pr-4"
                 />
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               </div>
+              <Button onClick={handleSearch}>
+                Search
+              </Button>
             </div>
             <div className="flex gap-2">
               <Select
