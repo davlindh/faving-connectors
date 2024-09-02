@@ -13,15 +13,15 @@ export const useProfileContext = () => {
 };
 
 export const ProfileProvider = ({ children }) => {
-  const { session } = useSupabaseAuth();
+  const auth = useSupabaseAuth();
   const [profileId, setProfileId] = useState(null);
   const { data: profile, isLoading, error } = useProfile(profileId);
 
   useEffect(() => {
-    if (session?.user?.id) {
-      setProfileId(session.user.id);
+    if (auth && auth.session?.user?.id) {
+      setProfileId(auth.session.user.id);
     }
-  }, [session]);
+  }, [auth]);
 
   const value = {
     profile,
