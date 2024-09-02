@@ -135,89 +135,83 @@ const ProjectDetailPage = () => {
                 )}
                 <div>
                   <h3 className="text-xl font-semibold mb-2">Project Creator</h3>
-                  <div className="flex items-center">
-                    <Avatar className="h-10 w-10 mr-2">
-                      <AvatarImage src={project.creator?.avatar_url} alt={project.creator?.first_name} />
-                      <AvatarFallback>{project.creator?.first_name?.[0]}{project.creator?.last_name?.[0]}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-semibold">{project.creator?.first_name} {project.creator?.last_name}</p>
-                      <p className="text-sm text-gray-500">{project.creator?.organization}</p>
-                    </div>
-                  </div>
+                  <Card>
+                    <CardContent className="flex items-center p-4">
+                      <Avatar className="h-12 w-12 mr-4">
+                        <AvatarImage src={project.creator?.avatar_url} alt={project.creator?.first_name} />
+                        <AvatarFallback>{project.creator?.first_name?.[0]}{project.creator?.last_name?.[0]}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-semibold">{project.creator?.first_name} {project.creator?.last_name}</p>
+                        <p className="text-sm text-gray-500">{project.creator?.location}</p>
+                        <Link to={`/profile/${project.creator?.user_id}`} className="text-blue-500 hover:underline">View Profile</Link>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
               </div>
             </TabsContent>
             <TabsContent value="impact">
               <div className="space-y-4">
                 <h3 className="text-xl font-semibold">Impact Metrics</h3>
-                {project.impact_metrics && project.impact_metrics.map((metric, index) => (
-                  <div key={index} className="flex justify-between items-center">
-                    <span>{metric.name}</span>
-                    <Progress value={metric.value} max={metric.target} className="w-1/2" />
-                    <span>{metric.value}/{metric.target}</span>
-                  </div>
-                ))}
-                {project.success_stories && (
-                  <div>
-                    <h3 className="text-xl font-semibold mt-6 mb-2">Success Stories</h3>
-                    {project.success_stories.map((story, index) => (
-                      <blockquote key={index} className="border-l-4 border-gray-300 pl-4 my-4 italic">
-                        "{story}"
-                      </blockquote>
-                    ))}
-                  </div>
+                {project.impact_metrics && project.impact_metrics.length > 0 ? (
+                  project.impact_metrics.map((metric, index) => (
+                    <div key={index} className="flex justify-between items-center">
+                      <span>{metric.name}</span>
+                      <Progress value={metric.value} max={metric.target} className="w-1/2" />
+                      <span>{metric.value}/{metric.target}</span>
+                    </div>
+                  ))
+                ) : (
+                  <p>No impact metrics available for this project.</p>
                 )}
               </div>
             </TabsContent>
             <TabsContent value="team">
               <div className="space-y-4">
                 <h3 className="text-xl font-semibold">Team Members</h3>
-                {project.team_members && project.team_members.map((member, index) => (
-                  <div key={index} className="flex items-center space-x-4">
-                    <Avatar>
-                      <AvatarImage src={member.avatar_url} alt={member.name} />
-                      <AvatarFallback>{member.name[0]}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-semibold">{member.name}</p>
-                      <p className="text-sm text-gray-500">{member.role}</p>
-                    </div>
-                  </div>
-                ))}
+                <p>This project currently has no additional team members.</p>
               </div>
             </TabsContent>
             <TabsContent value="tasks">
               <div className="space-y-4">
                 <h3 className="text-xl font-semibold">Project Tasks</h3>
-                {project.tasks && project.tasks.map((task, index) => (
-                  <Card key={index}>
-                    <CardHeader>
-                      <CardTitle>{task.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p>{task.description}</p>
-                      <p className="text-sm text-gray-500 mt-2">Assigned to: {task.assignee}</p>
-                      <p className="text-sm text-gray-500">Due: {new Date(task.due_date).toLocaleDateString()}</p>
-                    </CardContent>
-                  </Card>
-                ))}
+                {project.tasks && project.tasks.length > 0 ? (
+                  project.tasks.map((task, index) => (
+                    <Card key={index}>
+                      <CardHeader>
+                        <CardTitle>{task.title}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p>{task.description}</p>
+                        <p className="text-sm text-gray-500 mt-2">Assigned to: {task.assignee}</p>
+                        <p className="text-sm text-gray-500">Due: {new Date(task.due_date).toLocaleDateString()}</p>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <p>No tasks have been added to this project yet.</p>
+                )}
               </div>
             </TabsContent>
             <TabsContent value="resources">
               <div className="space-y-4">
                 <h3 className="text-xl font-semibold">Project Resources</h3>
-                {project.resources && project.resources.map((resource, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <FileText className="w-5 h-5 mr-2 text-gray-500" />
-                      <span>{resource.name}</span>
+                {project.resources && project.resources.length > 0 ? (
+                  project.resources.map((resource, index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <FileText className="w-5 h-5 mr-2 text-gray-500" />
+                        <span>{resource.name}</span>
+                      </div>
+                      <Button asChild variant="link">
+                        <a href={resource.url} target="_blank" rel="noopener noreferrer">View</a>
+                      </Button>
                     </div>
-                    <Button asChild variant="link">
-                      <a href={resource.url} target="_blank" rel="noopener noreferrer">View</a>
-                    </Button>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p>No resources have been added to this project yet.</p>
+                )}
               </div>
             </TabsContent>
           </Tabs>
