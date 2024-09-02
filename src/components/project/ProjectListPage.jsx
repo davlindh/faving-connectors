@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { X, Search, Plus, Filter, Edit } from 'lucide-react';
+import { X, Search, Plus, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   Popover,
@@ -14,6 +14,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ProjectListPage = () => {
   const { data: projects, isLoading, error } = useProjects();
@@ -28,6 +29,7 @@ const ProjectListPage = () => {
   const [displayedProjects, setDisplayedProjects] = useState([]);
   const navigate = useNavigate();
   const { session } = useSupabase();
+  const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
     if (projects) {
@@ -70,15 +72,25 @@ const ProjectListPage = () => {
     return session?.user?.id === project.creator_id;
   };
 
+  const myProjects = displayedProjects.filter(project => isProjectOwner(project));
+  const allProjects = displayedProjects;
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Available Projects</h1>
+        <h1 className="text-3xl font-bold">Projects</h1>
         <Button onClick={() => navigate('/projects/create')}>
           <Plus className="mr-2 h-4 w-4" /> Create Project
         </Button>
       </div>
       
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+        <TabsList>
+          <TabsTrigger value="all">All Projects</TabsTrigger>
+          <TabsTrigger value="my">My Projects</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       <div className="flex flex-col md:flex-row gap-4 mb-6">
         <div className="flex-grow">
           <div className="relative">
@@ -179,27 +191,41 @@ const ProjectListPage = () => {
       {isLoading && <div className="text-center py-8">Loading projects...</div>}
       {error && <div className="text-center text-red-500 py-8">Error loading projects: {error.message}</div>}
       
-      {!isLoading && !error && displayedProjects.length > 0 ? (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {displayedProjects.map((project) => (
-            <div key={project.project_id} className="relative">
-              <ProjectCard project={project} />
-              {isProjectOwner(project) && (
+      <TabsContent value="all">
+        <h2 className="text-2xl font-semibold mb-4">All Projects</h2>
+        {!isLoading && !error && allProjects.length > 0 ? (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {allProjects.map((project) => (
+              <ProjectCard key={project.project_id} project={project} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">No projects found matching your criteria.</div>
+        )}
+      </TabsContent>
+
+      <TabsContent value="my">
+        <h2 className="text-2xl font-semibold mb-4">My Projects</h2>
+        {!isLoading && !error && myProjects.length > 0 ? (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {myProjects.map((project) => (
+              <div key={project.project_id} className="relative">
+                <ProjectCard project={project} />
                 <Button
                   variant="outline"
                   size="sm"
                   className="absolute top-2 right-2"
                   onClick={() => navigate(`/projects/edit/${project.project_id}`)}
                 >
-                  <Edit className="mr-2 h-4 w-4" /> Edit
+                  Edit
                 </Button>
-              )}
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-8">No projects found matching your criteria.</div>
-      )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">You haven't created any projects yet.</div>
+        )}
+      </TabsContent>
     </div>
   );
 };
