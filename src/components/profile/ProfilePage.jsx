@@ -1,5 +1,5 @@
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -11,15 +11,18 @@ import { useProfileContext } from '@/contexts/ProfileContext';
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import FaveScore from '../shared/FaveScore.jsx';
 import ECKTSlider from '../shared/ECKTSlider.jsx';
-import { useUser } from '@/integrations/supabase';
+import { useProfile, useUser } from '@/integrations/supabase';
 import { Skeleton } from "@/components/ui/skeleton";
 
 const ProfilePage = () => {
   const { profileId } = useParams();
-  const { profile, isLoading: profileLoading, error: profileError } = useProfileContext();
   const { session } = useSupabase();
+  const navigate = useNavigate();
+  const { data: profile, isLoading: profileLoading, error: profileError } = useProfile(profileId);
   const { data: user, isLoading: userLoading, error: userError } = useUser(profile?.user_id);
   const [isEditing, setIsEditing] = React.useState(false);
+
+  const isOwnProfile = session?.user?.id === profile?.user_id;
 
   if (profileLoading || userLoading) {
     return <ProfileSkeleton />;
@@ -33,10 +36,13 @@ const ProfilePage = () => {
     return <div className="text-center mt-8">No profile found</div>;
   }
 
-  const isOwnProfile = session?.user?.id === profile.user_id;
-
   const handleEditToggle = () => {
     setIsEditing(!isEditing);
+  };
+
+  const handleMessage = () => {
+    // TODO: Implement messaging functionality
+    console.log('Message functionality not implemented yet');
   };
 
   return (
@@ -52,10 +58,12 @@ const ProfilePage = () => {
             <p className="text-gray-500">{profile.location}</p>
             <FaveScore score={user.score || 0} />
           </div>
-          {isOwnProfile && (
+          {isOwnProfile ? (
             <Button variant="outline" onClick={handleEditToggle}>
               {isEditing ? 'Cancel Edit' : 'Edit Profile'}
             </Button>
+          ) : (
+            <Button onClick={handleMessage}>Message</Button>
           )}
         </CardHeader>
         <CardContent>

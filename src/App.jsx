@@ -9,6 +9,7 @@ import { SupabaseAuthProvider } from "./integrations/supabase/auth";
 import { ProfileProvider } from "./contexts/ProfileContext";
 import { ProjectProvider } from "./contexts/ProjectContext";
 import ProjectDetailPage from "./components/project/ProjectDetailPage";
+import ProfilePage from "./components/profile/ProfilePage";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const App = () => (
                       <Route key={to} path={to} element={page} />
                     ))}
                     <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
+                    <Route path="/profile/:profileId" element={<ProfilePage />} />
                   </Routes>
                 </Layout>
               </BrowserRouter>
