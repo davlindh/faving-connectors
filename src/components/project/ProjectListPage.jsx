@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useProjectContext } from '@/contexts/ProjectContext';
+import { useProjects } from '@/integrations/supabase';
 import ProjectCard from './ProjectCard.jsx';
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,8 +11,15 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
 
 const ProjectListPage = () => {
-  const { projects, isLoading, error, filters, setFilters, sortBy, setSortBy } = useProjectContext();
+  const { data: projects, isLoading, error } = useProjects();
   const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    category: 'all',
+    minBudget: 0,
+    maxBudget: 10000,
+    skills: []
+  });
+  const [sortBy, setSortBy] = useState('latest');
   const [displayedProjects, setDisplayedProjects] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const projectsPerPage = 9;
@@ -21,11 +28,11 @@ const ProjectListPage = () => {
   useEffect(() => {
     if (projects) {
       const filtered = projects.filter(project => 
-        (searchTerm === '' || project.project_name.toLowerCase().includes(searchTerm.toLowerCase()) || project.description.toLowerCase().includes(searchTerm.toLowerCase())) &&
+        (searchTerm === '' || project.project_name.toLowerCase().includes(searchTerm.toLowerCase()) || (project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase()))) &&
         (filters.category === 'all' || project.category === filters.category) &&
         project.budget >= filters.minBudget &&
         project.budget <= filters.maxBudget &&
-        (filters.skills.length === 0 || filters.skills.every(skill => project.required_skills.includes(skill)))
+        (filters.skills.length === 0 || (project.required_skills && filters.skills.every(skill => project.required_skills.includes(skill))))
       );
 
       const sorted = [...filtered].sort((a, b) => {
