@@ -8,7 +8,8 @@ import { Link } from 'react-router-dom';
 const ArticleCard = ({ article }) => {
   const truncateContent = (content, maxLength) => {
     if (content.length <= maxLength) return content;
-    return content.slice(0, maxLength) + '...';
+    const truncated = content.slice(0, maxLength);
+    return truncated.replace(/<[^>]*$/, '') + '...';
   };
 
   return (
@@ -24,15 +25,21 @@ const ArticleCard = ({ article }) => {
         <CardTitle className="text-xl line-clamp-2">{article.title}</CardTitle>
       </CardHeader>
       <CardContent className="flex-grow">
-        <p className="text-gray-600 mb-4 line-clamp-3">
-          {truncateContent(article.content, 150)}
-        </p>
+        <div 
+          className="text-gray-600 mb-4 line-clamp-3 prose prose-sm max-w-none"
+          dangerouslySetInnerHTML={{ __html: truncateContent(article.content, 150) }}
+        />
         <div className="flex items-center text-sm text-gray-500">
           <User className="mr-1 h-4 w-4" />
           <span>{article.author_name || 'Anonymous'}</span>
         </div>
       </CardContent>
       <CardFooter className="pt-0">
+        <div className="flex flex-wrap gap-2 mb-2">
+          {article.tags && article.tags.map((tag, index) => (
+            <Badge key={index} variant="outline">{tag}</Badge>
+          ))}
+        </div>
         <Button asChild variant="link" className="ml-auto group">
           <Link to={`/knowledge-base/${article.article_id}`}>
             Read More
