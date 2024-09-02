@@ -12,18 +12,32 @@ import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import FaveScore from '../shared/FaveScore.jsx';
 import ECKTSlider from '../shared/ECKTSlider.jsx';
 import { useUser } from '@/integrations/supabase';
+import { Skeleton } from "@/components/ui/skeleton";
 
 const ProfilePage = () => {
   const { profileId } = useParams();
   const { profile, isLoading: profileLoading, error: profileError } = useProfileContext();
   const { session } = useSupabase();
   const { data: user, isLoading: userLoading, error: userError } = useUser(profile?.user_id);
+  const [isEditing, setIsEditing] = React.useState(false);
 
-  if (profileLoading || userLoading) return <div className="text-center mt-8">Loading profile...</div>;
-  if (profileError || userError) return <div className="text-center mt-8 text-red-500">Error: {profileError?.message || userError?.message}</div>;
-  if (!profile || !user) return <div className="text-center mt-8">No profile found</div>;
+  if (profileLoading || userLoading) {
+    return <ProfileSkeleton />;
+  }
+
+  if (profileError || userError) {
+    return <div className="text-center mt-8 text-red-500">Error: {profileError?.message || userError?.message}</div>;
+  }
+
+  if (!profile || !user) {
+    return <div className="text-center mt-8">No profile found</div>;
+  }
 
   const isOwnProfile = session?.user?.id === profile.user_id;
+
+  const handleEditToggle = () => {
+    setIsEditing(!isEditing);
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -39,7 +53,9 @@ const ProfilePage = () => {
             <FaveScore score={user.score || 0} />
           </div>
           {isOwnProfile && (
-            <Button variant="outline">Edit Profile</Button>
+            <Button variant="outline" onClick={handleEditToggle}>
+              {isEditing ? 'Cancel Edit' : 'Edit Profile'}
+            </Button>
           )}
         </CardHeader>
         <CardContent>
@@ -52,18 +68,22 @@ const ProfilePage = () => {
             </TabsList>
             <TabsContent value="about">
               <h3 className="font-semibold mb-2">Bio</h3>
-              <p className="text-gray-600 mb-4">{profile.bio || "No bio available."}</p>
-              {isOwnProfile && (
-                <ProfileForm profile={profile} />
+              {isEditing ? (
+                <ProfileForm profile={profile} onEditComplete={() => setIsEditing(false)} />
+              ) : (
+                <>
+                  <p className="text-gray-600 mb-4">{profile.bio || "No bio available."}</p>
+                  <p className="text-gray-600">Email: {user.email}</p>
+                </>
               )}
             </TabsContent>
             <TabsContent value="skills">
               <h3 className="font-semibold mb-2">Skills</h3>
-              <SkillList profileId={profile.profile_id} />
+              <SkillList profileId={profile.profile_id} isEditable={isOwnProfile} />
             </TabsContent>
             <TabsContent value="services">
               <h3 className="font-semibold mb-2">Services</h3>
-              <ServiceList profileId={profile.profile_id} />
+              <ServiceList profileId={profile.profile_id} isEditable={isOwnProfile} />
             </TabsContent>
             <TabsContent value="eckt">
               <h3 className="font-semibold mb-2">ECKT Score</h3>
@@ -75,5 +95,25 @@ const ProfilePage = () => {
     </div>
   );
 };
+
+const ProfileSkeleton = () => (
+  <div className="container mx-auto px-4 py-8">
+    <Card>
+      <CardHeader className="flex flex-col sm:flex-row items-center gap-4">
+        <Skeleton className="w-24 h-24 rounded-full" />
+        <div className="flex-grow">
+          <Skeleton className="h-8 w-48 mb-2" />
+          <Skeleton className="h-4 w-32 mb-2" />
+          <Skeleton className="h-4 w-24" />
+        </div>
+      </CardHeader>
+      <CardContent>
+        <Skeleton className="h-10 w-full mb-4" />
+        <Skeleton className="h-24 w-full mb-4" />
+        <Skeleton className="h-16 w-full" />
+      </CardContent>
+    </Card>
+  </div>
+);
 
 export default ProfilePage;

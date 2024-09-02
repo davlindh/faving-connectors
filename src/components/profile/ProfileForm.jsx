@@ -10,12 +10,12 @@ import { useUpdateProfile } from '@/integrations/supabase';
 import { toast } from 'sonner';
 
 const profileSchema = z.object({
-  location: z.string().optional(),
+  location: z.string().max(100, 'Location must be 100 characters or less').optional(),
   bio: z.string().max(500, 'Bio must be 500 characters or less').optional(),
   avatar_url: z.string().url('Invalid URL').optional().or(z.literal('')),
 });
 
-const ProfileForm = ({ profile }) => {
+const ProfileForm = ({ profile, onEditComplete }) => {
   const updateProfile = useUpdateProfile();
 
   const form = useForm({
@@ -31,6 +31,7 @@ const ProfileForm = ({ profile }) => {
     try {
       await updateProfile.mutateAsync({ profileId: profile.profile_id, updates: data });
       toast.success('Profile updated successfully');
+      onEditComplete();
     } catch (error) {
       toast.error('Failed to update profile');
       console.error('Update profile error:', error);
@@ -47,7 +48,7 @@ const ProfileForm = ({ profile }) => {
             <FormItem>
               <FormLabel>Location</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} placeholder="e.g. New York, USA" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -60,7 +61,7 @@ const ProfileForm = ({ profile }) => {
             <FormItem>
               <FormLabel>Bio</FormLabel>
               <FormControl>
-                <Textarea {...field} />
+                <Textarea {...field} placeholder="Tell us about yourself" rows={4} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -73,15 +74,18 @@ const ProfileForm = ({ profile }) => {
             <FormItem>
               <FormLabel>Avatar URL</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} placeholder="https://example.com/avatar.jpg" />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={updateProfile.isPending}>
-          {updateProfile.isPending ? 'Updating...' : 'Update Profile'}
-        </Button>
+        <div className="flex justify-end space-x-2">
+          <Button type="button" variant="outline" onClick={onEditComplete}>Cancel</Button>
+          <Button type="submit" disabled={updateProfile.isPending}>
+            {updateProfile.isPending ? 'Updating...' : 'Save Changes'}
+          </Button>
+        </div>
       </form>
     </Form>
   );
