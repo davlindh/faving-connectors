@@ -59,7 +59,7 @@ const ProjectDetailPage = () => {
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
-            <CardTitle className="text-3xl">{project.project_name || 'Untitled Project'}</CardTitle>
+            <CardTitle className="text-3xl">{project.project_name}</CardTitle>
             {project.category && <Badge variant="secondary">{project.category}</Badge>}
           </div>
           {isOwner && (
@@ -92,21 +92,21 @@ const ProjectDetailPage = () => {
         <CardContent className="space-y-6">
           <div>
             <h3 className="text-xl font-semibold mb-2">Description</h3>
-            <p className="text-gray-600">{project.description || 'No description available'}</p>
+            <p className="text-gray-600">{project.description}</p>
           </div>
           
           <div className="grid grid-cols-2 gap-4">
             <div className="flex items-center">
               <DollarSign className="w-5 h-5 mr-2 text-gray-500" />
-              <span className="font-semibold">Budget: {project.budget ? `$${project.budget}` : 'Not specified'}</span>
+              <span className="font-semibold">Budget: ${project.budget}</span>
             </div>
             <div className="flex items-center">
               <Calendar className="w-5 h-5 mr-2 text-gray-500" />
-              <span className="font-semibold">Start Date: {project.start_date ? new Date(project.start_date).toLocaleDateString() : 'Not set'}</span>
+              <span className="font-semibold">Start Date: {new Date(project.start_date).toLocaleDateString()}</span>
             </div>
             <div className="flex items-center">
               <Clock className="w-5 h-5 mr-2 text-gray-500" />
-              <span className="font-semibold">Duration: {project.duration ? `${project.duration} days` : 'Not specified'}</span>
+              <span className="font-semibold">End Date: {new Date(project.end_date).toLocaleDateString()}</span>
             </div>
             <div className="flex items-center">
               <MapPin className="w-5 h-5 mr-2 text-gray-500" />
@@ -132,16 +132,6 @@ const ProjectDetailPage = () => {
               <span>{project.creator_name || 'Anonymous'}</span>
             </div>
           </div>
-
-          {project.end_date && (
-            <div>
-              <h3 className="text-xl font-semibold mb-2">End Date</h3>
-              <div className="flex items-center">
-                <Calendar className="w-5 h-5 mr-2 text-gray-500" />
-                <span>{new Date(project.end_date).toLocaleDateString()}</span>
-              </div>
-            </div>
-          )}
 
           {project.interested_users && (
             <div>
