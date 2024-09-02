@@ -10,6 +10,8 @@ import { ProfileProvider } from "./contexts/ProfileContext";
 import { ProjectProvider } from "./contexts/ProjectContext";
 import ProjectDetailPage from "./components/project/ProjectDetailPage";
 import ProfilePage from "./components/profile/ProfilePage";
+import ArticleCreationForm from "./components/knowledgeBase/ArticleCreationForm";
+import ArticleDetailPage from "./components/knowledgeBase/ArticleDetailPage";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +31,8 @@ const App = () => (
                     ))}
                     <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
                     <Route path="/profile/:profileId" element={<ProfilePage />} />
+                    <Route path="/knowledge-base/create" element={<ArticleCreationForm />} />
+                    <Route path="/knowledge-base/:articleId" element={<ArticleDetailPage />} />
                   </Routes>
                 </Layout>
               </BrowserRouter>
