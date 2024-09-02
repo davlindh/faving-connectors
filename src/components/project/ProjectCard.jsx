@@ -57,7 +57,7 @@ const ProjectCard = ({ project }) => {
             </div>
           )}
         </div>
-        {required_skills.length > 0 && (
+        {required_skills && required_skills.length > 0 && (
           <div className="mt-4">
             <h4 className="font-semibold mb-2">Required Skills:</h4>
             <div className="flex flex-wrap gap-1">
@@ -74,7 +74,7 @@ const ProjectCard = ({ project }) => {
       <CardFooter className="flex justify-between items-center">
         <div className="flex items-center">
           <Users className="w-4 h-4 mr-2" />
-          <span>{interested_users.length} interested</span>
+          <span>{interested_users ? interested_users.length : 0} interested</span>
         </div>
         <Button asChild>
           <Link to={`/projects/${project_id}`}>View Details</Link>
