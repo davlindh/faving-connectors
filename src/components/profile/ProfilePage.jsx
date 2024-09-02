@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -7,32 +7,25 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SkillList from './SkillList.jsx';
 import ServiceList from './ServiceList.jsx';
 import ProfileForm from './ProfileForm.jsx';
+import SkillForm from './SkillForm.jsx';
+import ServiceForm from './ServiceForm.jsx';
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import FaveScore from '../shared/FaveScore.jsx';
 import DetailedFeedback from '../shared/DetailedFeedback.jsx';
 import ECKTSlider from '../shared/ECKTSlider.jsx';
-import { useProfile, useUser, useUpdateUser } from '@/integrations/supabase';
+import { useProfile, useUser } from '@/integrations/supabase';
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from 'sonner';
 
 const ProfilePage = () => {
   const { profileId } = useParams();
   const { session } = useSupabase();
-  const navigate = useNavigate();
   const userId = session?.user?.id;
   const { data: profile, isLoading: profileLoading, error: profileError } = useProfile(profileId || userId);
   const { data: user, isLoading: userLoading, error: userError } = useUser(profile?.user_id);
-  const updateUser = useUpdateUser();
   const [isEditing, setIsEditing] = useState(false);
-  const [ecktScores, setEcktScores] = useState([0, 0, 0, 0]);
+  const [activeTab, setActiveTab] = useState('about');
 
   const isOwnProfile = session?.user?.id === profile?.user_id;
-
-  React.useEffect(() => {
-    if (user?.eckt_scores) {
-      setEcktScores(user.eckt_scores);
-    }
-  }, [user]);
 
   if (profileLoading || userLoading) {
     return <ProfileSkeleton />;
@@ -48,25 +41,11 @@ const ProfilePage = () => {
 
   const handleEditToggle = () => {
     setIsEditing(!isEditing);
+    setActiveTab('about');
   };
 
-  const handleMessage = () => {
-    // TODO: Implement messaging functionality
-    console.log('Message functionality not implemented yet');
-  };
-
-  const handleEcktChange = async (newScores) => {
-    setEcktScores(newScores);
-    try {
-      await updateUser.mutateAsync({
-        userId: user.user_id,
-        updates: { eckt_scores: newScores }
-      });
-      toast.success('ECKT scores updated successfully');
-    } catch (error) {
-      toast.error('Failed to update ECKT scores');
-      console.error('Update ECKT scores error:', error);
-    }
+  const handleTabChange = (value) => {
+    setActiveTab(value);
   };
 
   // Mock feedback data (replace with actual data in a real application)
@@ -95,53 +74,64 @@ const ProfilePage = () => {
             <p className="text-gray-500">{profile.location}</p>
             <FaveScore score={user.score || 0} />
           </div>
-          {isOwnProfile ? (
+          {isOwnProfile && (
             <Button variant="outline" onClick={handleEditToggle}>
               {isEditing ? 'Cancel Edit' : 'Edit Profile'}
             </Button>
-          ) : (
-            <Button onClick={handleMessage}>Message</Button>
           )}
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="about">
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="about">About</TabsTrigger>
-              <TabsTrigger value="skills">Skills</TabsTrigger>
-              <TabsTrigger value="services">Services</TabsTrigger>
-              <TabsTrigger value="eckt">ECKT</TabsTrigger>
-              <TabsTrigger value="feedback">Feedback</TabsTrigger>
-            </TabsList>
-            <TabsContent value="about">
-              <h3 className="font-semibold mb-2">Bio</h3>
-              {isEditing ? (
-                <ProfileForm profile={profile} onEditComplete={() => setIsEditing(false)} />
-              ) : (
-                <>
-                  <p className="text-gray-600 mb-4">{profile.bio || "No bio available."}</p>
-                  <p className="text-gray-600">Email: {user.email}</p>
-                </>
-              )}
-            </TabsContent>
-            <TabsContent value="skills">
-              <h3 className="font-semibold mb-2">Skills</h3>
-              <SkillList profileId={profile.profile_id} isEditable={isOwnProfile} />
-            </TabsContent>
-            <TabsContent value="services">
-              <h3 className="font-semibold mb-2">Services</h3>
-              <ServiceList profileId={profile.profile_id} isEditable={isOwnProfile} />
-            </TabsContent>
-            <TabsContent value="eckt">
-              <ECKTSlider 
-                value={ecktScores} 
-                onChange={handleEcktChange} 
-                readOnly={!isOwnProfile}
-              />
-            </TabsContent>
-            <TabsContent value="feedback">
-              <DetailedFeedback feedback={mockFeedback} />
-            </TabsContent>
-          </Tabs>
+          {isEditing ? (
+            <Tabs value={activeTab} onValueChange={handleTabChange}>
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="about">About</TabsTrigger>
+                <TabsTrigger value="skills">Skills</TabsTrigger>
+                <TabsTrigger value="services">Services</TabsTrigger>
+              </TabsList>
+              <TabsContent value="about">
+                <ProfileForm profile={profile} onEditComplete={handleEditToggle} />
+              </TabsContent>
+              <TabsContent value="skills">
+                <SkillForm profileId={profile.profile_id} />
+              </TabsContent>
+              <TabsContent value="services">
+                <ServiceForm profileId={profile.profile_id} />
+              </TabsContent>
+            </Tabs>
+          ) : (
+            <Tabs defaultValue="about">
+              <TabsList className="grid w-full grid-cols-5">
+                <TabsTrigger value="about">About</TabsTrigger>
+                <TabsTrigger value="skills">Skills</TabsTrigger>
+                <TabsTrigger value="services">Services</TabsTrigger>
+                <TabsTrigger value="eckt">ECKT</TabsTrigger>
+                <TabsTrigger value="feedback">Feedback</TabsTrigger>
+              </TabsList>
+              <TabsContent value="about">
+                <h3 className="font-semibold mb-2">Bio</h3>
+                <p className="text-gray-600 mb-4">{profile.bio || "No bio available."}</p>
+                <p className="text-gray-600">Email: {user.email}</p>
+              </TabsContent>
+              <TabsContent value="skills">
+                <h3 className="font-semibold mb-2">Skills</h3>
+                <SkillList profileId={profile.profile_id} />
+              </TabsContent>
+              <TabsContent value="services">
+                <h3 className="font-semibold mb-2">Services</h3>
+                <ServiceList profileId={profile.profile_id} />
+              </TabsContent>
+              <TabsContent value="eckt">
+                <ECKTSlider 
+                  value={user.eckt_scores || [0, 0, 0, 0]}
+                  onChange={() => {}}
+                  readOnly={true}
+                />
+              </TabsContent>
+              <TabsContent value="feedback">
+                <DetailedFeedback feedback={mockFeedback} />
+              </TabsContent>
+            </Tabs>
+          )}
         </CardContent>
       </Card>
     </div>
