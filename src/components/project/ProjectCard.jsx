@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, DollarSign, Clock, MapPin, Users, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { format } from 'date-fns';
 
 const ProjectCard = ({ project }) => {
   if (!project) {
@@ -25,7 +26,7 @@ const ProjectCard = ({ project }) => {
 
   const formatDate = (dateString) => {
     if (!dateString) return 'Not set';
-    return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    return format(new Date(dateString), 'MMM d, yyyy');
   };
 
   const calculateDuration = () => {
@@ -53,7 +54,7 @@ const ProjectCard = ({ project }) => {
         <div className="grid grid-cols-2 gap-2 text-sm">
           <div className="flex items-center">
             <DollarSign className="w-4 h-4 mr-2 text-gray-500" />
-            <span>{budget ? `$${budget}` : 'Budget not set'}</span>
+            <span>{budget ? `$${budget.toLocaleString()}` : 'Budget not set'}</span>
           </div>
           <div className="flex items-center">
             <Calendar className="w-4 h-4 mr-2 text-gray-500" />
