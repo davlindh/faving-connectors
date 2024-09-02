@@ -7,20 +7,22 @@ import { navItems } from '@/nav-items';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { session, signOut } = useSupabaseAuth();
+  const auth = useSupabaseAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
+    if (auth && auth.signOut) {
+      await auth.signOut();
+      navigate('/');
+    }
   };
 
   const renderNavLink = (item) => {
-    if ((item.title === 'Login' || item.title === 'Register') && session) {
+    if ((item.title === 'Login' || item.title === 'Register') && auth?.session) {
       return null;
     }
-    if ((item.title === 'Profile' || item.title === 'Messages') && !session) {
+    if ((item.title === 'Profile' || item.title === 'Messages') && !auth?.session) {
       return null;
     }
     return (
@@ -40,7 +42,7 @@ const Navbar = () => {
         <Link to="/" className="text-xl font-bold">Faving</Link>
         <div className="hidden md:flex space-x-4">
           {navItems.map(renderNavLink)}
-          {session && (
+          {auth?.session && (
             <Button variant="ghost" onClick={handleSignOut}>Sign Out</Button>
           )}
         </div>
@@ -56,7 +58,7 @@ const Navbar = () => {
       {isMenuOpen && (
         <div className="md:hidden mt-4 space-y-2">
           {navItems.map(renderNavLink)}
-          {session && (
+          {auth?.session && (
             <Button variant="ghost" onClick={handleSignOut} className="block py-2 w-full text-left">Sign Out</Button>
           )}
         </div>
