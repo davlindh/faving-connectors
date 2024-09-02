@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { useSupabaseAuth } from '@/integrations/supabase/auth';
 import { useNavigate } from 'react-router-dom';
@@ -8,36 +9,75 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
+import { useCreateProfile } from '@/integrations/supabase';
 
 const formSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
+  firstName: z.string().min(2, 'First name must be at least 2 characters'),
+  lastName: z.string().min(2, 'Last name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  password: z.string().min(8, 'Password must be at least 8 characters')
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, 
+      'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'),
+  location: z.string().optional(),
+  bio: z.string().max(500, 'Bio must be 500 characters or less').optional(),
+  termsAccepted: z.boolean().refine(val => val === true, 'You must accept the terms and conditions'),
 });
 
 const RegistrationForm = () => {
   const [error, setError] = useState(null);
   const { signUp } = useSupabaseAuth();
+  const createProfile = useCreateProfile();
   const navigate = useNavigate();
+  const [passwordStrength, setPasswordStrength] = useState(0);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: '',
+      firstName: '',
+      lastName: '',
       email: '',
       password: '',
+      location: '',
+      bio: '',
+      termsAccepted: false,
     },
   });
+
+  const calculatePasswordStrength = (password) => {
+    let strength = 0;
+    if (password.length >= 8) strength += 25;
+    if (password.match(/[a-z]+/)) strength += 25;
+    if (password.match(/[A-Z]+/)) strength += 25;
+    if (password.match(/[0-9]+/)) strength += 25;
+    if (password.match(/[$@#&!]+/)) strength += 25;
+    return Math.min(100, strength);
+  };
 
   const onSubmit = async (values) => {
     setError(null);
     try {
-      const { error } = await signUp({
+      const { data: authData, error: authError } = await signUp({
         email: values.email,
         password: values.password,
-        options: { data: { name: values.name } }
+        options: { 
+          data: { 
+            first_name: values.firstName,
+            last_name: values.lastName,
+          }
+        }
       });
-      if (error) throw error;
+      if (authError) throw authError;
+
+      if (authData.user) {
+        await createProfile.mutateAsync({
+          user_id: authData.user.id,
+          location: values.location,
+          bio: values.bio,
+        });
+      }
+
       navigate('/');
     } catch (error) {
       setError(error.message);
@@ -45,27 +85,42 @@ const RegistrationForm = () => {
   };
 
   return (
-    <Card className="w-[350px]">
+    <Card className="w-[450px]">
       <CardHeader>
         <CardTitle>Register</CardTitle>
-        <CardDescription>Create a new account</CardDescription>
+        <CardDescription>Create a new account to get started</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Your name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="firstName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>First Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="John" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Doe" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <FormField
               control={form.control}
               name="email"
@@ -73,7 +128,7 @@ const RegistrationForm = () => {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="Your email" {...field} />
+                    <Input type="email" placeholder="john.doe@example.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -86,9 +141,63 @@ const RegistrationForm = () => {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="Create a password" {...field} />
+                    <Input 
+                      type="password" 
+                      placeholder="Create a strong password" 
+                      {...field} 
+                      onChange={(e) => {
+                        field.onChange(e);
+                        setPasswordStrength(calculatePasswordStrength(e.target.value));
+                      }}
+                    />
+                  </FormControl>
+                  <Progress value={passwordStrength} className="h-1 mt-2" />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="location"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Location (Optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="City, Country" {...field} />
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="bio"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Bio (Optional)</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Tell us about yourself" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="termsAccepted"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>
+                      I accept the terms and conditions
+                    </FormLabel>
+                  </div>
                 </FormItem>
               )}
             />
