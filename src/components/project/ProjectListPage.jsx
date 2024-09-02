@@ -22,7 +22,7 @@ const ProjectListPage = () => {
     if (projects) {
       const filtered = projects.filter(project => 
         (searchTerm === '' || project.project_name.toLowerCase().includes(searchTerm.toLowerCase()) || project.description.toLowerCase().includes(searchTerm.toLowerCase())) &&
-        (filters.category === '' || project.category === filters.category) &&
+        (filters.category === 'all' || project.category === filters.category) &&
         project.budget >= filters.minBudget &&
         project.budget <= filters.maxBudget &&
         (filters.skills.length === 0 || filters.skills.every(skill => project.required_skills.includes(skill)))
@@ -94,7 +94,7 @@ const ProjectListPage = () => {
                 <SelectValue placeholder="Select Category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
+                <SelectItem value="all">All Categories</SelectItem>
                 <SelectItem value="web-development">Web Development</SelectItem>
                 <SelectItem value="mobile-app">Mobile App</SelectItem>
                 <SelectItem value="design">Design</SelectItem>
