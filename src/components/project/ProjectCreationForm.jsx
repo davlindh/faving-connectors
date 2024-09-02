@@ -3,7 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useCreateProject, useUpdateProject, useProject, useProjects, useCreateProfile, useProfile } from '@/integrations/supabase';
+import { useCreateProject, useUpdateProject, useProject, useProjects, useProfile } from '@/integrations/supabase';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -43,7 +43,6 @@ const ProjectCreationForm = () => {
   const { session } = useSupabase();
   const { data: userProjects, isLoading: userProjectsLoading } = useProjects();
   const [isEditing, setIsEditing] = useState(false);
-  const createProfile = useCreateProfile();
   const { data: userProfile, isLoading: profileLoading } = useProfile(session?.user?.id);
 
   const form = useForm({
@@ -80,15 +79,9 @@ const ProjectCreationForm = () => {
         return;
       }
 
-      // Check if the user has a profile, if not create one
       if (!userProfile) {
-        await createProfile.mutateAsync({
-          user_id: session.user.id,
-          first_name: session.user.user_metadata?.first_name || '',
-          last_name: session.user.user_metadata?.last_name || '',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        });
+        toast.error('User profile not found. Please ensure your profile is set up.');
+        return;
       }
 
       const projectData = {
