@@ -73,6 +73,8 @@ const RegistrationForm = () => {
       if (authData.user) {
         await createProfile.mutateAsync({
           user_id: authData.user.id,
+          first_name: values.firstName,
+          last_name: values.lastName,
           location: values.location,
           bio: values.bio,
         });

@@ -8,6 +8,8 @@ import { supabase } from '../supabase';
 |------------|---------------------|------------------------|----------|
 | profile_id | uuid                | uuid                   | true     |
 | user_id    | uuid                | uuid                   | true     |
+| first_name | text                | string                 | false    |
+| last_name  | text                | string                 | false    |
 | location   | text                | string                 | false    |
 | bio        | text                | string                 | false    |
 | created_at | time with time zone | string                 | false    |
