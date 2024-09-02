@@ -131,7 +131,7 @@ const ProjectCreationForm = () => {
                 name="project_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Project Name</FormLabel>
+                    <FormLabel htmlFor="project_name">Project Name</FormLabel>
                     <FormControl>
                       <Input {...field} id="project_name" placeholder="Enter project name" />
                     </FormControl>
@@ -144,7 +144,7 @@ const ProjectCreationForm = () => {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description</FormLabel>
+                    <FormLabel htmlFor="description">Description</FormLabel>
                     <FormControl>
                       <Textarea {...field} id="description" placeholder="Describe your project" rows={4} />
                     </FormControl>
@@ -157,7 +157,7 @@ const ProjectCreationForm = () => {
                 name="category"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Category</FormLabel>
+                    <FormLabel htmlFor="category">Category</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger id="category">
@@ -181,7 +181,7 @@ const ProjectCreationForm = () => {
                 name="budget"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Budget</FormLabel>
+                    <FormLabel htmlFor="budget">Budget</FormLabel>
                     <FormControl>
                       <Input {...field} id="budget" type="text" placeholder="Enter budget" />
                     </FormControl>
@@ -195,7 +195,7 @@ const ProjectCreationForm = () => {
                   name="start_date"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Start Date</FormLabel>
+                      <FormLabel htmlFor="start_date">Start Date</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -237,7 +237,7 @@ const ProjectCreationForm = () => {
                   name="end_date"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>End Date</FormLabel>
+                      <FormLabel htmlFor="end_date">End Date</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -280,7 +280,7 @@ const ProjectCreationForm = () => {
                 name="location"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Location (Optional)</FormLabel>
+                    <FormLabel htmlFor="location">Location (Optional)</FormLabel>
                     <FormControl>
                       <Input {...field} id="location" placeholder="Enter project location" />
                     </FormControl>
@@ -293,7 +293,7 @@ const ProjectCreationForm = () => {
                 name="required_skills"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Required Skills</FormLabel>
+                    <FormLabel htmlFor="required_skills">Required Skills</FormLabel>
                     <FormControl>
                       <Input
                         id="required_skills"
