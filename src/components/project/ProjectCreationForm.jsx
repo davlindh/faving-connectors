@@ -1,37 +1,193 @@
 import React from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { useNavigate } from 'react-router-dom';
+import { useCreateProject } from '@/integrations/supabase';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { toast } from 'sonner';
+import { DatePicker } from "@/components/ui/date-picker";
+
+const projectSchema = z.object({
+  project_name: z.string().min(1, 'Project name is required').max(100, 'Project name must be 100 characters or less'),
+  description: z.string().min(1, 'Description is required').max(1000, 'Description must be 1000 characters or less'),
+  category: z.string().min(1, 'Category is required'),
+  budget: z.number().min(0, 'Budget must be a positive number'),
+  start_date: z.date().min(new Date(), 'Start date must be in the future'),
+  duration: z.number().min(1, 'Duration must be at least 1 day'),
+  location: z.string().optional(),
+  required_skills: z.array(z.string()).min(1, 'At least one skill is required'),
+});
 
 const ProjectCreationForm = () => {
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // TODO: Implement project creation logic
+  const navigate = useNavigate();
+  const createProject = useCreateProject();
+
+  const form = useForm({
+    resolver: zodResolver(projectSchema),
+    defaultValues: {
+      project_name: '',
+      description: '',
+      category: '',
+      budget: 0,
+      start_date: new Date(),
+      duration: 1,
+      location: '',
+      required_skills: [],
+    },
+  });
+
+  const onSubmit = async (data) => {
+    try {
+      await createProject.mutateAsync(data);
+      toast.success('Project created successfully');
+      navigate('/projects');
+    } catch (error) {
+      toast.error('Failed to create project');
+      console.error('Create project error:', error);
+    }
   };
 
   return (
-    <Card className="w-[600px]">
+    <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
         <CardTitle>Create New Project</CardTitle>
         <CardDescription>Fill in the details for your new project</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit}>
-          <div className="grid w-full items-center gap-4">
-            <div className="flex flex-col space-y-1.5">
-              <Input id="title" placeholder="Project Title" />
-            </div>
-            <div className="flex flex-col space-y-1.5">
-              <Textarea id="description" placeholder="Project Description" />
-            </div>
-            {/* TODO: Add fields for project requirements, budget, timeline, etc. */}
-          </div>
-        </form>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="project_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Project Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Enter project name" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea {...field} placeholder="Describe your project" rows={4} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="web-development">Web Development</SelectItem>
+                      <SelectItem value="mobile-app">Mobile App</SelectItem>
+                      <SelectItem value="design">Design</SelectItem>
+                      <SelectItem value="writing">Writing</SelectItem>
+                      <SelectItem value="marketing">Marketing</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="budget"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Budget</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="number" min="0" step="0.01" placeholder="Enter budget" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="start_date"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Start Date</FormLabel>
+                  <DatePicker
+                    selected={field.value}
+                    onSelect={field.onChange}
+                    minDate={new Date()}
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="duration"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Duration (in days)</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="number" min="1" placeholder="Enter project duration" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="location"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Location (Optional)</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Enter project location" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="required_skills"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Required Skills</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter skills (comma-separated)"
+                      onChange={(e) => field.onChange(e.target.value.split(',').map(skill => skill.trim()))}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit" className="w-full" disabled={createProject.isPending}>
+              {createProject.isPending ? 'Creating...' : 'Create Project'}
+            </Button>
+          </form>
+        </Form>
       </CardContent>
-      <CardFooter>
-        <Button>Create Project</Button>
-      </CardFooter>
     </Card>
   );
 };
