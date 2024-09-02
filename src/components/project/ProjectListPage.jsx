@@ -14,6 +14,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
+import { Card, CardContent } from "@/components/ui/card";
 
 const ProjectListPage = () => {
   const { data: projects, isLoading, error } = useProjects();
@@ -72,14 +73,14 @@ const ProjectListPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Available Projects</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-0">Available Projects</h1>
         <Button onClick={() => navigate('/projects/create')}>
           <Plus className="mr-2 h-4 w-4" /> Create Project
         </Button>
       </div>
       
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <div className="flex-grow">
           <div className="relative">
             <Input
@@ -180,21 +181,23 @@ const ProjectListPage = () => {
       {error && <div className="text-center text-red-500 py-8">Error loading projects: {error.message}</div>}
       
       {!isLoading && !error && displayedProjects.length > 0 ? (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {displayedProjects.map((project) => (
-            <div key={project.project_id} className="relative">
-              <ProjectCard project={project} />
-              {isProjectOwner(project) && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="absolute top-2 right-2"
-                  onClick={() => navigate(`/projects/edit/${project.project_id}`)}
-                >
-                  Edit
-                </Button>
-              )}
-            </div>
+            <Card key={project.project_id} className="relative">
+              <CardContent className="p-0">
+                <ProjectCard project={project} />
+                {isProjectOwner(project) && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="absolute top-2 right-2"
+                    onClick={() => navigate(`/projects/edit/${project.project_id}`)}
+                  >
+                    Edit
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
           ))}
         </div>
       ) : (
