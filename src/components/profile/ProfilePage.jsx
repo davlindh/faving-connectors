@@ -95,53 +95,52 @@ const ProfilePage = () => {
             <p className="text-gray-500">{profile.location}</p>
             <FaveScore score={user.score || 0} />
           </div>
-          {isOwnProfile ? (
+          {isOwnProfile && (
             <Button variant="outline" onClick={handleEditToggle}>
               {isEditing ? 'Cancel Edit' : 'Edit Profile'}
             </Button>
-          ) : (
+          )}
+          {!isOwnProfile && (
             <Button onClick={handleMessage}>Message</Button>
           )}
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="about">
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="about">About</TabsTrigger>
-              <TabsTrigger value="skills">Skills</TabsTrigger>
-              <TabsTrigger value="services">Services</TabsTrigger>
-              <TabsTrigger value="eckt">ECKT</TabsTrigger>
-              <TabsTrigger value="feedback">Feedback</TabsTrigger>
-            </TabsList>
-            <TabsContent value="about">
-              <h3 className="font-semibold mb-2">Bio</h3>
-              {isEditing ? (
-                <ProfileForm profile={profile} onEditComplete={() => setIsEditing(false)} />
-              ) : (
-                <>
-                  <p className="text-gray-600 mb-4">{profile.bio || "No bio available."}</p>
-                  <p className="text-gray-600">Email: {user.email}</p>
-                </>
-              )}
-            </TabsContent>
-            <TabsContent value="skills">
-              <h3 className="font-semibold mb-2">Skills</h3>
-              <SkillList profileId={profile.profile_id} isEditable={isOwnProfile} />
-            </TabsContent>
-            <TabsContent value="services">
-              <h3 className="font-semibold mb-2">Services</h3>
-              <ServiceList profileId={profile.profile_id} isEditable={isOwnProfile} />
-            </TabsContent>
-            <TabsContent value="eckt">
-              <ECKTSlider 
-                value={ecktScores} 
-                onChange={handleEcktChange} 
-                readOnly={!isOwnProfile}
-              />
-            </TabsContent>
-            <TabsContent value="feedback">
-              <DetailedFeedback feedback={mockFeedback} />
-            </TabsContent>
-          </Tabs>
+          {isEditing ? (
+            <ProfileForm profile={profile} onEditComplete={() => setIsEditing(false)} />
+          ) : (
+            <Tabs defaultValue="about">
+              <TabsList className="grid w-full grid-cols-5">
+                <TabsTrigger value="about">About</TabsTrigger>
+                <TabsTrigger value="skills">Skills</TabsTrigger>
+                <TabsTrigger value="services">Services</TabsTrigger>
+                <TabsTrigger value="eckt">ECKT</TabsTrigger>
+                <TabsTrigger value="feedback">Feedback</TabsTrigger>
+              </TabsList>
+              <TabsContent value="about">
+                <h3 className="font-semibold mb-2">Bio</h3>
+                <p className="text-gray-600 mb-4">{profile.bio || "No bio available."}</p>
+                <p className="text-gray-600">Email: {user.email}</p>
+              </TabsContent>
+              <TabsContent value="skills">
+                <h3 className="font-semibold mb-2">Skills</h3>
+                <SkillList profileId={profile.profile_id} isEditable={isOwnProfile} />
+              </TabsContent>
+              <TabsContent value="services">
+                <h3 className="font-semibold mb-2">Services</h3>
+                <ServiceList profileId={profile.profile_id} isEditable={isOwnProfile} />
+              </TabsContent>
+              <TabsContent value="eckt">
+                <ECKTSlider 
+                  value={ecktScores} 
+                  onChange={handleEcktChange} 
+                  readOnly={!isOwnProfile}
+                />
+              </TabsContent>
+              <TabsContent value="feedback">
+                <DetailedFeedback feedback={mockFeedback} />
+              </TabsContent>
+            </Tabs>
+          )}
         </CardContent>
       </Card>
     </div>
