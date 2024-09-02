@@ -11,8 +11,7 @@ import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import FaveScore from '../shared/FaveScore.jsx';
 import DetailedFeedback from '../shared/DetailedFeedback.jsx';
 import ECKTSlider from '../shared/ECKTSlider.jsx';
-import ReviewForm from '../shared/ReviewForm.jsx';
-import { useProfile, useUser, useUpdateUser, useReviews } from '@/integrations/supabase';
+import { useProfile, useUser, useUpdateUser } from '@/integrations/supabase';
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from 'sonner';
 
@@ -22,7 +21,6 @@ const ProfilePage = () => {
   const navigate = useNavigate();
   const { data: profile, isLoading: profileLoading, error: profileError } = useProfile(profileId);
   const { data: user, isLoading: userLoading, error: userError } = useUser(profile?.user_id);
-  const { data: reviews, isLoading: reviewsLoading, error: reviewsError } = useReviews(profileId);
   const updateUser = useUpdateUser();
   const [isEditing, setIsEditing] = useState(false);
   const [ecktScores, setEcktScores] = useState([0, 0, 0, 0]);
@@ -35,12 +33,12 @@ const ProfilePage = () => {
     }
   }, [user]);
 
-  if (profileLoading || userLoading || reviewsLoading) {
+  if (profileLoading || userLoading) {
     return <ProfileSkeleton />;
   }
 
-  if (profileError || userError || reviewsError) {
-    return <div className="text-center mt-8 text-red-500">Error: {profileError?.message || userError?.message || reviewsError?.message}</div>;
+  if (profileError || userError) {
+    return <div className="text-center mt-8 text-red-500">Error: {profileError?.message || userError?.message}</div>;
   }
 
   if (!profile || !user) {
@@ -70,6 +68,19 @@ const ProfilePage = () => {
     }
   };
 
+  // Mock feedback data (replace with actual data in a real application)
+  const mockFeedback = {
+    communication: 85,
+    quality: 90,
+    timeliness: 80,
+    professionalism: 95,
+    comments: [
+      "Great to work with!",
+      "Delivered high-quality work on time.",
+      "Excellent communication throughout the project."
+    ]
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <Card>
@@ -93,13 +104,12 @@ const ProfilePage = () => {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="about">
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="about">About</TabsTrigger>
               <TabsTrigger value="skills">Skills</TabsTrigger>
               <TabsTrigger value="services">Services</TabsTrigger>
               <TabsTrigger value="eckt">ECKT</TabsTrigger>
               <TabsTrigger value="feedback">Feedback</TabsTrigger>
-              <TabsTrigger value="review">Leave Review</TabsTrigger>
             </TabsList>
             <TabsContent value="about">
               <h3 className="font-semibold mb-2">Bio</h3>
@@ -128,10 +138,7 @@ const ProfilePage = () => {
               />
             </TabsContent>
             <TabsContent value="feedback">
-              <DetailedFeedback reviews={reviews} />
-            </TabsContent>
-            <TabsContent value="review">
-              <ReviewForm profileId={profile.profile_id} />
+              <DetailedFeedback feedback={mockFeedback} />
             </TabsContent>
           </Tabs>
         </CardContent>

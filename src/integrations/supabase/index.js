@@ -20,8 +20,6 @@ export const {
   useCreateProfile,
   useUpdateProfile,
   useDeleteProfile,
-  useReviews,
-  useSubmitReview,
 } = profileHooks;
 
 export const {
