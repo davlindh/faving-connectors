@@ -1,12 +1,29 @@
 import React from 'react';
-import { useProjects } from '@/integrations/supabase';
+import { useProjects, useProfiles } from '@/integrations/supabase';
 import ProjectCard from '@/components/project/ProjectCard';
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Briefcase, Users, BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const Index = () => {
-  const { data: projects, isLoading, error } = useProjects();
+  const { data: projects, isLoading: projectsLoading, error: projectsError } = useProjects();
+  const { data: profiles, isLoading: profilesLoading, error: profilesError } = useProfiles();
+
+  const getFeaturedProjects = (projects) => {
+    if (!projects) return [];
+    // Sort projects by start_date (newest first) and take the first 3
+    return projects.sort((a, b) => new Date(b.start_date) - new Date(a.start_date)).slice(0, 3);
+  };
+
+  const getFeaturedUsers = (profiles) => {
+    if (!profiles) return [];
+    // Sort profiles by some criteria (e.g., score) and take the first 3
+    return profiles.sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 3);
+  };
+
+  const featuredProjects = getFeaturedProjects(projects);
+  const featuredUsers = getFeaturedUsers(profiles);
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -36,13 +53,13 @@ const Index = () => {
         </div>
       </section>
 
-      <section>
+      <section className="mb-16">
         <h2 className="text-2xl sm:text-3xl font-semibold mb-6">Featured Projects</h2>
-        {isLoading && <div>Loading projects...</div>}
-        {error && <div>Error loading projects: {error.message}</div>}
-        {projects && (
+        {projectsLoading && <div>Loading projects...</div>}
+        {projectsError && <div>Error loading projects: {projectsError.message}</div>}
+        {featuredProjects.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.slice(0, 6).map((project) => (
+            {featuredProjects.map((project) => (
               <ProjectCard key={project.project_id} project={project} />
             ))}
           </div>
@@ -50,6 +67,33 @@ const Index = () => {
         <div className="text-center mt-8">
           <Button asChild variant="outline">
             <Link to="/projects">View All Projects <ArrowRight className="ml-2 h-4 w-4" /></Link>
+          </Button>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-2xl sm:text-3xl font-semibold mb-6">Featured Users</h2>
+        {profilesLoading && <div>Loading users...</div>}
+        {profilesError && <div>Error loading users: {profilesError.message}</div>}
+        {featuredUsers.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {featuredUsers.map((user) => (
+              <div key={user.user_id} className="flex items-center p-4 bg-white rounded-lg shadow">
+                <Avatar className="h-12 w-12">
+                  <AvatarImage src={user.avatar_url} alt={`${user.first_name} ${user.last_name}`} />
+                  <AvatarFallback>{user.first_name?.[0]}{user.last_name?.[0]}</AvatarFallback>
+                </Avatar>
+                <div className="ml-4">
+                  <h3 className="font-semibold">{user.first_name} {user.last_name}</h3>
+                  <p className="text-sm text-gray-500">{user.location}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="text-center mt-8">
+          <Button asChild variant="outline">
+            <Link to="/find-profiles">View All Users <ArrowRight className="ml-2 h-4 w-4" /></Link>
           </Button>
         </div>
       </section>

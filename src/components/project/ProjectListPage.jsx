@@ -186,7 +186,7 @@ const ProjectListPage = () => {
       {!isLoading && !error && displayedProjects.length > 0 ? (
         <>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {currentProjects.map((project) => (
+            {displayedProjects.map((project) => (
               <ProjectCard key={project.project_id} project={project} />
             ))}
           </div>
