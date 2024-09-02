@@ -1,45 +1,30 @@
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useProject, useUpdateProject, useDeleteProject, useCreateProjectApplication } from '@/integrations/supabase';
+import { useProject, useUpdateProject, useDeleteProject, useCreateProjectApplication, useProfile } from '@/integrations/supabase';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
-import { Calendar, DollarSign, Clock, MapPin, User, ArrowLeft, Edit, Trash, Send } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
-import { Progress } from "@/components/ui/progress";
 import ProjectDetails from './ProjectDetails';
 import ProjectActions from './ProjectActions';
 import ApplicationForm from './ApplicationForm';
+import { Skeleton } from "@/components/ui/skeleton";
 
 const ProjectDetailPage = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
-  const { data: project, isLoading, error } = useProject(projectId);
+  const { data: project, isLoading: projectLoading, error: projectError } = useProject(projectId);
+  const { session } = useSupabase();
+  const { data: userProfile, isLoading: profileLoading } = useProfile(session?.user?.id);
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
   const createProjectApplication = useCreateProjectApplication();
-  const { session } = useSupabase();
   const [applicationText, setApplicationText] = useState('');
 
-  if (isLoading) return <div className="text-center mt-8">Loading project details...</div>;
-  if (error) return <div className="text-center mt-8 text-red-500">Error loading project: {error.message}</div>;
-  if (!project) return <div className="text-center mt-8">Project not found</div>;
-
-  const isOwner = session?.user?.id === project.creator_id;
-  const hasApplied = project.applications?.some(app => app.user_id === session?.user?.id);
+  const isOwner = session?.user?.id === project?.creator_id;
+  const hasApplied = project?.applications?.some(app => app.user_id === session?.user?.id);
 
   const handleApply = async () => {
     if (!session) {
@@ -69,6 +54,18 @@ const ProjectDetailPage = () => {
       toast.error('Failed to delete project');
     }
   };
+
+  if (projectLoading || profileLoading) {
+    return <ProjectDetailSkeleton />;
+  }
+
+  if (projectError) {
+    return <div className="text-center mt-8 text-red-500">Error loading project: {projectError.message}</div>;
+  }
+
+  if (!project) {
+    return <div className="text-center mt-8">Project not found</div>;
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-4">
@@ -105,5 +102,28 @@ const ProjectDetailPage = () => {
     </div>
   );
 };
+
+const ProjectDetailSkeleton = () => (
+  <div className="max-w-4xl mx-auto p-4">
+    <Skeleton className="h-6 w-32 mb-4" />
+    <Card>
+      <CardHeader>
+        <Skeleton className="h-8 w-3/4" />
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-2/3" />
+        <div className="grid grid-cols-2 gap-4">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+      </CardContent>
+      <CardFooter>
+        <Skeleton className="h-12 w-full" />
+      </CardFooter>
+    </Card>
+  </div>
+);
 
 export default ProjectDetailPage;
