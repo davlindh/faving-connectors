@@ -5,6 +5,14 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 const ECKTSlider = ({ value, onChange, readOnly = false }) => {
   const categories = ['Effort', 'Creativity', 'Knowledge', 'Time'];
 
+  const handleSliderChange = (newValue, index) => {
+    if (!readOnly) {
+      const updatedValues = [...value];
+      updatedValues[index] = newValue[0];
+      onChange(updatedValues);
+    }
+  };
+
   return (
     <div className="w-full max-w-sm">
       <h3 className="font-semibold mb-4">ECKT Score</h3>
@@ -26,13 +34,7 @@ const ECKTSlider = ({ value, onChange, readOnly = false }) => {
             </div>
             <Slider
               value={[value[index]]}
-              onValueChange={(newValue) => {
-                if (!readOnly) {
-                  const newValues = [...value];
-                  newValues[index] = newValue[0];
-                  onChange(newValues);
-                }
-              }}
+              onValueChange={(newValue) => handleSliderChange(newValue, index)}
               max={100}
               step={1}
               className="w-full"
