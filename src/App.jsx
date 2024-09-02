@@ -13,48 +13,37 @@ import ProfilePage from "./components/profile/ProfilePage";
 import ArticleCreationForm from "./components/knowledgeBase/ArticleCreationForm";
 import ArticleDetailPage from "./components/knowledgeBase/ArticleDetailPage";
 import ProjectCreationForm from "./components/project/ProjectCreationForm";
-import ErrorBoundary from "./components/ErrorBoundary";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 3,
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-    },
-  },
-});
+const queryClient = new QueryClient();
 
 const App = () => (
-  <ErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-      <SupabaseProvider>
-        <SupabaseAuthProvider>
-          <ProfileProvider>
-            <ProjectProvider>
-              <TooltipProvider>
-                <Toaster />
-                <BrowserRouter>
-                  <Layout>
-                    <Routes>
-                      {navItems.map(({ to, page }) => (
-                        <Route key={to} path={to} element={page} />
-                      ))}
-                      <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
-                      <Route path="/projects/create" element={<ProjectCreationForm />} />
-                      <Route path="/projects/edit/:projectId" element={<ProjectCreationForm />} />
-                      <Route path="/profile/:profileId" element={<ProfilePage />} />
-                      <Route path="/knowledge-base/create" element={<ArticleCreationForm />} />
-                      <Route path="/knowledge-base/:articleId" element={<ArticleDetailPage />} />
-                    </Routes>
-                  </Layout>
-                </BrowserRouter>
-              </TooltipProvider>
-            </ProjectProvider>
-          </ProfileProvider>
-        </SupabaseAuthProvider>
-      </SupabaseProvider>
-    </QueryClientProvider>
-  </ErrorBoundary>
+  <QueryClientProvider client={queryClient}>
+    <SupabaseProvider>
+      <SupabaseAuthProvider>
+        <ProfileProvider>
+          <ProjectProvider>
+            <TooltipProvider>
+              <Toaster />
+              <BrowserRouter>
+                <Layout>
+                  <Routes>
+                    {navItems.map(({ to, page }) => (
+                      <Route key={to} path={to} element={page} />
+                    ))}
+                    <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
+                    <Route path="/projects/create" element={<ProjectCreationForm />} />
+                    <Route path="/profile/:profileId" element={<ProfilePage />} />
+                    <Route path="/knowledge-base/create" element={<ArticleCreationForm />} />
+                    <Route path="/knowledge-base/:articleId" element={<ArticleDetailPage />} />
+                  </Routes>
+                </Layout>
+              </BrowserRouter>
+            </TooltipProvider>
+          </ProjectProvider>
+        </ProfileProvider>
+      </SupabaseAuthProvider>
+    </SupabaseProvider>
+  </QueryClientProvider>
 );
 
 export default App;

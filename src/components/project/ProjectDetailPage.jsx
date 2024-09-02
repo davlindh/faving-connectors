@@ -1,48 +1,44 @@
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useProject, useUpdateProject, useDeleteProject, useCreateProjectApplication, useProfile } from '@/integrations/supabase';
+import { useProject, useUpdateProject, useDeleteProject } from '@/integrations/supabase';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft } from 'lucide-react';
+import { Textarea } from "@/components/ui/textarea";
+import { Calendar, DollarSign, Clock, MapPin, User, ArrowLeft, Edit, Trash } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
-import ProjectDetails from './ProjectDetails';
-import ProjectActions from './ProjectActions';
-import ApplicationForm from './ApplicationForm';
-import { Skeleton } from "@/components/ui/skeleton";
 
 const ProjectDetailPage = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
-  const { data: project, isLoading: projectLoading, error: projectError } = useProject(projectId);
-  const { session } = useSupabase();
-  const { data: userProfile, isLoading: profileLoading } = useProfile(session?.user?.id);
+  const { data: project, isLoading, error } = useProject(projectId);
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
-  const createProjectApplication = useCreateProjectApplication();
+  const { session } = useSupabase();
   const [applicationText, setApplicationText] = useState('');
 
-  const isOwner = session?.user?.id === project?.creator_id;
-  const hasApplied = project?.applications?.some(app => app.user_id === session?.user?.id);
+  if (isLoading) return <div className="text-center mt-8">Loading project details...</div>;
+  if (error) return <div className="text-center mt-8 text-red-500">Error loading project: {error.message}</div>;
+  if (!project) return <div className="text-center mt-8">Project not found</div>;
 
-  const handleApply = async () => {
-    if (!session) {
-      toast.error('Please log in to apply for projects');
-      return;
-    }
-    try {
-      await createProjectApplication.mutateAsync({
-        project_id: projectId,
-        user_id: session.user.id,
-        application_text: applicationText,
-      });
-      toast.success('Application submitted successfully!');
-      setApplicationText('');
-    } catch (error) {
-      toast.error('Failed to submit application');
-      console.error('Application submission error:', error);
-    }
+  const isOwner = session?.user?.id === project.creator_id;
+
+  const handleApply = () => {
+    // TODO: Implement application logic
+    toast.success('Application submitted successfully!');
+    setApplicationText('');
   };
 
   const handleDelete = async () => {
@@ -55,22 +51,10 @@ const ProjectDetailPage = () => {
     }
   };
 
-  if (projectLoading || profileLoading) {
-    return <ProjectDetailSkeleton />;
-  }
-
-  if (projectError) {
-    return <div className="text-center mt-8 text-red-500">Error loading project: {projectError.message}</div>;
-  }
-
-  if (!project) {
-    return <div className="text-center mt-8">Project not found</div>;
-  }
-
   return (
     <div className="max-w-4xl mx-auto p-4">
       <Link to="/projects" className="inline-flex items-center mb-4 text-blue-600 hover:text-blue-800">
-        <ArrowLeft className="mr-2" /> Back to Projects List
+        <ArrowLeft className="mr-2" /> Back to Projects
       </Link>
       <Card>
         <CardHeader>
@@ -78,23 +62,104 @@ const ProjectDetailPage = () => {
             <CardTitle className="text-3xl">{project.project_name || 'Untitled Project'}</CardTitle>
             {project.category && <Badge variant="secondary">{project.category}</Badge>}
           </div>
+          {isOwner && (
+            <div className="flex space-x-2 mt-2">
+              <Button variant="outline" size="sm" onClick={() => navigate(`/projects/edit/${projectId}`)}>
+                <Edit className="mr-2 h-4 w-4" /> Edit Project
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm">
+                    <Trash className="mr-2 h-4 w-4" /> Delete Project
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure you want to delete this project?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete the project and all associated data.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          )}
         </CardHeader>
         <CardContent className="space-y-6">
-          <ProjectDetails project={project} />
-          {isOwner && <ProjectActions projectId={projectId} onDelete={handleDelete} />}
+          <div>
+            <h3 className="text-xl font-semibold mb-2">Description</h3>
+            <p className="text-gray-600">{project.description || 'No description available'}</p>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center">
+              <DollarSign className="w-5 h-5 mr-2 text-gray-500" />
+              <span className="font-semibold">Budget: {project.budget ? `$${project.budget}` : 'Not specified'}</span>
+            </div>
+            <div className="flex items-center">
+              <Calendar className="w-5 h-5 mr-2 text-gray-500" />
+              <span className="font-semibold">Start Date: {project.start_date ? new Date(project.start_date).toLocaleDateString() : 'Not set'}</span>
+            </div>
+            <div className="flex items-center">
+              <Clock className="w-5 h-5 mr-2 text-gray-500" />
+              <span className="font-semibold">Duration: {project.duration ? `${project.duration} days` : 'Not specified'}</span>
+            </div>
+            <div className="flex items-center">
+              <MapPin className="w-5 h-5 mr-2 text-gray-500" />
+              <span className="font-semibold">Location: {project.location || 'Not specified'}</span>
+            </div>
+          </div>
+          
+          {project.required_skills && project.required_skills.length > 0 && (
+            <div>
+              <h3 className="text-xl font-semibold mb-2">Required Skills</h3>
+              <div className="flex flex-wrap gap-2">
+                {project.required_skills.map((skill, index) => (
+                  <Badge key={index} variant="outline">{skill}</Badge>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          <div>
+            <h3 className="text-xl font-semibold mb-2">Project Creator</h3>
+            <div className="flex items-center">
+              <User className="w-5 h-5 mr-2 text-gray-500" />
+              <span>{project.creator_name || 'Anonymous'}</span>
+            </div>
+          </div>
+
+          {project.end_date && (
+            <div>
+              <h3 className="text-xl font-semibold mb-2">End Date</h3>
+              <div className="flex items-center">
+                <Calendar className="w-5 h-5 mr-2 text-gray-500" />
+                <span>{new Date(project.end_date).toLocaleDateString()}</span>
+              </div>
+            </div>
+          )}
+
+          {project.interested_users && (
+            <div>
+              <h3 className="text-xl font-semibold mb-2">Interested Users</h3>
+              <span>{project.interested_users.length} user(s) interested</span>
+            </div>
+          )}
         </CardContent>
         <CardFooter>
-          {!isOwner && !hasApplied && (
-            <ApplicationForm
-              applicationText={applicationText}
-              setApplicationText={setApplicationText}
-              onSubmit={handleApply}
-              isLoggedIn={!!session}
-            />
-          )}
-          {hasApplied && (
-            <div className="w-full">
-              <p className="text-green-600 font-semibold">You have already applied to this project.</p>
+          {!isOwner && (
+            <div className="w-full space-y-4">
+              <Textarea
+                placeholder="Why are you interested in this project? Describe your relevant skills and experience."
+                value={applicationText}
+                onChange={(e) => setApplicationText(e.target.value)}
+                rows={4}
+              />
+              <Button className="w-full" onClick={handleApply}>Apply for Project</Button>
             </div>
           )}
         </CardFooter>
@@ -102,39 +167,5 @@ const ProjectDetailPage = () => {
     </div>
   );
 };
-
-const ProjectDetailSkeleton = () => (
-  <div className="max-w-4xl mx-auto p-4">
-    <Skeleton className="h-6 w-32 mb-4" />
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <Skeleton className="h-8 w-3/4" />
-          <Skeleton className="h-6 w-20" />
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-2/3" />
-        <div className="grid grid-cols-2 gap-4">
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-full" />
-        </div>
-        <Skeleton className="h-20 w-full" />
-        <div className="flex flex-wrap gap-2">
-          <Skeleton className="h-6 w-20" />
-          <Skeleton className="h-6 w-20" />
-          <Skeleton className="h-6 w-20" />
-        </div>
-      </CardContent>
-      <CardFooter>
-        <Skeleton className="h-12 w-full" />
-      </CardFooter>
-    </Card>
-  </div>
-);
 
 export default ProjectDetailPage;
