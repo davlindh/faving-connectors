@@ -108,7 +108,10 @@ const ProjectDetailSkeleton = () => (
     <Skeleton className="h-6 w-32 mb-4" />
     <Card>
       <CardHeader>
-        <Skeleton className="h-8 w-3/4" />
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-8 w-3/4" />
+          <Skeleton className="h-6 w-20" />
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
         <Skeleton className="h-4 w-full" />
@@ -117,6 +120,14 @@ const ProjectDetailSkeleton = () => (
         <div className="grid grid-cols-2 gap-4">
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+        <Skeleton className="h-20 w-full" />
+        <div className="flex flex-wrap gap-2">
+          <Skeleton className="h-6 w-20" />
+          <Skeleton className="h-6 w-20" />
+          <Skeleton className="h-6 w-20" />
         </div>
       </CardContent>
       <CardFooter>
