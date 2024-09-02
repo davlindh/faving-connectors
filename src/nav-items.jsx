@@ -1,4 +1,4 @@
-import { HomeIcon, UserIcon, BriefcaseIcon, BookOpenIcon, MessageSquareIcon, LogInIcon, UserPlusIcon } from "lucide-react";
+import { HomeIcon, UserIcon, BriefcaseIcon, BookOpenIcon, MessageSquareIcon, LogInIcon, UserPlusIcon, SearchIcon } from "lucide-react";
 import Index from "./pages/Index";
 import ProfilePage from "./components/profile/ProfilePage";
 import ProjectListPage from "./components/project/ProjectListPage";
@@ -6,6 +6,7 @@ import ArticleListPage from "./components/knowledgeBase/ArticleListPage";
 import MessagingInterface from "./components/messaging/MessagingInterface";
 import LoginForm from "./components/auth/LoginForm";
 import RegistrationForm from "./components/auth/RegistrationForm";
+import ProfileSearchPage from "./components/profile/ProfileSearchPage";
 
 /**
  * Central place for defining the navigation items. Used for navigation components and routing.
@@ -40,6 +41,12 @@ export const navItems = [
     to: "/messages",
     icon: <MessageSquareIcon className="h-4 w-4" />,
     page: <MessagingInterface />,
+  },
+  {
+    title: "Find Profiles",
+    to: "/find-profiles",
+    icon: <SearchIcon className="h-4 w-4" />,
+    page: <ProfileSearchPage />,
   },
   {
     title: "Login",
