@@ -10,23 +10,23 @@ const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const { signInWithPassword } = useSupabaseAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    setIsLoading(true);
     try {
-      const { error, data } = await signInWithPassword({ email, password });
+      const { error } = await signInWithPassword({ email, password });
       if (error) throw error;
-      if (data.user) {
-        navigate('/');
-      } else {
-        setError('Login failed. Please try again.');
-      }
+      navigate('/');
     } catch (error) {
       console.error('Login error:', error);
       setError(error.message || 'An error occurred during login. Please check your credentials and try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -68,7 +68,9 @@ const LoginForm = () => {
         </form>
       </CardContent>
       <CardFooter>
-        <Button className="w-full" onClick={handleSubmit}>Login</Button>
+        <Button className="w-full" onClick={handleSubmit} disabled={isLoading}>
+          {isLoading ? 'Logging in...' : 'Login'}
+        </Button>
       </CardFooter>
     </Card>
   );

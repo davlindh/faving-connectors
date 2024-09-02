@@ -30,14 +30,22 @@ export const SupabaseAuthProvider = ({ children }) => {
   const signInWithPassword = async (credentials) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword(credentials);
-      if (error) {
-        console.error('Supabase auth error:', error);
-        throw error;
-      }
+      if (error) throw error;
+      setSession(data.session);
       return { data, error: null };
     } catch (error) {
       console.error('Login error:', error);
       return { data: null, error };
+    }
+  };
+
+  const signOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      setSession(null);
+    } catch (error) {
+      console.error('Logout error:', error);
     }
   };
 
@@ -46,7 +54,7 @@ export const SupabaseAuthProvider = ({ children }) => {
     loading,
     signUp: (data) => supabase.auth.signUp(data),
     signInWithPassword,
-    signOut: () => supabase.auth.signOut(),
+    signOut,
   };
 
   return (
