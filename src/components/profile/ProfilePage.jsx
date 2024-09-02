@@ -33,6 +33,10 @@ const ProfilePage = () => {
     }
   }, [user]);
 
+  if (!profileId) {
+    return <div className="text-center mt-8">No profile ID provided</div>;
+  }
+
   if (profileLoading || userLoading) {
     return <ProfileSkeleton />;
   }
