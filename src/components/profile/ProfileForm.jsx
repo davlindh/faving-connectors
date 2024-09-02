@@ -14,6 +14,7 @@ const profileSchema = z.object({
   last_name: z.string().min(2, 'Last name must be at least 2 characters'),
   location: z.string().optional(),
   bio: z.string().max(500, 'Bio must be 500 characters or less').optional(),
+  avatar_url: z.string().url('Invalid URL').optional(),
 });
 
 const ProfileForm = ({ profile }) => {
@@ -26,6 +27,7 @@ const ProfileForm = ({ profile }) => {
       last_name: profile.last_name || '',
       location: profile.location || '',
       bio: profile.bio || '',
+      avatar_url: profile.avatar_url || '',
     },
   });
 
@@ -89,6 +91,19 @@ const ProfileForm = ({ profile }) => {
               <FormLabel>Bio</FormLabel>
               <FormControl>
                 <Textarea {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="avatar_url"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Avatar URL</FormLabel>
+              <FormControl>
+                <Input {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

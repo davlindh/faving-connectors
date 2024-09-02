@@ -9,6 +9,8 @@ import ServiceList from './ServiceList.jsx';
 import ProfileForm from './ProfileForm.jsx';
 import { useProfileContext } from '@/contexts/ProfileContext';
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
+import FaveScore from '../shared/FaveScore.jsx';
+import ECKTSlider from '../shared/ECKTSlider.jsx';
 
 const ProfilePage = () => {
   const { profileId } = useParams();
@@ -29,17 +31,22 @@ const ProfilePage = () => {
             <AvatarImage src={profile.avatar_url} alt={`${profile.first_name} ${profile.last_name}`} />
             <AvatarFallback>{profile.first_name?.[0]}{profile.last_name?.[0]}</AvatarFallback>
           </Avatar>
-          <div className="text-center sm:text-left">
+          <div className="text-center sm:text-left flex-grow">
             <CardTitle className="text-2xl">{profile.first_name} {profile.last_name}</CardTitle>
             <p className="text-gray-500">{profile.location}</p>
+            <FaveScore score={profile.fave_score || 0} />
           </div>
+          {isOwnProfile && (
+            <Button variant="outline">Edit Profile</Button>
+          )}
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="about">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="about">About</TabsTrigger>
               <TabsTrigger value="skills">Skills</TabsTrigger>
               <TabsTrigger value="services">Services</TabsTrigger>
+              <TabsTrigger value="eckt">ECKT</TabsTrigger>
             </TabsList>
             <TabsContent value="about">
               <h3 className="font-semibold mb-2">Bio</h3>
@@ -55,6 +62,10 @@ const ProfilePage = () => {
             <TabsContent value="services">
               <h3 className="font-semibold mb-2">Services</h3>
               <ServiceList profileId={profile.profile_id} />
+            </TabsContent>
+            <TabsContent value="eckt">
+              <h3 className="font-semibold mb-2">ECKT Score</h3>
+              <ECKTSlider value={profile.eckt_score || 50} onChange={(value) => console.log('ECKT Score:', value)} />
             </TabsContent>
           </Tabs>
         </CardContent>
