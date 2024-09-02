@@ -70,7 +70,7 @@ const ProjectDetailPage = () => {
   return (
     <div className="max-w-4xl mx-auto p-4">
       <Link to="/projects" className="inline-flex items-center mb-4 text-blue-600 hover:text-blue-800">
-        <ArrowLeft className="mr-2" /> Back to Projects
+        <ArrowLeft className="mr-2" /> Back to Projects List
       </Link>
       <Card>
         <CardHeader>
