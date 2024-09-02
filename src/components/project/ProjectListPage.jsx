@@ -62,10 +62,6 @@ const ProjectListPage = () => {
     });
   };
 
-  const handleSearch = () => {
-    setCurrentPage(1);
-  };
-
   const indexOfLastProject = currentPage * projectsPerPage;
   const indexOfFirstProject = indexOfLastProject - projectsPerPage;
   const currentProjects = displayedProjects.slice(indexOfFirstProject, indexOfLastProject);
