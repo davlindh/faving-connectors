@@ -9,6 +9,7 @@ import ServiceList from './ServiceList.jsx';
 import ProfileForm from './ProfileForm.jsx';
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import FaveScore from '../shared/FaveScore.jsx';
+import DetailedFeedback from '../shared/DetailedFeedback.jsx';
 import ECKTSlider from '../shared/ECKTSlider.jsx';
 import { useProfile, useUser, useUpdateUser } from '@/integrations/supabase';
 import { Skeleton } from "@/components/ui/skeleton";
@@ -67,6 +68,19 @@ const ProfilePage = () => {
     }
   };
 
+  // Mock feedback data (replace with actual data in a real application)
+  const mockFeedback = {
+    communication: 85,
+    quality: 90,
+    timeliness: 80,
+    professionalism: 95,
+    comments: [
+      "Great to work with!",
+      "Delivered high-quality work on time.",
+      "Excellent communication throughout the project."
+    ]
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <Card>
@@ -90,11 +104,12 @@ const ProfilePage = () => {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="about">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="about">About</TabsTrigger>
               <TabsTrigger value="skills">Skills</TabsTrigger>
               <TabsTrigger value="services">Services</TabsTrigger>
               <TabsTrigger value="eckt">ECKT</TabsTrigger>
+              <TabsTrigger value="feedback">Feedback</TabsTrigger>
             </TabsList>
             <TabsContent value="about">
               <h3 className="font-semibold mb-2">Bio</h3>
@@ -121,6 +136,9 @@ const ProfilePage = () => {
                 onChange={handleEcktChange} 
                 readOnly={!isOwnProfile}
               />
+            </TabsContent>
+            <TabsContent value="feedback">
+              <DetailedFeedback feedback={mockFeedback} />
             </TabsContent>
           </Tabs>
         </CardContent>
