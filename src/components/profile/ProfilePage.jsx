@@ -19,7 +19,8 @@ const ProfilePage = () => {
   const { profileId } = useParams();
   const { session } = useSupabase();
   const navigate = useNavigate();
-  const { data: profile, isLoading: profileLoading, error: profileError } = useProfile(profileId);
+  const userId = session?.user?.id;
+  const { data: profile, isLoading: profileLoading, error: profileError } = useProfile(profileId || userId);
   const { data: user, isLoading: userLoading, error: userError } = useUser(profile?.user_id);
   const updateUser = useUpdateUser();
   const [isEditing, setIsEditing] = useState(false);
@@ -32,10 +33,6 @@ const ProfilePage = () => {
       setEcktScores(user.eckt_scores);
     }
   }, [user]);
-
-  if (!profileId) {
-    return <div className="text-center mt-8">No profile ID provided</div>;
-  }
 
   if (profileLoading || userLoading) {
     return <ProfileSkeleton />;
