@@ -223,7 +223,9 @@ const ProjectListPage = () => {
               ))}
             </div>
           ) : (
-            <div className="text-center py-8">You haven't created any projects yet.</div>
+            <div className="text-center py-8">
+              {session ? "You don't have any projects yet." : "Please log in to view your projects."}
+            </div>
           )}
         </TabsContent>
       </Tabs>
