@@ -10,17 +10,25 @@ export const useProfiles = () => useQuery({
   },
 });
 
-export const useProfile = (profileId) => useQuery({
-  queryKey: ['profiles', profileId],
+export const useProfile = (userId) => useQuery({
+  queryKey: ['profiles', userId],
   queryFn: async () => {
+    if (!userId) return null;
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .eq('profile_id', profileId)
+      .eq('user_id', userId)
       .single();
-    if (error) throw error;
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // No rows returned
+        return null;
+      }
+      throw error;
+    }
     return data;
   },
+  enabled: !!userId,
 });
 
 export const useCreateProfile = () => {
@@ -33,7 +41,7 @@ export const useCreateProfile = () => {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries(['profiles']);
-      queryClient.setQueryData(['profiles', data.profile_id], data);
+      queryClient.setQueryData(['profiles', data.user_id], data);
     },
   });
 };
@@ -41,18 +49,18 @@ export const useCreateProfile = () => {
 export const useUpdateProfile = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ profileId, updates }) => {
+    mutationFn: async ({ userId, updates }) => {
       const { data, error } = await supabase
         .from('profiles')
         .update(updates)
-        .eq('profile_id', profileId)
+        .eq('user_id', userId)
         .select();
       if (error) throw error;
       return data[0];
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries(['profiles']);
-      queryClient.setQueryData(['profiles', data.profile_id], data);
+      queryClient.setQueryData(['profiles', data.user_id], data);
     },
   });
 };
@@ -60,17 +68,17 @@ export const useUpdateProfile = () => {
 export const useDeleteProfile = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (profileId) => {
+    mutationFn: async (userId) => {
       const { data, error } = await supabase
         .from('profiles')
         .delete()
-        .eq('profile_id', profileId);
+        .eq('user_id', userId);
       if (error) throw error;
       return data;
     },
-    onSuccess: (_, profileId) => {
+    onSuccess: (_, userId) => {
       queryClient.invalidateQueries(['profiles']);
-      queryClient.removeQueries(['profiles', profileId]);
+      queryClient.removeQueries(['profiles', userId]);
     },
   });
 };
