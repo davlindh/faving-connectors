@@ -66,7 +66,7 @@ const Index = () => {
         )}
         <div className="text-center mt-8">
           <Button asChild variant="outline">
-            <Link to="/projects">View All Projects <ArrowRight className="ml-2 h-4 w-4" /></Link>
+            <Link to="/projects">View All Projects ({projects ? projects.length : 0}) <ArrowRight className="ml-2 h-4 w-4" /></Link>
           </Button>
         </div>
       </section>
