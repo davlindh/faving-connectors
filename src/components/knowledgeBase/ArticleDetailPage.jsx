@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useKnowledgeBaseArticle, useDeleteKnowledgeBaseArticle } from '@/integrations/supabase';
+import { useKnowledgeBaseArticle, useDeleteKnowledgeBaseArticle, useUpdateKnowledgeBaseArticle } from '@/integrations/supabase';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +24,7 @@ const ArticleDetailPage = () => {
   const navigate = useNavigate();
   const { data: article, isLoading, error } = useKnowledgeBaseArticle(articleId);
   const deleteArticle = useDeleteKnowledgeBaseArticle();
+  const updateArticle = useUpdateKnowledgeBaseArticle();
   const [isEditing, setIsEditing] = useState(false);
 
   if (isLoading) return <div className="text-center mt-8">Loading article...</div>;
@@ -41,8 +42,21 @@ const ArticleDetailPage = () => {
     }
   };
 
-  const handleEditComplete = () => {
-    setIsEditing(false);
+  const handleUpdate = async (updatedArticle) => {
+    try {
+      await updateArticle.mutateAsync({
+        articleId,
+        updates: {
+          ...updatedArticle,
+          updated_at: new Date().toISOString(),
+        },
+      });
+      toast.success('Article updated successfully');
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Update article error:', error);
+      toast.error('Failed to update article');
+    }
   };
 
   return (
@@ -63,9 +77,21 @@ const ArticleDetailPage = () => {
         </CardHeader>
         <CardContent>
           {isEditing ? (
-            <ArticleEditForm article={article} onEditComplete={handleEditComplete} />
+            <ArticleEditForm article={article} onSubmit={handleUpdate} onCancel={() => setIsEditing(false)} />
           ) : (
-            <div dangerouslySetInnerHTML={{ __html: article.content }} className="prose max-w-none" />
+            <>
+              <div dangerouslySetInnerHTML={{ __html: article.content }} className="prose max-w-none" />
+              {article.tags && article.tags.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="font-semibold mb-2">Tags:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {article.tags.map((tag, index) => (
+                      <Badge key={index} variant="outline">{tag}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
