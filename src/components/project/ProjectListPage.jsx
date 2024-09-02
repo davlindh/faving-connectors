@@ -27,7 +27,7 @@ const ProjectListPage = () => {
     skills: []
   });
   const [sortBy, setSortBy] = useState('latest');
-  const [displayedProjects, setDisplayedProjects] = useState([]);
+  const [filteredProjects, setFilteredProjects] = useState([]);
   const navigate = useNavigate();
   const { session } = useSupabase();
   const [activeTab, setActiveTab] = useState('all');
@@ -48,7 +48,7 @@ const ProjectListPage = () => {
         return 0;
       });
 
-      setDisplayedProjects(sorted);
+      setFilteredProjects(sorted);
     }
   }, [projects, searchTerm, filters, sortBy]);
 
@@ -73,8 +73,8 @@ const ProjectListPage = () => {
     return session?.user?.id === project.creator_id;
   };
 
-  const allProjects = displayedProjects;
-  const myProjects = displayedProjects.filter(project => isProjectOwner(project));
+  const allProjects = filteredProjects;
+  const myProjects = filteredProjects.filter(project => isProjectOwner(project));
 
   const renderProjects = (projectList) => (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
