@@ -6,14 +6,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { X, Search, Plus, Filter } from 'lucide-react';
+import { X, Search, Plus, Filter, Edit } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 
 const ProjectListPage = () => {
   const { data: projects, isLoading, error } = useProjects();
@@ -26,9 +26,8 @@ const ProjectListPage = () => {
   });
   const [sortBy, setSortBy] = useState('latest');
   const [displayedProjects, setDisplayedProjects] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const projectsPerPage = 9;
   const navigate = useNavigate();
+  const { session } = useSupabase();
 
   useEffect(() => {
     if (projects) {
@@ -47,7 +46,6 @@ const ProjectListPage = () => {
       });
 
       setDisplayedProjects(sorted);
-      setCurrentPage(1);
     }
   }, [projects, searchTerm, filters, sortBy]);
 
@@ -68,11 +66,9 @@ const ProjectListPage = () => {
     });
   };
 
-  const indexOfLastProject = currentPage * projectsPerPage;
-  const indexOfFirstProject = indexOfLastProject - projectsPerPage;
-  const currentProjects = displayedProjects.slice(indexOfFirstProject, indexOfLastProject);
-
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  const isProjectOwner = (project) => {
+    return session?.user?.id === project.creator_id;
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -184,25 +180,23 @@ const ProjectListPage = () => {
       {error && <div className="text-center text-red-500 py-8">Error loading projects: {error.message}</div>}
       
       {!isLoading && !error && displayedProjects.length > 0 ? (
-        <>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {currentProjects.map((project) => (
-              <ProjectCard key={project.project_id} project={project} />
-            ))}
-          </div>
-          <div className="mt-8 flex justify-center">
-            {Array.from({ length: Math.ceil(displayedProjects.length / projectsPerPage) }, (_, i) => (
-              <Button
-                key={i}
-                onClick={() => paginate(i + 1)}
-                variant={currentPage === i + 1 ? "default" : "outline"}
-                className="mx-1"
-              >
-                {i + 1}
-              </Button>
-            ))}
-          </div>
-        </>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {displayedProjects.map((project) => (
+            <div key={project.project_id} className="relative">
+              <ProjectCard project={project} />
+              {isProjectOwner(project) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="absolute top-2 right-2"
+                  onClick={() => navigate(`/projects/edit/${project.project_id}`)}
+                >
+                  <Edit className="mr-2 h-4 w-4" /> Edit
+                </Button>
+              )}
+            </div>
+          ))}
+        </div>
       ) : (
         <div className="text-center py-8">No projects found matching your criteria.</div>
       )}

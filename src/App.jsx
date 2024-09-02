@@ -32,6 +32,7 @@ const App = () => (
                     ))}
                     <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
                     <Route path="/projects/create" element={<ProjectCreationForm />} />
+                    <Route path="/projects/edit/:projectId" element={<ProjectCreationForm />} />
                     <Route path="/profile/:profileId" element={<ProfilePage />} />
                     <Route path="/knowledge-base/create" element={<ArticleCreationForm />} />
                     <Route path="/knowledge-base/:articleId" element={<ArticleDetailPage />} />
