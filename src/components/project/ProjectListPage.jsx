@@ -35,22 +35,16 @@ const ProjectListPage = () => {
   const filteredAndSortedProjects = useMemo(() => {
     if (!projects) return [];
 
-    const now = new Date();
-
     return projects
       .filter(project => 
         (searchTerm === '' || 
          project.project_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-         (project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase()))) &&
+         project.description?.toLowerCase().includes(searchTerm.toLowerCase())) &&
         (filters.category === 'all' || project.category === filters.category) &&
-        (!project.budget || (project.budget >= filters.minBudget && project.budget <= filters.maxBudget)) &&
+        (project.budget === null || project.budget === undefined || 
+         (project.budget >= filters.minBudget && project.budget <= filters.maxBudget)) &&
         (filters.skills.length === 0 || 
-         (project.required_skills && filters.skills.every(skill => project.required_skills.includes(skill)))) &&
-        (filters.status === 'all' || (
-          (filters.status === 'ongoing' && new Date(project.start_date) <= now && new Date(project.end_date) >= now) ||
-          (filters.status === 'upcoming' && new Date(project.start_date) > now) ||
-          (filters.status === 'past' && new Date(project.end_date) < now)
-        ))
+         (project.required_skills && filters.skills.every(skill => project.required_skills.includes(skill))))
       )
       .sort((a, b) => {
         if (sortBy === 'latest') return new Date(b.start_date || 0) - new Date(a.start_date || 0);
@@ -195,23 +189,6 @@ const ProjectListPage = () => {
                           </Badge>
                         ))}
                       </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Project Status</label>
-                      <Select
-                        value={filters.status}
-                        onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select Status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Projects</SelectItem>
-                          <SelectItem value="ongoing">Ongoing</SelectItem>
-                          <SelectItem value="upcoming">Upcoming</SelectItem>
-                          <SelectItem value="past">Past</SelectItem>
-                        </SelectContent>
-                      </Select>
                     </div>
                   </div>
                 </PopoverContent>
