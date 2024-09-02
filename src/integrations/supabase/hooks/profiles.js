@@ -87,3 +87,32 @@ export const useDeleteProfile = () => {
     },
   });
 };
+
+export const useReviews = (profileId) => useQuery({
+  queryKey: ['reviews', profileId],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from('reviews')
+      .select(`
+        *,
+        reviewer:profiles(first_name, last_name, avatar_url)
+      `)
+      .eq('profile_id', profileId);
+    if (error) throw error;
+    return data;
+  },
+});
+
+export const useSubmitReview = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (reviewData) => {
+      const { data, error } = await supabase.from('reviews').insert([reviewData]);
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, { profileId }) => {
+      queryClient.invalidateQueries(['reviews', profileId]);
+    },
+  });
+};
