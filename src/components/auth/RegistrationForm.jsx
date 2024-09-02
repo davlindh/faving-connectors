@@ -20,9 +20,13 @@ const formSchema = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters')
     .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, 
       'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'),
+  confirmPassword: z.string(),
   location: z.string().optional(),
   bio: z.string().max(500, 'Bio must be 500 characters or less').optional(),
   termsAccepted: z.boolean().refine(val => val === true, 'You must accept the terms and conditions'),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
 });
 
 const RegistrationForm = () => {
@@ -39,6 +43,7 @@ const RegistrationForm = () => {
       lastName: '',
       email: '',
       password: '',
+      confirmPassword: '',
       location: '',
       bio: '',
       termsAccepted: false,
@@ -154,6 +159,23 @@ const RegistrationForm = () => {
                     />
                   </FormControl>
                   <Progress value={passwordStrength} className="h-1 mt-2" />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Confirm Password</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="password" 
+                      placeholder="Confirm your password" 
+                      {...field} 
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
