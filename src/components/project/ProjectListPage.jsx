@@ -25,7 +25,7 @@ const ProjectListPage = () => {
     minBudget: 0,
     maxBudget: 10000,
     skills: [],
-    status: 'all' // New filter for project status
+    status: 'all'
   });
   const [sortBy, setSortBy] = useState('latest');
   const navigate = useNavigate();
