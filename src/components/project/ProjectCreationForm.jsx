@@ -3,7 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useNavigate } from 'react-router-dom';
-import { useCreateProject } from '@/integrations/supabase';
+import { useCreateProject, useProfile } from '@/integrations/supabase';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
+import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 
 const projectSchema = z.object({
   project_name: z.string().min(1, 'Project name is required').max(100, 'Project name must be 100 characters or less'),
@@ -36,6 +37,8 @@ const projectSchema = z.object({
 const ProjectCreationForm = () => {
   const navigate = useNavigate();
   const createProject = useCreateProject();
+  const { session } = useSupabase();
+  const { data: profile } = useProfile(session?.user?.id);
 
   const form = useForm({
     resolver: zodResolver(projectSchema),
@@ -52,10 +55,16 @@ const ProjectCreationForm = () => {
   });
 
   const onSubmit = async (data) => {
+    if (!profile) {
+      toast.error('User profile not found');
+      return;
+    }
+
     try {
       await createProject.mutateAsync({
         ...data,
         budget: parseFloat(data.budget),
+        creator_id: profile.profile_id, // Use profile_id instead of user_id
       });
       toast.success('Project created successfully');
       navigate('/projects');
