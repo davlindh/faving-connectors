@@ -1,22 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../supabase';
 
-/*
-### users
-
-| name       | type                    | format | required |
-|------------|-------------------------|--------|----------|
-| user_id    | uuid                    | uuid   | true     |
-| first_name | text                    | string | false    |
-| last_name  | text                    | string | false    |
-| email      | text                    | string | true     |
-| created_at | timestamp with time zone| string | true     |
-| updated_at | time with time zone     | string | false    |
-| score      | numeric                 | number | false    |
-
-Note: user_id is the Primary Key
-*/
-
 export const useUsers = () => useQuery({
   queryKey: ['users'],
   queryFn: async () => {
@@ -43,12 +27,13 @@ export const useCreateUser = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (newUser) => {
-      const { data, error } = await supabase.from('users').insert([newUser]);
+      const { data, error } = await supabase.from('users').insert([newUser]).select();
       if (error) throw error;
-      return data;
+      return data[0];
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries(['users']);
+      queryClient.setQueryData(['users', data.user_id], data);
     },
   });
 };
@@ -60,13 +45,14 @@ export const useUpdateUser = () => {
       const { data, error } = await supabase
         .from('users')
         .update(updates)
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .select();
       if (error) throw error;
-      return data;
+      return data[0];
     },
-    onSuccess: (_, { userId }) => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries(['users']);
-      queryClient.invalidateQueries(['users', userId]);
+      queryClient.setQueryData(['users', data.user_id], data);
     },
   });
 };
@@ -82,8 +68,9 @@ export const useDeleteUser = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (_, userId) => {
       queryClient.invalidateQueries(['users']);
+      queryClient.removeQueries(['users', userId]);
     },
   });
 };

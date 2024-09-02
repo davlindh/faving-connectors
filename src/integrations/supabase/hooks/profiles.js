@@ -1,22 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../supabase';
 
-/*
-### profiles
-
-| name       | type                | format                | required |
-|------------|---------------------|------------------------|----------|
-| profile_id | uuid                | uuid                   | true     |
-| user_id    | uuid                | uuid                   | true     |
-| location   | text                | string                 | false    |
-| bio        | text                | string                 | false    |
-| created_at | timestamp with time zone | string            | false    |
-| updated_at | timestamp with time zone | string            | false    |
-| avatar_url | text                | string (URL)           | false    |
-
-Note: profile_id is the Primary Key
-*/
-
 export const useProfiles = () => useQuery({
   queryKey: ['profiles'],
   queryFn: async () => {
@@ -43,12 +27,13 @@ export const useCreateProfile = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (newProfile) => {
-      const { data, error } = await supabase.from('profiles').insert([newProfile]);
+      const { data, error } = await supabase.from('profiles').insert([newProfile]).select();
       if (error) throw error;
-      return data;
+      return data[0];
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries(['profiles']);
+      queryClient.setQueryData(['profiles', data.profile_id], data);
     },
   });
 };
@@ -60,13 +45,14 @@ export const useUpdateProfile = () => {
       const { data, error } = await supabase
         .from('profiles')
         .update(updates)
-        .eq('profile_id', profileId);
+        .eq('profile_id', profileId)
+        .select();
       if (error) throw error;
-      return data;
+      return data[0];
     },
-    onSuccess: (_, { profileId }) => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries(['profiles']);
-      queryClient.invalidateQueries(['profiles', profileId]);
+      queryClient.setQueryData(['profiles', data.profile_id], data);
     },
   });
 };
@@ -82,8 +68,9 @@ export const useDeleteProfile = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (_, profileId) => {
       queryClient.invalidateQueries(['profiles']);
+      queryClient.removeQueries(['profiles', profileId]);
     },
   });
 };

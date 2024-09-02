@@ -1,26 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../supabase';
 
-/*
-### projects
-
-| name            | type                    | format | required |
-|-----------------|-------------------------|--------|----------|
-| description     | text                    | string | false    |
-| category        | text                    | string | false    |
-| location        | text                    | string | false    |
-| required_skills | text[]                  | array  | false    |
-| start_date      | timestamp with time zone| string | false    |
-| end_date        | timestamp with time zone| string | false    |
-| creator_id      | uuid                    | uuid   | true     |
-| project_name    | text                    | string | true     |
-| interested_users| uuid[]                  | array  | true     |
-| project_id      | uuid                    | uuid   | false    |
-
-Note: project_id is the Primary Key
-Foreign Key: creator_id references profiles.profile_id
-*/
-
 export const useProjects = () => useQuery({
   queryKey: ['projects'],
   queryFn: async () => {
@@ -33,6 +13,7 @@ export const useProjects = () => useQuery({
 export const useProject = (projectId) => useQuery({
   queryKey: ['projects', projectId],
   queryFn: async () => {
+    if (!projectId || projectId === 'create') return null;
     const { data, error } = await supabase
       .from('projects')
       .select('*')
@@ -41,18 +22,20 @@ export const useProject = (projectId) => useQuery({
     if (error) throw error;
     return data;
   },
+  enabled: !!projectId && projectId !== 'create',
 });
 
 export const useCreateProject = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (newProject) => {
-      const { data, error } = await supabase.from('projects').insert([newProject]);
+      const { data, error } = await supabase.from('projects').insert([newProject]).select();
       if (error) throw error;
-      return data;
+      return data[0];
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries(['projects']);
+      queryClient.setQueryData(['projects', data.project_id], data);
     },
   });
 };
@@ -64,13 +47,14 @@ export const useUpdateProject = () => {
       const { data, error } = await supabase
         .from('projects')
         .update(updates)
-        .eq('project_id', projectId);
+        .eq('project_id', projectId)
+        .select();
       if (error) throw error;
-      return data;
+      return data[0];
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries(['projects']);
-      queryClient.invalidateQueries(['projects', projectId]);
+      queryClient.setQueryData(['projects', data.project_id], data);
     },
   });
 };
@@ -86,8 +70,9 @@ export const useDeleteProject = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (_, projectId) => {
       queryClient.invalidateQueries(['projects']);
+      queryClient.removeQueries(['projects', projectId]);
     },
   });
 };

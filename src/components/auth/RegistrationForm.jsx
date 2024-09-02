@@ -11,7 +11,7 @@ import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { useCreateProfile } from '@/integrations/supabase';
+import { useCreateProfile, useCreateUser } from '@/integrations/supabase';
 
 const formSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
@@ -33,6 +33,7 @@ const RegistrationForm = () => {
   const [error, setError] = useState(null);
   const { signUp } = useSupabaseAuth();
   const createProfile = useCreateProfile();
+  const createUser = useCreateUser();
   const navigate = useNavigate();
   const [passwordStrength, setPasswordStrength] = useState(0);
 
@@ -76,6 +77,15 @@ const RegistrationForm = () => {
       if (authError) throw authError;
 
       if (authData.user) {
+        // Create user record
+        await createUser.mutateAsync({
+          user_id: authData.user.id,
+          first_name: values.firstName,
+          last_name: values.lastName,
+          email: values.email,
+        });
+
+        // Create profile record
         await createProfile.mutateAsync({
           user_id: authData.user.id,
           first_name: values.firstName,
