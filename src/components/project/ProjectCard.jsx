@@ -37,6 +37,11 @@ const ProjectCard = ({ project }) => {
     return `${diffDays} day${diffDays !== 1 ? 's' : ''}`;
   };
 
+  const truncateDescription = (text, maxLength = 100) => {
+    if (!text) return 'No description available';
+    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+  };
+
   return (
     <Card className="flex flex-col h-full hover:shadow-lg transition-shadow duration-300">
       <CardHeader>
@@ -48,7 +53,7 @@ const ProjectCard = ({ project }) => {
       </CardHeader>
       <CardContent className="flex-grow">
         <p className="text-gray-600 mb-4 line-clamp-3">
-          {description || 'No description available'}
+          {truncateDescription(description)}
         </p>
         <div className="grid grid-cols-2 gap-2 text-sm">
           <div className="flex items-center">
