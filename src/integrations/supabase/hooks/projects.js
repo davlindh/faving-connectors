@@ -19,7 +19,10 @@ export const useProject = (projectId) => useQuery({
       .select(`
         *,
         creator:creator_id(*),
-        team_members:project_team_members(*)
+        team_members:project_team_members(*),
+        tasks:project_tasks(*),
+        impact_metrics:project_impact_metrics(*),
+        resources:project_resources(*)
       `)
       .eq('project_id', projectId)
       .single();
