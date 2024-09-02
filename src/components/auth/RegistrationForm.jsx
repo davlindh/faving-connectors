@@ -83,6 +83,7 @@ const RegistrationForm = () => {
           first_name: values.firstName,
           last_name: values.lastName,
           email: values.email,
+          created_at: new Date().toISOString(), // Add this line to set the created_at field
         });
 
         // Create profile record
