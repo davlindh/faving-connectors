@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useProject, useUpdateProject, useDeleteProject } from '@/integrations/supabase';
+import { useProject, useUpdateProject, useDeleteProject, useCreateProjectApplication } from '@/integrations/supabase';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar, DollarSign, Clock, MapPin, User, ArrowLeft, Edit, Trash } from 'lucide-react';
+import { Calendar, DollarSign, Clock, MapPin, User, ArrowLeft, Edit, Trash, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -19,6 +19,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
+import { Progress } from "@/components/ui/progress";
 
 const ProjectDetailPage = () => {
   const { projectId } = useParams();
@@ -26,6 +27,7 @@ const ProjectDetailPage = () => {
   const { data: project, isLoading, error } = useProject(projectId);
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
+  const createProjectApplication = useCreateProjectApplication();
   const { session } = useSupabase();
   const [applicationText, setApplicationText] = useState('');
 
@@ -34,11 +36,25 @@ const ProjectDetailPage = () => {
   if (!project) return <div className="text-center mt-8">Project not found</div>;
 
   const isOwner = session?.user?.id === project.creator_id;
+  const hasApplied = project.applications?.some(app => app.user_id === session?.user?.id);
 
-  const handleApply = () => {
-    // TODO: Implement application logic
-    toast.success('Application submitted successfully!');
-    setApplicationText('');
+  const handleApply = async () => {
+    if (!session) {
+      toast.error('Please log in to apply for projects');
+      return;
+    }
+    try {
+      await createProjectApplication.mutateAsync({
+        project_id: projectId,
+        user_id: session.user.id,
+        application_text: applicationText,
+      });
+      toast.success('Application submitted successfully!');
+      setApplicationText('');
+    } catch (error) {
+      toast.error('Failed to submit application');
+      console.error('Application submission error:', error);
+    }
   };
 
   const handleDelete = async () => {
@@ -49,6 +65,16 @@ const ProjectDetailPage = () => {
     } catch (error) {
       toast.error('Failed to delete project');
     }
+  };
+
+  const calculateProgress = () => {
+    if (!project.start_date || !project.end_date) return 0;
+    const start = new Date(project.start_date);
+    const end = new Date(project.end_date);
+    const today = new Date();
+    const totalDuration = end - start;
+    const elapsed = today - start;
+    return Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
   };
 
   return (
@@ -106,7 +132,7 @@ const ProjectDetailPage = () => {
             </div>
             <div className="flex items-center">
               <Clock className="w-5 h-5 mr-2 text-gray-500" />
-              <span className="font-semibold">Duration: {project.duration ? `${project.duration} days` : 'Not specified'}</span>
+              <span className="font-semibold">End Date: {project.end_date ? new Date(project.end_date).toLocaleDateString() : 'Not set'}</span>
             </div>
             <div className="flex items-center">
               <MapPin className="w-5 h-5 mr-2 text-gray-500" />
@@ -133,25 +159,21 @@ const ProjectDetailPage = () => {
             </div>
           </div>
 
-          {project.end_date && (
-            <div>
-              <h3 className="text-xl font-semibold mb-2">End Date</h3>
-              <div className="flex items-center">
-                <Calendar className="w-5 h-5 mr-2 text-gray-500" />
-                <span>{new Date(project.end_date).toLocaleDateString()}</span>
-              </div>
-            </div>
-          )}
+          <div>
+            <h3 className="text-xl font-semibold mb-2">Project Progress</h3>
+            <Progress value={calculateProgress()} className="w-full" />
+            <p className="text-sm text-gray-500 mt-1">{Math.round(calculateProgress())}% Complete</p>
+          </div>
 
-          {project.interested_users && (
+          {project.applications && (
             <div>
-              <h3 className="text-xl font-semibold mb-2">Interested Users</h3>
-              <span>{project.interested_users.length} user(s) interested</span>
+              <h3 className="text-xl font-semibold mb-2">Applications</h3>
+              <span>{project.applications.length} application(s) received</span>
             </div>
           )}
         </CardContent>
         <CardFooter>
-          {!isOwner && (
+          {!isOwner && !hasApplied && (
             <div className="w-full space-y-4">
               <Textarea
                 placeholder="Why are you interested in this project? Describe your relevant skills and experience."
@@ -159,7 +181,15 @@ const ProjectDetailPage = () => {
                 onChange={(e) => setApplicationText(e.target.value)}
                 rows={4}
               />
-              <Button className="w-full" onClick={handleApply}>Apply for Project</Button>
+              <Button className="w-full" onClick={handleApply} disabled={!session}>
+                <Send className="mr-2 h-4 w-4" />
+                {session ? 'Apply for Project' : 'Log in to Apply'}
+              </Button>
+            </div>
+          )}
+          {hasApplied && (
+            <div className="w-full">
+              <p className="text-green-600 font-semibold">You have already applied to this project.</p>
             </div>
           )}
         </CardFooter>
