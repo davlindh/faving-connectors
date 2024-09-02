@@ -3,7 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useCreateProject, useUpdateProject, useProject, useProjects } from '@/integrations/supabase';
+import { useCreateProject, useUpdateProject, useProject, useProjects, useCreateProfile, useProfile } from '@/integrations/supabase';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -43,6 +43,8 @@ const ProjectCreationForm = () => {
   const { session } = useSupabase();
   const { data: userProjects, isLoading: userProjectsLoading } = useProjects();
   const [isEditing, setIsEditing] = useState(false);
+  const createProfile = useCreateProfile();
+  const { data: userProfile, isLoading: profileLoading } = useProfile(session?.user?.id);
 
   const form = useForm({
     resolver: zodResolver(projectSchema),
@@ -73,6 +75,22 @@ const ProjectCreationForm = () => {
 
   const onSubmit = async (data) => {
     try {
+      if (!session?.user?.id) {
+        toast.error('You must be logged in to create or edit a project');
+        return;
+      }
+
+      // Check if the user has a profile, if not create one
+      if (!userProfile) {
+        await createProfile.mutateAsync({
+          user_id: session.user.id,
+          first_name: session.user.user_metadata?.first_name || '',
+          last_name: session.user.user_metadata?.last_name || '',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+      }
+
       if (isEditing) {
         await updateProject.mutateAsync({
           projectId,
@@ -99,7 +117,7 @@ const ProjectCreationForm = () => {
 
   const userCreatedProjects = userProjects?.filter(p => p.creator_id === session?.user?.id) || [];
 
-  if (projectLoading || userProjectsLoading) {
+  if (projectLoading || userProjectsLoading || profileLoading) {
     return <div className="text-center mt-8">Loading...</div>;
   }
 
