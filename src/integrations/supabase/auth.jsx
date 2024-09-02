@@ -27,11 +27,22 @@ export const SupabaseAuthProvider = ({ children }) => {
     return () => subscription.unsubscribe();
   }, [queryClient]);
 
+  const signInWithPassword = async (credentials) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword(credentials);
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      console.error('Login error:', error);
+      return { data: null, error };
+    }
+  };
+
   const value = {
     session,
     loading,
     signUp: (data) => supabase.auth.signUp(data),
-    signInWithPassword: (data) => supabase.auth.signInWithPassword(data),
+    signInWithPassword,
     signOut: () => supabase.auth.signOut(),
   };
 

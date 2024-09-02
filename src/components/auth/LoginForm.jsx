@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { useSupabaseAuth } from '@/integrations/supabase/auth';
 import { useNavigate } from 'react-router-dom';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
@@ -16,11 +17,15 @@ const LoginForm = () => {
     e.preventDefault();
     setError(null);
     try {
-      const { error } = await signInWithPassword({ email, password });
+      const { error, data } = await signInWithPassword({ email, password });
       if (error) throw error;
-      navigate('/');
+      if (data.user) {
+        navigate('/');
+      } else {
+        setError('Login failed. Please try again.');
+      }
     } catch (error) {
-      setError(error.message);
+      setError(error.message || 'An error occurred during login. Please try again.');
     }
   };
 
@@ -54,7 +59,11 @@ const LoginForm = () => {
               />
             </div>
           </div>
-          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+          {error && (
+            <Alert variant="destructive" className="mt-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
         </form>
       </CardContent>
       <CardFooter>
