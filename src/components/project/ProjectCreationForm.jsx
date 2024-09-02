@@ -17,9 +17,9 @@ const projectSchema = z.object({
   project_name: z.string().min(1, 'Project name is required').max(100, 'Project name must be 100 characters or less'),
   description: z.string().min(1, 'Description is required').max(1000, 'Description must be 1000 characters or less'),
   category: z.string().min(1, 'Category is required'),
-  budget: z.number().min(0, 'Budget must be a positive number'),
+  budget: z.number().positive('Budget must be a positive number').or(z.string().regex(/^\d+(\.\d{1,2})?$/, 'Invalid budget format').transform(Number)),
   start_date: z.date().min(new Date(), 'Start date must be in the future'),
-  duration: z.number().min(1, 'Duration must be at least 1 day'),
+  duration: z.number().int().positive('Duration must be a positive integer').or(z.string().regex(/^\d+$/, 'Duration must be a positive integer').transform(Number)),
   location: z.string().optional(),
   required_skills: z.array(z.string()).min(1, 'At least one skill is required'),
 });
@@ -34,9 +34,9 @@ const ProjectCreationForm = () => {
       project_name: '',
       description: '',
       category: '',
-      budget: 0,
+      budget: '',
       start_date: new Date(),
-      duration: 1,
+      duration: '',
       location: '',
       required_skills: [],
     },
@@ -119,7 +119,7 @@ const ProjectCreationForm = () => {
                 <FormItem>
                   <FormLabel>Budget</FormLabel>
                   <FormControl>
-                    <Input {...field} type="number" min="0" step="0.01" placeholder="Enter budget" />
+                    <Input {...field} type="number" step="0.01" placeholder="Enter budget" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -147,7 +147,7 @@ const ProjectCreationForm = () => {
                 <FormItem>
                   <FormLabel>Duration (in days)</FormLabel>
                   <FormControl>
-                    <Input {...field} type="number" min="1" placeholder="Enter project duration" />
+                    <Input {...field} type="number" placeholder="Enter project duration" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
