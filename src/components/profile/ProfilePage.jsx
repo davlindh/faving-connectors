@@ -92,10 +92,10 @@ const ProfilePage = () => {
                 <ProfileForm profile={profile} onEditComplete={handleEditToggle} />
               </TabsContent>
               <TabsContent value="skills">
-                <SkillForm profileId={profile.profile_id} />
+                <SkillForm profileId={profile.user_id} />
               </TabsContent>
               <TabsContent value="services">
-                <ServiceForm profileId={profile.profile_id} />
+                <ServiceForm profileId={profile.user_id} />
               </TabsContent>
             </Tabs>
           ) : (
@@ -114,11 +114,11 @@ const ProfilePage = () => {
               </TabsContent>
               <TabsContent value="skills">
                 <h3 className="font-semibold mb-2">Skills</h3>
-                <SkillList profileId={profile.profile_id} />
+                <SkillList profileId={profile.user_id} />
               </TabsContent>
               <TabsContent value="services">
                 <h3 className="font-semibold mb-2">Services</h3>
-                <ServiceList profileId={profile.profile_id} />
+                <ServiceList profileId={profile.user_id} />
               </TabsContent>
               <TabsContent value="eckt">
                 <ECKTSlider 

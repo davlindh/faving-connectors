@@ -29,12 +29,12 @@ const ProfileForm = ({ profile, onEditComplete }) => {
 
   const onSubmit = async (data) => {
     try {
-      await updateProfile.mutateAsync({ profileId: profile.profile_id, updates: data });
+      await updateProfile.mutateAsync({ userId: profile.user_id, updates: data });
       toast.success('Profile updated successfully');
       onEditComplete();
     } catch (error) {
-      toast.error('Failed to update profile');
       console.error('Update profile error:', error);
+      toast.error('Failed to update profile');
     }
   };
 
