@@ -30,7 +30,10 @@ export const SupabaseAuthProvider = ({ children }) => {
   const signInWithPassword = async (credentials) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword(credentials);
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase auth error:', error);
+        throw error;
+      }
       return { data, error: null };
     } catch (error) {
       console.error('Login error:', error);
@@ -54,7 +57,11 @@ export const SupabaseAuthProvider = ({ children }) => {
 };
 
 export const useSupabaseAuth = () => {
-  return useContext(SupabaseAuthContext);
+  const context = useContext(SupabaseAuthContext);
+  if (context === undefined) {
+    throw new Error('useSupabaseAuth must be used within a SupabaseAuthProvider');
+  }
+  return context;
 };
 
 export const SupabaseAuthUI = () => (

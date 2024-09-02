@@ -25,7 +25,8 @@ const LoginForm = () => {
         setError('Login failed. Please try again.');
       }
     } catch (error) {
-      setError(error.message || 'An error occurred during login. Please try again.');
+      console.error('Login error:', error);
+      setError(error.message || 'An error occurred during login. Please check your credentials and try again.');
     }
   };
 
