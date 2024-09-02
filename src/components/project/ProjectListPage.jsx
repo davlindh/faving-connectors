@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useProjects } from '@/integrations/supabase';
 import ProjectCard from './ProjectCard.jsx';
 import { Input } from "@/components/ui/input";
@@ -27,54 +27,52 @@ const ProjectListPage = () => {
     skills: []
   });
   const [sortBy, setSortBy] = useState('latest');
-  const [filteredProjects, setFilteredProjects] = useState([]);
   const navigate = useNavigate();
   const { session } = useSupabase();
   const [activeTab, setActiveTab] = useState('all');
 
-  useEffect(() => {
-    if (projects) {
-      const filtered = projects.filter(project => 
-        (searchTerm === '' || project.project_name.toLowerCase().includes(searchTerm.toLowerCase()) || (project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase()))) &&
+  const filteredAndSortedProjects = useMemo(() => {
+    if (!projects) return [];
+
+    return projects
+      .filter(project => 
+        (searchTerm === '' || 
+         project.project_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+         (project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase()))) &&
         (filters.category === 'all' || project.category === filters.category) &&
         (!project.budget || (project.budget >= filters.minBudget && project.budget <= filters.maxBudget)) &&
-        (filters.skills.length === 0 || (project.required_skills && filters.skills.every(skill => project.required_skills.includes(skill))))
-      );
-
-      const sorted = [...filtered].sort((a, b) => {
+        (filters.skills.length === 0 || 
+         (project.required_skills && filters.skills.every(skill => project.required_skills.includes(skill))))
+      )
+      .sort((a, b) => {
         if (sortBy === 'latest') return new Date(b.start_date || 0) - new Date(a.start_date || 0);
         if (sortBy === 'budget-high-to-low') return (b.budget || 0) - (a.budget || 0);
         if (sortBy === 'budget-low-to-high') return (a.budget || 0) - (b.budget || 0);
         return 0;
       });
-
-      setFilteredProjects(sorted);
-    }
   }, [projects, searchTerm, filters, sortBy]);
+
+  const myProjects = useMemo(() => {
+    if (!session || !filteredAndSortedProjects) return [];
+    return filteredAndSortedProjects.filter(project => project.creator_id === session.user.id);
+  }, [session, filteredAndSortedProjects]);
 
   const handleSkillAdd = (e) => {
     if (e.key === 'Enter' && e.target.value) {
-      setFilters({
-        ...filters,
-        skills: [...filters.skills, e.target.value]
-      });
+      setFilters(prev => ({
+        ...prev,
+        skills: [...prev.skills, e.target.value.trim()]
+      }));
       e.target.value = '';
     }
   };
 
   const handleSkillRemove = (skillToRemove) => {
-    setFilters({
-      ...filters,
-      skills: filters.skills.filter(skill => skill !== skillToRemove)
-    });
+    setFilters(prev => ({
+      ...prev,
+      skills: prev.skills.filter(skill => skill !== skillToRemove)
+    }));
   };
-
-  const isProjectOwner = (project) => {
-    return session?.user?.id === project.creator_id;
-  };
-
-  const allProjects = filteredProjects;
-  const myProjects = filteredProjects.filter(project => isProjectOwner(project));
 
   const renderProjects = (projectList) => (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -137,7 +135,7 @@ const ProjectListPage = () => {
                       <label className="block text-sm font-medium mb-1">Category</label>
                       <Select
                         value={filters.category}
-                        onValueChange={(value) => setFilters({ ...filters, category: value })}
+                        onValueChange={(value) => setFilters(prev => ({ ...prev, category: value }))}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select Category" />
@@ -159,7 +157,7 @@ const ProjectListPage = () => {
                         max={10000}
                         step={100}
                         value={[filters.minBudget, filters.maxBudget]}
-                        onValueChange={([min, max]) => setFilters({ ...filters, minBudget: min, maxBudget: max })}
+                        onValueChange={([min, max]) => setFilters(prev => ({ ...prev, minBudget: min, maxBudget: max }))}
                         className="mb-2"
                       />
                       <div className="flex justify-between text-sm text-gray-500">
@@ -210,8 +208,8 @@ const ProjectListPage = () => {
             <div className="flex justify-center items-center py-12">
               <Loader className="h-8 w-8 animate-spin" />
             </div>
-          ) : allProjects.length > 0 ? (
-            renderProjects(allProjects)
+          ) : filteredAndSortedProjects.length > 0 ? (
+            renderProjects(filteredAndSortedProjects)
           ) : (
             <div className="text-center py-8">No projects found matching your criteria.</div>
           )}
