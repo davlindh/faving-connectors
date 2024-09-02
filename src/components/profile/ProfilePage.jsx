@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -7,12 +7,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SkillList from './SkillList.jsx';
 import ServiceList from './ServiceList.jsx';
 import ProfileForm from './ProfileForm.jsx';
-import { useProfileContext } from '@/contexts/ProfileContext';
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import FaveScore from '../shared/FaveScore.jsx';
 import ECKTSlider from '../shared/ECKTSlider.jsx';
-import { useProfile, useUser } from '@/integrations/supabase';
+import { useProfile, useUser, useUpdateUser } from '@/integrations/supabase';
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from 'sonner';
 
 const ProfilePage = () => {
   const { profileId } = useParams();
@@ -20,9 +20,17 @@ const ProfilePage = () => {
   const navigate = useNavigate();
   const { data: profile, isLoading: profileLoading, error: profileError } = useProfile(profileId);
   const { data: user, isLoading: userLoading, error: userError } = useUser(profile?.user_id);
-  const [isEditing, setIsEditing] = React.useState(false);
+  const updateUser = useUpdateUser();
+  const [isEditing, setIsEditing] = useState(false);
+  const [ecktScores, setEcktScores] = useState([0, 0, 0, 0]);
 
   const isOwnProfile = session?.user?.id === profile?.user_id;
+
+  React.useEffect(() => {
+    if (user?.eckt_scores) {
+      setEcktScores(user.eckt_scores);
+    }
+  }, [user]);
 
   if (profileLoading || userLoading) {
     return <ProfileSkeleton />;
@@ -43,6 +51,20 @@ const ProfilePage = () => {
   const handleMessage = () => {
     // TODO: Implement messaging functionality
     console.log('Message functionality not implemented yet');
+  };
+
+  const handleEcktChange = async (newScores) => {
+    setEcktScores(newScores);
+    try {
+      await updateUser.mutateAsync({
+        userId: user.user_id,
+        updates: { eckt_scores: newScores }
+      });
+      toast.success('ECKT scores updated successfully');
+    } catch (error) {
+      toast.error('Failed to update ECKT scores');
+      console.error('Update ECKT scores error:', error);
+    }
   };
 
   return (
@@ -94,8 +116,11 @@ const ProfilePage = () => {
               <ServiceList profileId={profile.profile_id} isEditable={isOwnProfile} />
             </TabsContent>
             <TabsContent value="eckt">
-              <h3 className="font-semibold mb-2">ECKT Score</h3>
-              <ECKTSlider value={user.score || 50} onChange={(value) => console.log('ECKT Score:', value)} />
+              <ECKTSlider 
+                value={ecktScores} 
+                onChange={handleEcktChange} 
+                readOnly={!isOwnProfile}
+              />
             </TabsContent>
           </Tabs>
         </CardContent>
