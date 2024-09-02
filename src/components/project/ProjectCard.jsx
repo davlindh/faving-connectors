@@ -68,7 +68,7 @@ const ProjectCard = ({ project }) => {
             <span className="truncate">{location || 'Location not set'}</span>
           </div>
         </div>
-        {required_skills && required_skills.length > 0 && (
+        {required_skills.length > 0 && (
           <div className="mt-4">
             <h4 className="text-sm font-semibold mb-2">Required Skills:</h4>
             <div className="flex flex-wrap gap-1">

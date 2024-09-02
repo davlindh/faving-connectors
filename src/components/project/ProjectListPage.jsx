@@ -37,7 +37,7 @@ const ProjectListPage = () => {
     return projects
       .filter(project => 
         (searchTerm === '' || 
-         project.project_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+         project.project_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
          (project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase()))) &&
         (filters.category === 'all' || project.category === filters.category) &&
         (!project.budget || (project.budget >= filters.minBudget && project.budget <= filters.maxBudget)) &&
