@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { useSupabaseAuth } from '@/integrations/supabase/auth';
+import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -31,7 +31,7 @@ const formSchema = z.object({
 
 const RegistrationForm = () => {
   const [error, setError] = useState(null);
-  const { signUp } = useSupabaseAuth();
+  const { signUp } = useSupabase();
   const createProfile = useCreateProfile();
   const createUser = useCreateUser();
   const navigate = useNavigate();
@@ -64,39 +64,40 @@ const RegistrationForm = () => {
   const onSubmit = async (values) => {
     setError(null);
     try {
+      // Step 1: Register with Supabase Auth
       const { data: authData, error: authError } = await signUp({
         email: values.email,
         password: values.password,
-        options: { 
-          data: { 
-            first_name: values.firstName,
-            last_name: values.lastName,
-          }
-        }
       });
       if (authError) throw authError;
 
       if (authData.user) {
-        // Create user record
+        const userId = authData.user.id;
+        const now = new Date().toISOString();
+
+        // Step 2: Create user record
         await createUser.mutateAsync({
-          user_id: authData.user.id,
+          user_id: userId,
           first_name: values.firstName,
           last_name: values.lastName,
           email: values.email,
-          created_at: new Date().toISOString(), // Add this line to set the created_at field
+          created_at: now,
+          updated_at: now,
         });
 
-        // Create profile record
+        // Step 3: Create profile record
         await createProfile.mutateAsync({
-          user_id: authData.user.id,
+          user_id: userId,
           first_name: values.firstName,
           last_name: values.lastName,
           location: values.location,
           bio: values.bio,
+          created_at: now,
+          updated_at: now,
         });
-      }
 
-      navigate('/');
+        navigate('/');
+      }
     } catch (error) {
       setError(error.message);
     }
