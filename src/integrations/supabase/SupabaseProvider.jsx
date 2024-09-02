@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
 import { useQueryClient } from '@tanstack/react-query';
+import { supabase } from './supabase';
 
 const SupabaseContext = createContext(null);
 
@@ -13,10 +13,6 @@ export const useSupabase = () => {
 };
 
 export const SupabaseProvider = ({ children }) => {
-  const [supabase] = useState(() => createClient(
-    import.meta.env.VITE_SUPABASE_PROJECT_URL,
-    import.meta.env.VITE_SUPABASE_API_KEY
-  ));
   const [session, setSession] = useState(null);
   const queryClient = useQueryClient();
 
@@ -33,7 +29,7 @@ export const SupabaseProvider = ({ children }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase, queryClient]);
+  }, [queryClient]);
 
   const value = {
     supabase,
