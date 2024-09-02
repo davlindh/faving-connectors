@@ -11,15 +11,23 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { toast } from 'sonner';
-import { DatePicker } from "@/components/ui/date-picker";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
 
 const projectSchema = z.object({
   project_name: z.string().min(1, 'Project name is required').max(100, 'Project name must be 100 characters or less'),
   description: z.string().min(1, 'Description is required').max(1000, 'Description must be 1000 characters or less'),
   category: z.string().min(1, 'Category is required'),
-  budget: z.number().positive('Budget must be a positive number').or(z.string().regex(/^\d+(\.\d{1,2})?$/, 'Invalid budget format').transform(Number)),
+  budget: z.string().refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, {
+    message: "Budget must be a positive number",
+  }),
   start_date: z.date().min(new Date(), 'Start date must be in the future'),
-  duration: z.number().int().positive('Duration must be a positive integer').or(z.string().regex(/^\d+$/, 'Duration must be a positive integer').transform(Number)),
+  duration: z.string().refine((val) => !isNaN(parseInt(val)) && parseInt(val) > 0, {
+    message: "Duration must be a positive integer",
+  }),
   location: z.string().optional(),
   required_skills: z.array(z.string()).min(1, 'At least one skill is required'),
 });
@@ -44,7 +52,11 @@ const ProjectCreationForm = () => {
 
   const onSubmit = async (data) => {
     try {
-      await createProject.mutateAsync(data);
+      await createProject.mutateAsync({
+        ...data,
+        budget: parseFloat(data.budget),
+        duration: parseInt(data.duration),
+      });
       toast.success('Project created successfully');
       navigate('/projects');
     } catch (error) {
@@ -119,7 +131,7 @@ const ProjectCreationForm = () => {
                 <FormItem>
                   <FormLabel>Budget</FormLabel>
                   <FormControl>
-                    <Input {...field} type="number" step="0.01" placeholder="Enter budget" />
+                    <Input {...field} type="text" placeholder="Enter budget" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -131,11 +143,37 @@ const ProjectCreationForm = () => {
               render={({ field }) => (
                 <FormItem className="flex flex-col">
                   <FormLabel>Start Date</FormLabel>
-                  <DatePicker
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    minDate={new Date()}
-                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-[240px] pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
+                            format(field.value, "PPP")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) =>
+                          date < new Date() || date < new Date("1900-01-01")
+                        }
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}
@@ -147,7 +185,7 @@ const ProjectCreationForm = () => {
                 <FormItem>
                   <FormLabel>Duration (in days)</FormLabel>
                   <FormControl>
-                    <Input {...field} type="number" placeholder="Enter project duration" />
+                    <Input {...field} type="text" placeholder="Enter project duration" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
