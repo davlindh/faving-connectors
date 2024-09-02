@@ -24,7 +24,8 @@ const ProjectListPage = () => {
     category: 'all',
     minBudget: 0,
     maxBudget: 10000,
-    skills: []
+    skills: [],
+    status: 'all' // New filter for project status
   });
   const [sortBy, setSortBy] = useState('latest');
   const navigate = useNavigate();
@@ -34,6 +35,8 @@ const ProjectListPage = () => {
   const filteredAndSortedProjects = useMemo(() => {
     if (!projects) return [];
 
+    const now = new Date();
+
     return projects
       .filter(project => 
         (searchTerm === '' || 
@@ -42,7 +45,12 @@ const ProjectListPage = () => {
         (filters.category === 'all' || project.category === filters.category) &&
         (!project.budget || (project.budget >= filters.minBudget && project.budget <= filters.maxBudget)) &&
         (filters.skills.length === 0 || 
-         (project.required_skills && filters.skills.every(skill => project.required_skills.includes(skill))))
+         (project.required_skills && filters.skills.every(skill => project.required_skills.includes(skill)))) &&
+        (filters.status === 'all' || (
+          (filters.status === 'ongoing' && new Date(project.start_date) <= now && new Date(project.end_date) >= now) ||
+          (filters.status === 'upcoming' && new Date(project.start_date) > now) ||
+          (filters.status === 'past' && new Date(project.end_date) < now)
+        ))
       )
       .sort((a, b) => {
         if (sortBy === 'latest') return new Date(b.start_date || 0) - new Date(a.start_date || 0);
@@ -187,6 +195,23 @@ const ProjectListPage = () => {
                           </Badge>
                         ))}
                       </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Project Status</label>
+                      <Select
+                        value={filters.status}
+                        onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Projects</SelectItem>
+                          <SelectItem value="ongoing">Ongoing</SelectItem>
+                          <SelectItem value="upcoming">Upcoming</SelectItem>
+                          <SelectItem value="past">Past</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                 </PopoverContent>
