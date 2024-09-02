@@ -16,7 +16,10 @@ export const useProject = (projectId) => useQuery({
     if (!projectId || projectId === 'create') return null;
     const { data, error } = await supabase
       .from('projects')
-      .select('*')
+      .select(`
+        *,
+        creator:creator_id(*)
+      `)
       .eq('project_id', projectId)
       .single();
     if (error) throw error;

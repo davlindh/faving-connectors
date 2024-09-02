@@ -4,8 +4,10 @@ import { useProject, useUpdateProject, useDeleteProject } from '@/integrations/s
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
-import { Calendar, DollarSign, Clock, MapPin, User, ArrowLeft, Edit, Trash } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Calendar, DollarSign, MapPin, User, ArrowLeft, Edit, Trash, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -19,6 +21,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
+import FaveScore from '../shared/FaveScore';
 
 const ProjectDetailPage = () => {
   const { projectId } = useParams();
@@ -27,19 +30,13 @@ const ProjectDetailPage = () => {
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
   const { session } = useSupabase();
-  const [applicationText, setApplicationText] = useState('');
+  const [activeTab, setActiveTab] = useState('overview');
 
   if (isLoading) return <div className="text-center mt-8">Loading project details...</div>;
   if (error) return <div className="text-center mt-8 text-red-500">Error loading project: {error.message}</div>;
   if (!project) return <div className="text-center mt-8">Project not found</div>;
 
   const isOwner = session?.user?.id === project.creator_id;
-
-  const handleApply = () => {
-    // TODO: Implement application logic
-    toast.success('Application submitted successfully!');
-    setApplicationText('');
-  };
 
   const handleDelete = async () => {
     try {
@@ -58,12 +55,19 @@ const ProjectDetailPage = () => {
       </Link>
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle className="text-3xl">{project.project_name}</CardTitle>
-            {project.category && <Badge variant="secondary">{project.category}</Badge>}
+          <div className="flex justify-between items-start">
+            <div>
+              <Badge variant="secondary" className="mb-2">{project.category}</Badge>
+              <CardTitle className="text-3xl mb-2">{project.project_name}</CardTitle>
+              <div className="flex items-center text-sm text-gray-500">
+                <MapPin className="w-4 h-4 mr-1" />
+                <span>{project.location}</span>
+              </div>
+            </div>
+            <FaveScore score={project.fave_score || 0} />
           </div>
           {isOwner && (
-            <div className="flex space-x-2 mt-2">
+            <div className="flex space-x-2 mt-4">
               <Button variant="outline" size="sm" onClick={() => navigate(`/projects/edit/${projectId}`)}>
                 <Edit className="mr-2 h-4 w-4" /> Edit Project
               </Button>
@@ -89,69 +93,135 @@ const ProjectDetailPage = () => {
             </div>
           )}
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div>
-            <h3 className="text-xl font-semibold mb-2">Description</h3>
-            <p className="text-gray-600">{project.description}</p>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex items-center">
-              <DollarSign className="w-5 h-5 mr-2 text-gray-500" />
-              <span className="font-semibold">Budget: ${project.budget}</span>
-            </div>
-            <div className="flex items-center">
-              <Calendar className="w-5 h-5 mr-2 text-gray-500" />
-              <span className="font-semibold">Start Date: {new Date(project.start_date).toLocaleDateString()}</span>
-            </div>
-            <div className="flex items-center">
-              <Clock className="w-5 h-5 mr-2 text-gray-500" />
-              <span className="font-semibold">End Date: {new Date(project.end_date).toLocaleDateString()}</span>
-            </div>
-            <div className="flex items-center">
-              <MapPin className="w-5 h-5 mr-2 text-gray-500" />
-              <span className="font-semibold">Location: {project.location || 'Not specified'}</span>
-            </div>
-          </div>
-          
-          {project.required_skills && project.required_skills.length > 0 && (
-            <div>
-              <h3 className="text-xl font-semibold mb-2">Required Skills</h3>
-              <div className="flex flex-wrap gap-2">
-                {project.required_skills.map((skill, index) => (
-                  <Badge key={index} variant="outline">{skill}</Badge>
+        <CardContent>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="impact">Impact</TabsTrigger>
+              <TabsTrigger value="team">Team</TabsTrigger>
+              <TabsTrigger value="tasks">Tasks</TabsTrigger>
+              <TabsTrigger value="resources">Resources</TabsTrigger>
+            </TabsList>
+            <TabsContent value="overview">
+              <div className="space-y-4">
+                <p className="text-gray-600">{project.description}</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center">
+                    <DollarSign className="w-5 h-5 mr-2 text-gray-500" />
+                    <span className="font-semibold">Budget: ${project.budget}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Calendar className="w-5 h-5 mr-2 text-gray-500" />
+                    <span className="font-semibold">Start Date: {new Date(project.start_date).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Calendar className="w-5 h-5 mr-2 text-gray-500" />
+                    <span className="font-semibold">End Date: {new Date(project.end_date).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <User className="w-5 h-5 mr-2 text-gray-500" />
+                    <span className="font-semibold">Status: {project.status}</span>
+                  </div>
+                </div>
+                {project.required_skills && project.required_skills.length > 0 && (
+                  <div>
+                    <h3 className="text-xl font-semibold mb-2">Required Skills</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {project.required_skills.map((skill, index) => (
+                        <Badge key={index} variant="outline">{skill}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div>
+                  <h3 className="text-xl font-semibold mb-2">Project Creator</h3>
+                  <div className="flex items-center">
+                    <Avatar className="h-10 w-10 mr-2">
+                      <AvatarImage src={project.creator?.avatar_url} alt={project.creator?.first_name} />
+                      <AvatarFallback>{project.creator?.first_name?.[0]}{project.creator?.last_name?.[0]}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-semibold">{project.creator?.first_name} {project.creator?.last_name}</p>
+                      <p className="text-sm text-gray-500">{project.creator?.organization}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+            <TabsContent value="impact">
+              <div className="space-y-4">
+                <h3 className="text-xl font-semibold">Impact Metrics</h3>
+                {project.impact_metrics && project.impact_metrics.map((metric, index) => (
+                  <div key={index} className="flex justify-between items-center">
+                    <span>{metric.name}</span>
+                    <Progress value={metric.value} max={metric.target} className="w-1/2" />
+                    <span>{metric.value}/{metric.target}</span>
+                  </div>
+                ))}
+                {project.success_stories && (
+                  <div>
+                    <h3 className="text-xl font-semibold mt-6 mb-2">Success Stories</h3>
+                    {project.success_stories.map((story, index) => (
+                      <blockquote key={index} className="border-l-4 border-gray-300 pl-4 my-4 italic">
+                        "{story}"
+                      </blockquote>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+            <TabsContent value="team">
+              <div className="space-y-4">
+                <h3 className="text-xl font-semibold">Team Members</h3>
+                {project.team_members && project.team_members.map((member, index) => (
+                  <div key={index} className="flex items-center space-x-4">
+                    <Avatar>
+                      <AvatarImage src={member.avatar_url} alt={member.name} />
+                      <AvatarFallback>{member.name[0]}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-semibold">{member.name}</p>
+                      <p className="text-sm text-gray-500">{member.role}</p>
+                    </div>
+                  </div>
                 ))}
               </div>
-            </div>
-          )}
-          
-          <div>
-            <h3 className="text-xl font-semibold mb-2">Project Creator</h3>
-            <div className="flex items-center">
-              <User className="w-5 h-5 mr-2 text-gray-500" />
-              <span>{project.creator_name || 'Anonymous'}</span>
-            </div>
-          </div>
-
-          {project.interested_users && (
-            <div>
-              <h3 className="text-xl font-semibold mb-2">Interested Users</h3>
-              <span>{project.interested_users.length} user(s) interested</span>
-            </div>
-          )}
+            </TabsContent>
+            <TabsContent value="tasks">
+              <div className="space-y-4">
+                <h3 className="text-xl font-semibold">Project Tasks</h3>
+                {project.tasks && project.tasks.map((task, index) => (
+                  <Card key={index}>
+                    <CardHeader>
+                      <CardTitle>{task.title}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p>{task.description}</p>
+                      <p className="text-sm text-gray-500 mt-2">Assigned to: {task.assignee}</p>
+                      <p className="text-sm text-gray-500">Due: {new Date(task.due_date).toLocaleDateString()}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </TabsContent>
+            <TabsContent value="resources">
+              <div className="space-y-4">
+                <h3 className="text-xl font-semibold">Project Resources</h3>
+                {project.resources && project.resources.map((resource, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <span>{resource.name}</span>
+                    <Button asChild variant="link">
+                      <a href={resource.url} target="_blank" rel="noopener noreferrer">View</a>
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
-        <CardFooter>
-          {!isOwner && (
-            <div className="w-full space-y-4">
-              <Textarea
-                placeholder="Why are you interested in this project? Describe your relevant skills and experience."
-                value={applicationText}
-                onChange={(e) => setApplicationText(e.target.value)}
-                rows={4}
-              />
-              <Button className="w-full" onClick={handleApply}>Apply for Project</Button>
-            </div>
-          )}
+        <CardFooter className="flex justify-between">
+          <Button variant="outline">Join Project</Button>
+          <Button>Support Project</Button>
         </CardFooter>
       </Card>
     </div>
