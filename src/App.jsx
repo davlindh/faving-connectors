@@ -8,6 +8,7 @@ import { SupabaseProvider } from "./integrations/supabase/SupabaseProvider";
 import { SupabaseAuthProvider } from "./integrations/supabase/auth";
 import { ProfileProvider } from "./contexts/ProfileContext";
 import { ProjectProvider } from "./contexts/ProjectContext";
+import ProjectDetailPage from "./components/project/ProjectDetailPage";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const App = () => (
                     {navItems.map(({ to, page }) => (
                       <Route key={to} path={to} element={page} />
                     ))}
+                    <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
                   </Routes>
                 </Layout>
               </BrowserRouter>
