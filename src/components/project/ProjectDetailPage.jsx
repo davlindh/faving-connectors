@@ -1,18 +1,55 @@
-import React from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { useProject } from '@/integrations/supabase';
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import React, { useState } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useProject, useUpdateProject, useDeleteProject } from '@/integrations/supabase';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, DollarSign, Clock, MapPin, User, ArrowLeft } from 'lucide-react';
+import { Textarea } from "@/components/ui/textarea";
+import { Calendar, DollarSign, Clock, MapPin, User, ArrowLeft, Edit, Trash } from 'lucide-react';
+import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 
 const ProjectDetailPage = () => {
   const { projectId } = useParams();
+  const navigate = useNavigate();
   const { data: project, isLoading, error } = useProject(projectId);
+  const updateProject = useUpdateProject();
+  const deleteProject = useDeleteProject();
+  const { session } = useSupabase();
+  const [applicationText, setApplicationText] = useState('');
 
   if (isLoading) return <div className="text-center mt-8">Loading project details...</div>;
   if (error) return <div className="text-center mt-8 text-red-500">Error loading project: {error.message}</div>;
   if (!project) return <div className="text-center mt-8">Project not found</div>;
+
+  const isOwner = session?.user?.id === project.creator_id;
+
+  const handleApply = () => {
+    // TODO: Implement application logic
+    toast.success('Application submitted successfully!');
+    setApplicationText('');
+  };
+
+  const handleDelete = async () => {
+    try {
+      await deleteProject.mutateAsync(projectId);
+      toast.success('Project deleted successfully');
+      navigate('/projects');
+    } catch (error) {
+      toast.error('Failed to delete project');
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto p-4">
@@ -25,6 +62,32 @@ const ProjectDetailPage = () => {
             <CardTitle className="text-3xl">{project.project_name || 'Untitled Project'}</CardTitle>
             {project.category && <Badge variant="secondary">{project.category}</Badge>}
           </div>
+          {isOwner && (
+            <div className="flex space-x-2 mt-2">
+              <Button variant="outline" size="sm" onClick={() => navigate(`/projects/edit/${projectId}`)}>
+                <Edit className="mr-2 h-4 w-4" /> Edit Project
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm">
+                    <Trash className="mr-2 h-4 w-4" /> Delete Project
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure you want to delete this project?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete the project and all associated data.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          )}
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
@@ -86,9 +149,20 @@ const ProjectDetailPage = () => {
               <span>{project.interested_users.length} user(s) interested</span>
             </div>
           )}
-          
-          <Button className="w-full mt-4">Apply for Project</Button>
         </CardContent>
+        <CardFooter>
+          {!isOwner && (
+            <div className="w-full space-y-4">
+              <Textarea
+                placeholder="Why are you interested in this project? Describe your relevant skills and experience."
+                value={applicationText}
+                onChange={(e) => setApplicationText(e.target.value)}
+                rows={4}
+              />
+              <Button className="w-full" onClick={handleApply}>Apply for Project</Button>
+            </div>
+          )}
+        </CardFooter>
       </Card>
     </div>
   );
