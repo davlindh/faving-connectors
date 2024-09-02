@@ -18,14 +18,28 @@ export const useProject = (projectId) => useQuery({
       .from('projects')
       .select(`
         *,
-        creator:profiles!creator_id(*),
+        creator:users!creator_id(*),
         impact_metrics:project_impact_metrics(*),
         tasks:project_tasks(*),
         resources:project_resources(*)
       `)
       .eq('project_id', projectId)
       .single();
+    
     if (error) throw error;
+
+    // Fetch the creator's profile
+    if (data.creator) {
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', data.creator.user_id)
+        .single();
+      
+      if (profileError) throw profileError;
+      data.creator.profile = profileData;
+    }
+
     return data;
   },
   enabled: !!projectId && projectId !== 'create',

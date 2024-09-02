@@ -138,12 +138,12 @@ const ProjectDetailPage = () => {
                   <Card>
                     <CardContent className="flex items-center p-4">
                       <Avatar className="h-12 w-12 mr-4">
-                        <AvatarImage src={project.creator?.avatar_url} alt={project.creator?.first_name} />
-                        <AvatarFallback>{project.creator?.first_name?.[0]}{project.creator?.last_name?.[0]}</AvatarFallback>
+                        <AvatarImage src={project.creator?.profile?.avatar_url} alt={`${project.creator?.profile?.first_name} ${project.creator?.profile?.last_name}`} />
+                        <AvatarFallback>{project.creator?.profile?.first_name?.[0]}{project.creator?.profile?.last_name?.[0]}</AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-semibold">{project.creator?.first_name} {project.creator?.last_name}</p>
-                        <p className="text-sm text-gray-500">{project.creator?.location}</p>
+                        <p className="font-semibold">{project.creator?.profile?.first_name} {project.creator?.profile?.last_name}</p>
+                        <p className="text-sm text-gray-500">{project.creator?.profile?.location}</p>
                         <Link to={`/profile/${project.creator?.user_id}`} className="text-blue-500 hover:underline">View Profile</Link>
                       </div>
                     </CardContent>
