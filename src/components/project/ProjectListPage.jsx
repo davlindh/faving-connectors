@@ -30,15 +30,14 @@ const ProjectListPage = () => {
       const filtered = projects.filter(project => 
         (searchTerm === '' || project.project_name.toLowerCase().includes(searchTerm.toLowerCase()) || (project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase()))) &&
         (filters.category === 'all' || project.category === filters.category) &&
-        project.budget >= filters.minBudget &&
-        project.budget <= filters.maxBudget &&
+        (!project.budget || (project.budget >= filters.minBudget && project.budget <= filters.maxBudget)) &&
         (filters.skills.length === 0 || (project.required_skills && filters.skills.every(skill => project.required_skills.includes(skill))))
       );
 
       const sorted = [...filtered].sort((a, b) => {
-        if (sortBy === 'latest') return new Date(b.start_date) - new Date(a.start_date);
-        if (sortBy === 'budget-high-to-low') return b.budget - a.budget;
-        if (sortBy === 'budget-low-to-high') return a.budget - b.budget;
+        if (sortBy === 'latest') return new Date(b.start_date || 0) - new Date(a.start_date || 0);
+        if (sortBy === 'budget-high-to-low') return (b.budget || 0) - (a.budget || 0);
+        if (sortBy === 'budget-low-to-high') return (a.budget || 0) - (b.budget || 0);
         return 0;
       });
 
