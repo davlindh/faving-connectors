@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useSupabaseAuth } from '@/integrations/supabase/auth';
+import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import { useProfile } from '@/integrations/supabase';
 
 const ProfileContext = createContext(null);
@@ -13,15 +13,15 @@ export const useProfileContext = () => {
 };
 
 export const ProfileProvider = ({ children }) => {
-  const auth = useSupabaseAuth();
+  const { session } = useSupabase();
   const [profileId, setProfileId] = useState(null);
   const { data: profile, isLoading, error } = useProfile(profileId);
 
   useEffect(() => {
-    if (auth && auth.session?.user?.id) {
-      setProfileId(auth.session.user.id);
+    if (session?.user?.id) {
+      setProfileId(session.user.id);
     }
-  }, [auth]);
+  }, [session]);
 
   const value = {
     profile,
