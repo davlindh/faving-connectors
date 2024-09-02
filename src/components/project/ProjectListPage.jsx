@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useProjects } from '@/integrations/supabase';
-import ProjectCard from './ProjectCard.jsx';
+import ProjectCard from './ProjectCard';
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { X, Search, Plus, Filter, Edit } from 'lucide-react';
+import { X, Search, Plus, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   Popover,
@@ -191,7 +191,7 @@ const ProjectListPage = () => {
                   className="absolute top-2 right-2"
                   onClick={() => navigate(`/projects/edit/${project.project_id}`)}
                 >
-                  <Edit className="mr-2 h-4 w-4" /> Edit
+                  Edit
                 </Button>
               )}
             </div>

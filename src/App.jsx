@@ -12,7 +12,7 @@ import ProjectDetailPage from "./components/project/ProjectDetailPage";
 import ProfilePage from "./components/profile/ProfilePage";
 import ArticleCreationForm from "./components/knowledgeBase/ArticleCreationForm";
 import ArticleDetailPage from "./components/knowledgeBase/ArticleDetailPage";
-import ProjectCreationForm from "./components/project/ProjectCreationForm";
+import ProjectForm from "./components/project/ProjectForm";
 
 const queryClient = new QueryClient();
 
@@ -31,8 +31,8 @@ const App = () => (
                       <Route key={to} path={to} element={page} />
                     ))}
                     <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
-                    <Route path="/projects/create" element={<ProjectCreationForm />} />
-                    <Route path="/projects/edit/:projectId" element={<ProjectCreationForm />} />
+                    <Route path="/projects/create" element={<ProjectForm />} />
+                    <Route path="/projects/edit/:projectId" element={<ProjectForm isEditing={true} />} />
                     <Route path="/profile/:profileId" element={<ProfilePage />} />
                     <Route path="/knowledge-base/create" element={<ArticleCreationForm />} />
                     <Route path="/knowledge-base/:articleId" element={<ArticleDetailPage />} />
