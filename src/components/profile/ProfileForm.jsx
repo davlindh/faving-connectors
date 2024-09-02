@@ -10,11 +10,9 @@ import { useUpdateProfile } from '@/integrations/supabase';
 import { toast } from 'sonner';
 
 const profileSchema = z.object({
-  first_name: z.string().min(2, 'First name must be at least 2 characters'),
-  last_name: z.string().min(2, 'Last name must be at least 2 characters'),
   location: z.string().optional(),
   bio: z.string().max(500, 'Bio must be 500 characters or less').optional(),
-  avatar_url: z.string().url('Invalid URL').optional(),
+  avatar_url: z.string().url('Invalid URL').optional().or(z.literal('')),
 });
 
 const ProfileForm = ({ profile }) => {
@@ -23,8 +21,6 @@ const ProfileForm = ({ profile }) => {
   const form = useForm({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      first_name: profile.first_name || '',
-      last_name: profile.last_name || '',
       location: profile.location || '',
       bio: profile.bio || '',
       avatar_url: profile.avatar_url || '',
@@ -44,32 +40,6 @@ const ProfileForm = ({ profile }) => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="first_name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>First Name</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="last_name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Last Name</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
         <FormField
           control={form.control}
           name="location"

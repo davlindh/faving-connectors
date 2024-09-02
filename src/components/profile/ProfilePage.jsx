@@ -11,15 +11,17 @@ import { useProfileContext } from '@/contexts/ProfileContext';
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import FaveScore from '../shared/FaveScore.jsx';
 import ECKTSlider from '../shared/ECKTSlider.jsx';
+import { useUser } from '@/integrations/supabase';
 
 const ProfilePage = () => {
   const { profileId } = useParams();
-  const { profile, isLoading, error } = useProfileContext();
+  const { profile, isLoading: profileLoading, error: profileError } = useProfileContext();
   const { session } = useSupabase();
+  const { data: user, isLoading: userLoading, error: userError } = useUser(profile?.user_id);
 
-  if (isLoading) return <div className="text-center mt-8">Loading profile...</div>;
-  if (error) return <div className="text-center mt-8 text-red-500">Error: {error.message}</div>;
-  if (!profile) return <div className="text-center mt-8">No profile found</div>;
+  if (profileLoading || userLoading) return <div className="text-center mt-8">Loading profile...</div>;
+  if (profileError || userError) return <div className="text-center mt-8 text-red-500">Error: {profileError?.message || userError?.message}</div>;
+  if (!profile || !user) return <div className="text-center mt-8">No profile found</div>;
 
   const isOwnProfile = session?.user?.id === profile.user_id;
 
@@ -28,13 +30,13 @@ const ProfilePage = () => {
       <Card>
         <CardHeader className="flex flex-col sm:flex-row items-center gap-4">
           <Avatar className="w-24 h-24">
-            <AvatarImage src={profile.avatar_url} alt={`${profile.first_name} ${profile.last_name}`} />
-            <AvatarFallback>{profile.first_name?.[0]}{profile.last_name?.[0]}</AvatarFallback>
+            <AvatarImage src={profile.avatar_url} alt={`${user.first_name} ${user.last_name}`} />
+            <AvatarFallback>{user.first_name?.[0]}{user.last_name?.[0]}</AvatarFallback>
           </Avatar>
           <div className="text-center sm:text-left flex-grow">
-            <CardTitle className="text-2xl">{profile.first_name} {profile.last_name}</CardTitle>
+            <CardTitle className="text-2xl">{user.first_name} {user.last_name}</CardTitle>
             <p className="text-gray-500">{profile.location}</p>
-            <FaveScore score={profile.fave_score || 0} />
+            <FaveScore score={user.score || 0} />
           </div>
           {isOwnProfile && (
             <Button variant="outline">Edit Profile</Button>
@@ -65,7 +67,7 @@ const ProfilePage = () => {
             </TabsContent>
             <TabsContent value="eckt">
               <h3 className="font-semibold mb-2">ECKT Score</h3>
-              <ECKTSlider value={profile.eckt_score || 50} onChange={(value) => console.log('ECKT Score:', value)} />
+              <ECKTSlider value={user.score || 50} onChange={(value) => console.log('ECKT Score:', value)} />
             </TabsContent>
           </Tabs>
         </CardContent>

@@ -8,12 +8,10 @@ import { supabase } from '../supabase';
 |------------|---------------------|------------------------|----------|
 | profile_id | uuid                | uuid                   | true     |
 | user_id    | uuid                | uuid                   | true     |
-| first_name | text                | string                 | false    |
-| last_name  | text                | string                 | false    |
 | location   | text                | string                 | false    |
 | bio        | text                | string                 | false    |
-| created_at | time with time zone | string                 | false    |
-| updated_at | time with time zone | string                 | false    |
+| created_at | timestamp with time zone | string            | false    |
+| updated_at | timestamp with time zone | string            | false    |
 | avatar_url | text                | string (URL)           | false    |
 
 Note: profile_id is the Primary Key
