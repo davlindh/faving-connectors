@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { useSupabaseAuth } from '@/integrations/supabase/auth';
+import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import { useNavigate } from 'react-router-dom';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -11,7 +11,7 @@ const LoginForm = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { signInWithPassword } = useSupabaseAuth();
+  const { signIn } = useSupabase();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -19,7 +19,7 @@ const LoginForm = () => {
     setError(null);
     setIsLoading(true);
     try {
-      const { error } = await signInWithPassword({ email, password });
+      const { error } = await signIn({ email, password });
       if (error) throw error;
       navigate('/');
     } catch (error) {

@@ -2,27 +2,25 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { useSupabaseAuth } from '@/integrations/supabase/auth';
+import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import { navItems } from '@/nav-items';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const auth = useSupabaseAuth();
+  const { session, signOut } = useSupabase();
   const navigate = useNavigate();
   const location = useLocation();
 
   const handleSignOut = async () => {
-    if (auth && auth.signOut) {
-      await auth.signOut();
-      navigate('/');
-    }
+    await signOut();
+    navigate('/');
   };
 
   const renderNavLink = (item) => {
-    if ((item.title === 'Login' || item.title === 'Register') && auth?.session) {
+    if ((item.title === 'Login' || item.title === 'Register') && session) {
       return null;
     }
-    if ((item.title === 'Profile' || item.title === 'Messages') && !auth?.session) {
+    if ((item.title === 'Profile' || item.title === 'Messages') && !session) {
       return null;
     }
     return (
@@ -42,7 +40,7 @@ const Navbar = () => {
         <Link to="/" className="text-xl font-bold">Faving</Link>
         <div className="hidden md:flex space-x-4">
           {navItems.map(renderNavLink)}
-          {auth?.session && (
+          {session && (
             <Button variant="ghost" onClick={handleSignOut}>Sign Out</Button>
           )}
         </div>
@@ -58,7 +56,7 @@ const Navbar = () => {
       {isMenuOpen && (
         <div className="md:hidden mt-4 space-y-2">
           {navItems.map(renderNavLink)}
-          {auth?.session && (
+          {session && (
             <Button variant="ghost" onClick={handleSignOut} className="block py-2 w-full text-left">Sign Out</Button>
           )}
         </div>
