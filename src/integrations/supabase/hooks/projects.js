@@ -76,3 +76,21 @@ export const useDeleteProject = () => {
     },
   });
 };
+
+export const useCreateProjectApplication = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ project_id, user_id, application_text }) => {
+      const { data, error } = await supabase
+        .from('project_applications')
+        .insert([{ project_id, user_id, application_text }])
+        .select();
+      if (error) throw error;
+      return data[0];
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(['projects']);
+      queryClient.invalidateQueries(['project_applications']);
+    },
+  });
+};

@@ -44,6 +44,7 @@ export const {
   useCreateProject,
   useUpdateProject,
   useDeleteProject,
+  useCreateProjectApplication,
 } = projectHooks;
 
 export const {
