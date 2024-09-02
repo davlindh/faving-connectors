@@ -25,11 +25,12 @@ const projectSchema = z.object({
     message: "Budget must be a positive number",
   }),
   start_date: z.date().min(new Date(), 'Start date must be in the future'),
-  duration: z.string().refine((val) => !isNaN(parseInt(val)) && parseInt(val) > 0, {
-    message: "Duration must be a positive integer",
-  }),
+  end_date: z.date(),
   location: z.string().optional(),
   required_skills: z.array(z.string()).min(1, 'At least one skill is required'),
+}).refine((data) => data.end_date > data.start_date, {
+  message: "End date must be after start date",
+  path: ["end_date"],
 });
 
 const ProjectCreationForm = () => {
@@ -44,7 +45,7 @@ const ProjectCreationForm = () => {
       category: '',
       budget: '',
       start_date: new Date(),
-      duration: '',
+      end_date: new Date(),
       location: '',
       required_skills: [],
     },
@@ -55,7 +56,6 @@ const ProjectCreationForm = () => {
       await createProject.mutateAsync({
         ...data,
         budget: parseFloat(data.budget),
-        duration: parseInt(data.duration),
       });
       toast.success('Project created successfully');
       navigate('/projects');
@@ -156,7 +156,7 @@ const ProjectCreationForm = () => {
                           {field.value ? (
                             format(field.value, "PPP")
                           ) : (
-                            <span>Pick a date</span>
+                            <span>Pick a start date</span>
                           )}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
@@ -180,13 +180,41 @@ const ProjectCreationForm = () => {
             />
             <FormField
               control={form.control}
-              name="duration"
+              name="end_date"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Duration (in days)</FormLabel>
-                  <FormControl>
-                    <Input {...field} type="text" placeholder="Enter project duration" />
-                  </FormControl>
+                <FormItem className="flex flex-col">
+                  <FormLabel>End Date</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-[240px] pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
+                            format(field.value, "PPP")
+                          ) : (
+                            <span>Pick an end date</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) =>
+                          date <= form.getValues('start_date') || date < new Date("1900-01-01")
+                        }
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}
