@@ -89,143 +89,144 @@ const ProjectListPage = () => {
           <TabsTrigger value="all">All Projects</TabsTrigger>
           <TabsTrigger value="my">My Projects</TabsTrigger>
         </TabsList>
-      </Tabs>
 
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
-        <div className="flex-grow">
-          <div className="relative">
-            <Input
-              placeholder="Search projects..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <div className="flex flex-col md:flex-row gap-4 mb-6 mt-4">
+          <div className="flex-grow">
+            <div className="relative">
+              <Input
+                placeholder="Search projects..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            </div>
           </div>
-        </div>
-        <div className="flex gap-2">
-          <Select
-            value={sortBy}
-            onValueChange={setSortBy}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Sort By" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="latest">Latest</SelectItem>
-              <SelectItem value="budget-high-to-low">Budget: High to Low</SelectItem>
-              <SelectItem value="budget-low-to-high">Budget: Low to High</SelectItem>
-            </SelectContent>
-          </Select>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline">
-                <Filter className="mr-2 h-4 w-4" /> Filters
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-80">
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Category</label>
-                  <Select
-                    value={filters.category}
-                    onValueChange={(value) => setFilters({ ...filters, category: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Categories</SelectItem>
-                      <SelectItem value="web-development">Web Development</SelectItem>
-                      <SelectItem value="mobile-app">Mobile App</SelectItem>
-                      <SelectItem value="design">Design</SelectItem>
-                      <SelectItem value="writing">Writing</SelectItem>
-                      <SelectItem value="marketing">Marketing</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Budget Range</label>
-                  <Slider
-                    min={0}
-                    max={10000}
-                    step={100}
-                    value={[filters.minBudget, filters.maxBudget]}
-                    onValueChange={([min, max]) => setFilters({ ...filters, minBudget: min, maxBudget: max })}
-                    className="mb-2"
-                  />
-                  <div className="flex justify-between text-sm text-gray-500">
-                    <span>${filters.minBudget}</span>
-                    <span>${filters.maxBudget}</span>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Skills</label>
-                  <Input
-                    placeholder="Add skills (press Enter)"
-                    onKeyPress={handleSkillAdd}
-                    className="mb-2"
-                  />
-                  <div className="flex flex-wrap gap-2">
-                    {filters.skills.map((skill, index) => (
-                      <Badge key={index} variant="secondary">
-                        {skill}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="ml-1 h-4 w-4 p-0"
-                          onClick={() => handleSkillRemove(skill)}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
-        </div>
-      </div>
-
-      {isLoading && <div className="text-center py-8">Loading projects...</div>}
-      {error && <div className="text-center text-red-500 py-8">Error loading projects: {error.message}</div>}
-      
-      <TabsContent value="all">
-        <h2 className="text-2xl font-semibold mb-4">All Projects</h2>
-        {!isLoading && !error && allProjects.length > 0 ? (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {allProjects.map((project) => (
-              <ProjectCard key={project.project_id} project={project} />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-8">No projects found matching your criteria.</div>
-        )}
-      </TabsContent>
-
-      <TabsContent value="my">
-        <h2 className="text-2xl font-semibold mb-4">My Projects</h2>
-        {!isLoading && !error && myProjects.length > 0 ? (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {myProjects.map((project) => (
-              <div key={project.project_id} className="relative">
-                <ProjectCard project={project} />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="absolute top-2 right-2"
-                  onClick={() => navigate(`/projects/edit/${project.project_id}`)}
-                >
-                  Edit
+          <div className="flex gap-2">
+            <Select
+              value={sortBy}
+              onValueChange={setSortBy}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Sort By" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="latest">Latest</SelectItem>
+                <SelectItem value="budget-high-to-low">Budget: High to Low</SelectItem>
+                <SelectItem value="budget-low-to-high">Budget: Low to High</SelectItem>
+              </SelectContent>
+            </Select>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline">
+                  <Filter className="mr-2 h-4 w-4" /> Filters
                 </Button>
-              </div>
-            ))}
+              </PopoverTrigger>
+              <PopoverContent className="w-80">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Category</label>
+                    <Select
+                      value={filters.category}
+                      onValueChange={(value) => setFilters({ ...filters, category: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Categories</SelectItem>
+                        <SelectItem value="web-development">Web Development</SelectItem>
+                        <SelectItem value="mobile-app">Mobile App</SelectItem>
+                        <SelectItem value="design">Design</SelectItem>
+                        <SelectItem value="writing">Writing</SelectItem>
+                        <SelectItem value="marketing">Marketing</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Budget Range</label>
+                    <Slider
+                      min={0}
+                      max={10000}
+                      step={100}
+                      value={[filters.minBudget, filters.maxBudget]}
+                      onValueChange={([min, max]) => setFilters({ ...filters, minBudget: min, maxBudget: max })}
+                      className="mb-2"
+                    />
+                    <div className="flex justify-between text-sm text-gray-500">
+                      <span>${filters.minBudget}</span>
+                      <span>${filters.maxBudget}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Skills</label>
+                    <Input
+                      placeholder="Add skills (press Enter)"
+                      onKeyPress={handleSkillAdd}
+                      className="mb-2"
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      {filters.skills.map((skill, index) => (
+                        <Badge key={index} variant="secondary">
+                          {skill}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="ml-1 h-4 w-4 p-0"
+                            onClick={() => handleSkillRemove(skill)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
-        ) : (
-          <div className="text-center py-8">You haven't created any projects yet.</div>
-        )}
-      </TabsContent>
+        </div>
+
+        <TabsContent value="all">
+          <h2 className="text-2xl font-semibold mb-4">All Projects</h2>
+          {isLoading && <div className="text-center py-8">Loading projects...</div>}
+          {error && <div className="text-center text-red-500 py-8">Error loading projects: {error.message}</div>}
+          {!isLoading && !error && allProjects.length > 0 ? (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {allProjects.map((project) => (
+                <ProjectCard key={project.project_id} project={project} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">No projects found matching your criteria.</div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="my">
+          <h2 className="text-2xl font-semibold mb-4">My Projects</h2>
+          {isLoading && <div className="text-center py-8">Loading projects...</div>}
+          {error && <div className="text-center text-red-500 py-8">Error loading projects: {error.message}</div>}
+          {!isLoading && !error && myProjects.length > 0 ? (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {myProjects.map((project) => (
+                <div key={project.project_id} className="relative">
+                  <ProjectCard project={project} />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="absolute top-2 right-2"
+                    onClick={() => navigate(`/projects/edit/${project.project_id}`)}
+                  >
+                    Edit
+                  </Button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">You haven't created any projects yet.</div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
