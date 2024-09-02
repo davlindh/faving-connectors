@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 
 const ProjectCard = ({ project }) => {
   if (!project) {
-    return null; // Or return a placeholder card
+    return null;
   }
 
   const {
@@ -30,32 +30,30 @@ const ProjectCard = ({ project }) => {
         {category && <Badge variant="secondary">{category}</Badge>}
       </CardHeader>
       <CardContent className="flex-grow">
-        <p className="text-gray-600 mb-4">{description ? `${description.slice(0, 100)}...` : 'No description available'}</p>
+        <p className="text-gray-600 mb-4">
+          {description 
+            ? `${description.slice(0, 100)}${description.length > 100 ? '...' : ''}`
+            : 'No description available'}
+        </p>
         <div className="grid grid-cols-2 gap-2">
-          {budget !== undefined && (
-            <div className="flex items-center">
-              <DollarSign className="w-4 h-4 mr-2" />
-              <span className="font-semibold">${budget}</span>
-            </div>
-          )}
-          {start_date && (
-            <div className="flex items-center">
-              <Calendar className="w-4 h-4 mr-2" />
-              <span className="font-semibold">{new Date(start_date).toLocaleDateString()}</span>
-            </div>
-          )}
-          {duration !== undefined && (
-            <div className="flex items-center">
-              <Clock className="w-4 h-4 mr-2" />
-              <span className="font-semibold">{duration} days</span>
-            </div>
-          )}
-          {location && (
-            <div className="flex items-center">
-              <MapPin className="w-4 h-4 mr-2" />
-              <span className="font-semibold">{location}</span>
-            </div>
-          )}
+          <div className="flex items-center">
+            <DollarSign className="w-4 h-4 mr-2" />
+            <span className="font-semibold">{budget ? `$${budget}` : 'Budget not specified'}</span>
+          </div>
+          <div className="flex items-center">
+            <Calendar className="w-4 h-4 mr-2" />
+            <span className="font-semibold">
+              {start_date ? new Date(start_date).toLocaleDateString() : 'Start date not set'}
+            </span>
+          </div>
+          <div className="flex items-center">
+            <Clock className="w-4 h-4 mr-2" />
+            <span className="font-semibold">{duration ? `${duration} days` : 'Duration not specified'}</span>
+          </div>
+          <div className="flex items-center">
+            <MapPin className="w-4 h-4 mr-2" />
+            <span className="font-semibold">{location || 'Location not specified'}</span>
+          </div>
         </div>
         {required_skills && required_skills.length > 0 && (
           <div className="mt-4">
