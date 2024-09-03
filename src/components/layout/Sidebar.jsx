@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   Home,
   User,
@@ -16,10 +17,11 @@ import {
   HelpCircle,
   FileText,
   Calendar,
-  BarChart
+  BarChart,
+  X
 } from 'lucide-react';
 
-const SidebarItem = ({ icon: Icon, title, to, isActive }) => (
+const SidebarItem = ({ icon: Icon, title, to, isActive, onClick }) => (
   <Button
     variant="ghost"
     className={cn(
@@ -27,6 +29,7 @@ const SidebarItem = ({ icon: Icon, title, to, isActive }) => (
       isActive && "bg-accent"
     )}
     asChild
+    onClick={onClick}
   >
     <Link to={to}>
       {Icon && <Icon className="mr-2 h-4 w-4" />}
@@ -35,7 +38,7 @@ const SidebarItem = ({ icon: Icon, title, to, isActive }) => (
   </Button>
 );
 
-const Sidebar = () => {
+const Sidebar = ({ open, setOpen }) => {
   const location = useLocation();
 
   const navItems = [
@@ -54,27 +57,45 @@ const Sidebar = () => {
     { icon: UserPlus, title: "Register", to: "/register" },
   ];
 
-  return (
-    <div className="w-64 bg-background border-r">
-      <div className="flex h-16 items-center px-4">
+  const sidebarContent = (
+    <>
+      <div className="flex h-16 items-center px-4 border-b">
         <Link to="/" className="text-xl font-bold">Faving</Link>
       </div>
-      <ScrollArea className="h-[calc(100vh-4rem)]">
-        <div className="space-y-4 py-4">
-          <div className="px-3 py-2">
-            <div className="space-y-1">
-              {navItems.map((item) => (
-                <SidebarItem
-                  key={item.to}
-                  {...item}
-                  isActive={location.pathname === item.to}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
+      <ScrollArea className="flex-grow">
+        <nav className="space-y-1 p-2">
+          {navItems.map((item) => (
+            <SidebarItem
+              key={item.to}
+              {...item}
+              isActive={location.pathname === item.to}
+              onClick={() => setOpen(false)}
+            />
+          ))}
+        </nav>
       </ScrollArea>
-    </div>
+    </>
+  );
+
+  return (
+    <>
+      <aside className="hidden lg:flex lg:flex-col w-64 bg-white border-r">
+        {sidebarContent}
+      </aside>
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent side="left" className="p-0 w-64">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-4 top-4 lg:hidden"
+            onClick={() => setOpen(false)}
+          >
+            <X className="h-6 w-6" />
+          </Button>
+          {sidebarContent}
+        </SheetContent>
+      </Sheet>
+    </>
   );
 };
 
