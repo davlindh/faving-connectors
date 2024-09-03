@@ -11,10 +11,10 @@ import SkillForm from './SkillForm.jsx';
 import ServiceForm from './ServiceForm.jsx';
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import FaveScore from '../shared/FaveScore.jsx';
-import DetailedFeedback from '../shared/DetailedFeedback.jsx';
 import ECKTSlider from '../shared/ECKTSlider.jsx';
-import { useProfile, useUser } from '@/integrations/supabase';
+import { useProfile, useUser, useUpdateProfile } from '@/integrations/supabase';
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from 'sonner';
 
 const ProfilePage = () => {
   const { profileId } = useParams();
@@ -24,6 +24,7 @@ const ProfilePage = () => {
   const { data: user, isLoading: userLoading, error: userError } = useUser(profile?.user_id);
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('about');
+  const updateProfile = useUpdateProfile();
 
   const isOwnProfile = session?.user?.id === profile?.user_id;
 
@@ -48,17 +49,20 @@ const ProfilePage = () => {
     setActiveTab(value);
   };
 
-  // Mock feedback data (replace with actual data in a real application)
-  const mockFeedback = {
-    communication: 85,
-    quality: 90,
-    timeliness: 80,
-    professionalism: 95,
-    comments: [
-      "Great to work with!",
-      "Delivered high-quality work on time.",
-      "Excellent communication throughout the project."
-    ]
+  const handleECKTUpdate = async (newECKTScores, feedback) => {
+    try {
+      await updateProfile.mutateAsync({
+        userId: profile.user_id,
+        updates: {
+          eckt_scores: newECKTScores,
+          feedback: feedback
+        }
+      });
+      toast.success('ECKT scores and feedback updated successfully');
+    } catch (error) {
+      toast.error('Failed to update ECKT scores and feedback');
+      console.error('Update ECKT error:', error);
+    }
   };
 
   return (
@@ -100,12 +104,11 @@ const ProfilePage = () => {
             </Tabs>
           ) : (
             <Tabs defaultValue="about">
-              <TabsList className="grid w-full grid-cols-5">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="about">About</TabsTrigger>
                 <TabsTrigger value="skills">Skills</TabsTrigger>
                 <TabsTrigger value="services">Services</TabsTrigger>
-                <TabsTrigger value="eckt">ECKT</TabsTrigger>
-                <TabsTrigger value="feedback">Feedback</TabsTrigger>
+                <TabsTrigger value="eckt">ECKT & Feedback</TabsTrigger>
               </TabsList>
               <TabsContent value="about">
                 <h3 className="font-semibold mb-2">Bio</h3>
@@ -122,13 +125,11 @@ const ProfilePage = () => {
               </TabsContent>
               <TabsContent value="eckt">
                 <ECKTSlider 
-                  value={user.eckt_scores || [0, 0, 0, 0]}
-                  onChange={() => {}}
-                  readOnly={true}
+                  value={profile.eckt_scores || [0, 0, 0, 0]}
+                  feedback={profile.feedback || ''}
+                  onChange={handleECKTUpdate}
+                  readOnly={!isOwnProfile}
                 />
-              </TabsContent>
-              <TabsContent value="feedback">
-                <DetailedFeedback feedback={mockFeedback} />
               </TabsContent>
             </Tabs>
           )}
