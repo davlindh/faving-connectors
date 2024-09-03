@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Send } from 'lucide-react';
+import { Send, Search } from 'lucide-react';
 import { useProfiles, useMessages, useCreateMessage } from '@/integrations/supabase';
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import { format } from 'date-fns';
@@ -15,10 +15,17 @@ const MessagingInterface = () => {
   const [newMessage, setNewMessage] = useState('');
   const { session } = useSupabase();
   const createMessage = useCreateMessage();
+  const [searchTerm, setSearchTerm] = useState('');
+  const messagesEndRef = useRef(null);
   
   const { data: messages, isLoading: messagesLoading, error: messagesError } = useMessages(
     session?.user?.id,
     activeConversation?.user_id
+  );
+
+  const filteredProfiles = profiles?.filter(profile => 
+    profile.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    profile.last_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleSendMessage = async (e) => {
@@ -38,14 +45,30 @@ const MessagingInterface = () => {
     }
   };
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
   return (
-    <div className="flex h-[600px] border rounded-lg overflow-hidden">
-      <div className="w-1/3 border-r bg-gray-50">
-        <h2 className="text-xl font-semibold p-4 border-b">Profiles</h2>
-        <ScrollArea className="h-[calc(600px-57px)]">
+    <div className="flex h-[calc(100vh-4rem)] border rounded-lg overflow-hidden bg-white">
+      <div className="w-1/3 border-r flex flex-col">
+        <div className="p-4 border-b">
+          <h2 className="text-xl font-semibold mb-2">Profiles</h2>
+          <div className="relative">
+            <Input
+              type="text"
+              placeholder="Search profiles..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          </div>
+        </div>
+        <ScrollArea className="flex-grow">
           {profilesLoading && <p className="p-4">Loading profiles...</p>}
           {profilesError && <p className="p-4 text-red-500">Error loading profiles: {profilesError.message}</p>}
-          {profiles && profiles.map((profile) => (
+          {filteredProfiles && filteredProfiles.map((profile) => (
             <div
               key={profile.user_id}
               className={`flex items-center p-4 hover:bg-gray-100 cursor-pointer ${
@@ -57,7 +80,7 @@ const MessagingInterface = () => {
                 <AvatarImage src={profile.avatar_url} alt={`${profile.first_name} ${profile.last_name}`} />
                 <AvatarFallback>{profile.first_name?.[0]}{profile.last_name?.[0]}</AvatarFallback>
               </Avatar>
-              <div className="flex-grow">
+              <div>
                 <h3 className="font-medium">{profile.first_name} {profile.last_name}</h3>
                 <p className="text-sm text-gray-500 truncate">{profile.location || 'No location set'}</p>
               </div>
@@ -66,12 +89,14 @@ const MessagingInterface = () => {
         </ScrollArea>
       </div>
       <div className="w-2/3 flex flex-col">
-        <Card className="flex-grow border-0 rounded-none">
+        <Card className="flex-grow border-0 rounded-none shadow-none">
           <CardHeader className="border-b">
-            <CardTitle>Chat with {activeConversation ? `${activeConversation.first_name} ${activeConversation.last_name}` : 'Select a profile'}</CardTitle>
+            <CardTitle className="text-xl">
+              {activeConversation ? `Chat with ${activeConversation.first_name} ${activeConversation.last_name}` : 'Select a profile'}
+            </CardTitle>
           </CardHeader>
-          <CardContent className="p-0">
-            <ScrollArea className="h-[450px] p-4">
+          <CardContent className="p-0 flex-grow overflow-hidden">
+            <ScrollArea className="h-full p-4">
               {messagesLoading && <p className="text-center">Loading messages...</p>}
               {messagesError && <p className="text-center text-red-500">Error loading messages: {messagesError.message}</p>}
               {messages && messages.map((message) => (
@@ -84,6 +109,7 @@ const MessagingInterface = () => {
                   </div>
                 </div>
               ))}
+              <div ref={messagesEndRef} />
             </ScrollArea>
           </CardContent>
         </Card>
@@ -95,7 +121,7 @@ const MessagingInterface = () => {
             onChange={(e) => setNewMessage(e.target.value)}
             disabled={!activeConversation}
           />
-          <Button type="submit" disabled={!activeConversation}>
+          <Button type="submit" disabled={!activeConversation || newMessage.trim() === ''}>
             <Send className="h-4 w-4" />
           </Button>
         </form>
