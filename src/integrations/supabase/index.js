@@ -6,6 +6,7 @@ import * as knowledgeBaseHooks from './hooks/knowledge_base.js';
 import * as projectHooks from './hooks/projects.js';
 import * as skillHooks from './hooks/skills.js';
 import * as userHooks from './hooks/users.js';
+import * as bookingRequestHooks from './hooks/booking_requests.js';
 
 export {
   supabase,
@@ -61,3 +62,9 @@ export const {
   useUpdateUser,
   useDeleteUser,
 } = userHooks;
+
+export const {
+  useCreateBookingRequest,
+  useBookingRequests,
+  useUpdateBookingRequest,
+} = bookingRequestHooks;
