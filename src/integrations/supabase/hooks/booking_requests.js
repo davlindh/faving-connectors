@@ -1,5 +1,22 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '../supabase';
+
+/*
+### booking_requests
+
+| name               | type                    | format | required |
+|--------------------|-------------------------|--------|----------|
+| booking_request_id | uuid                    | uuid   | true     |
+| service_id         | uuid                    | uuid   | true     |
+| user_id            | uuid                    | uuid   | true     |
+| provider_id        | uuid                    | uuid   | true     |
+| requested_date     | timestamp with time zone| string | true     |
+| message            | text                    | string | false    |
+| status             | text                    | string | true     |
+| created_at         | timestamp with time zone| string | true     |
+
+Note: booking_request_id is the Primary Key
+*/
 
 export const useCreateBookingRequest = () => {
   const queryClient = useQueryClient();
