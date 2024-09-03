@@ -5,14 +5,10 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Send } from 'lucide-react';
-
-const dummyConversations = [
-  { id: 1, name: 'John Doe', lastMessage: 'Hey, how are you?', avatar: '/path/to/john.jpg' },
-  { id: 2, name: 'Jane Smith', lastMessage: 'Can we discuss the project?', avatar: '/path/to/jane.jpg' },
-  { id: 3, name: 'Bob Johnson', lastMessage: 'Thanks for your help!', avatar: '/path/to/bob.jpg' },
-];
+import { useProfiles } from '@/integrations/supabase';
 
 const MessagingInterface = () => {
+  const { data: profiles, isLoading, error } = useProfiles();
   const [activeConversation, setActiveConversation] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
@@ -35,23 +31,25 @@ const MessagingInterface = () => {
   return (
     <div className="flex h-[600px] border rounded-lg overflow-hidden">
       <div className="w-1/3 border-r bg-gray-50">
-        <h2 className="text-xl font-semibold p-4 border-b">Conversations</h2>
+        <h2 className="text-xl font-semibold p-4 border-b">Profiles</h2>
         <ScrollArea className="h-[calc(600px-57px)]">
-          {dummyConversations.map((conversation) => (
+          {isLoading && <p className="p-4">Loading profiles...</p>}
+          {error && <p className="p-4 text-red-500">Error loading profiles: {error.message}</p>}
+          {profiles && profiles.map((profile) => (
             <div
-              key={conversation.id}
+              key={profile.user_id}
               className={`flex items-center p-4 hover:bg-gray-100 cursor-pointer ${
-                activeConversation === conversation.id ? 'bg-gray-200' : ''
+                activeConversation === profile.user_id ? 'bg-gray-200' : ''
               }`}
-              onClick={() => setActiveConversation(conversation.id)}
+              onClick={() => setActiveConversation(profile.user_id)}
             >
               <Avatar className="h-10 w-10 mr-3">
-                <AvatarImage src={conversation.avatar} alt={conversation.name} />
-                <AvatarFallback>{conversation.name[0]}</AvatarFallback>
+                <AvatarImage src={profile.avatar_url} alt={`${profile.first_name} ${profile.last_name}`} />
+                <AvatarFallback>{profile.first_name?.[0]}{profile.last_name?.[0]}</AvatarFallback>
               </Avatar>
               <div className="flex-grow">
-                <h3 className="font-medium">{conversation.name}</h3>
-                <p className="text-sm text-gray-500 truncate">{conversation.lastMessage}</p>
+                <h3 className="font-medium">{profile.first_name} {profile.last_name}</h3>
+                <p className="text-sm text-gray-500 truncate">{profile.location || 'No location set'}</p>
               </div>
             </div>
           ))}
@@ -60,7 +58,7 @@ const MessagingInterface = () => {
       <div className="w-2/3 flex flex-col">
         <Card className="flex-grow border-0 rounded-none">
           <CardHeader className="border-b">
-            <CardTitle>Chat with {activeConversation ? dummyConversations.find(c => c.id === activeConversation)?.name : 'Select a conversation'}</CardTitle>
+            <CardTitle>Chat with {activeConversation ? profiles?.find(p => p.user_id === activeConversation)?.first_name : 'Select a profile'}</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <ScrollArea className="h-[450px] p-4">
