@@ -27,8 +27,8 @@ const App = () => (
               <BrowserRouter>
                 <Layout>
                   <Routes>
-                    {navItems.map(({ to, page }) => (
-                      <Route key={to} path={to} element={page} />
+                    {navItems.map(({ to, page: PageComponent }) => (
+                      <Route key={to} path={to} element={<PageComponent />} />
                     ))}
                     <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
                     <Route path="/projects/create" element={<ProjectForm />} />
