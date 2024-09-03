@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useProject, useUpdateProject, useDeleteProject, useCreateTeamMemberRequest } from '@/integrations/supabase';
+import { useProject, useUpdateProject, useDeleteProject, useCreateTeamMemberRequest, useTeamMemberRequests } from '@/integrations/supabase';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar, DollarSign, MapPin, User, ArrowLeft, Edit, Trash, Star, FileText, MessageSquare, UserPlus } from 'lucide-react';
+import { Calendar, DollarSign, MapPin, User, ArrowLeft, Edit, Trash, Star, FileText, MessageSquare, UserPlus, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -33,6 +33,7 @@ const ProjectDetailPage = () => {
   const { session } = useSupabase();
   const [activeTab, setActiveTab] = useState('overview');
   const createTeamMemberRequest = useCreateTeamMemberRequest();
+  const { data: teamMemberRequests, isLoading: isLoadingRequests } = useTeamMemberRequests(projectId);
 
   if (isLoading) return <div className="text-center mt-8">Loading project details...</div>;
   if (error) return <div className="text-center mt-8 text-red-500">Error loading project: {error.message}</div>;
@@ -40,6 +41,8 @@ const ProjectDetailPage = () => {
 
   const isOwner = session?.user?.id === project.creator_id;
   const hasExpressedInterest = project.interested_users?.some(user => user.user_id === session?.user?.id);
+  const isTeamMember = project.team_members?.some(member => member.user_id === session?.user?.id);
+  const hasPendingRequest = teamMemberRequests?.some(request => request.user_id === session?.user?.id && request.status === 'pending');
 
   const handleDelete = async () => {
     try {
@@ -207,10 +210,16 @@ const ProjectDetailPage = () => {
                 ) : (
                   <p>This project currently has no additional team members.</p>
                 )}
-                {!isOwner && (
+                {!isOwner && !isTeamMember && !hasPendingRequest && (
                   <Button onClick={handleJoinTeam} className="mt-4">
                     <UserPlus className="mr-2 h-4 w-4" /> Request to Join Team
                   </Button>
+                )}
+                {hasPendingRequest && (
+                  <p className="text-sm text-gray-500 mt-4">Your request to join this team is pending approval.</p>
+                )}
+                {isTeamMember && (
+                  <p className="text-sm text-green-500 mt-4">You are a member of this team.</p>
                 )}
               </div>
             </TabsContent>
