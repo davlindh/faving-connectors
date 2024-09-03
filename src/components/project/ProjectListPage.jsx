@@ -7,7 +7,7 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { X, Search, Plus, Filter } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Popover,
   PopoverContent,
@@ -15,11 +15,12 @@ import {
 } from "@/components/ui/popover";
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ProjectListPage = () => {
-  const location = useLocation();
-  const isMyProjects = location.pathname.includes('my-projects');
-  const { data: projects, isLoading, error } = useProjects(isMyProjects);
+  const [activeTab, setActiveTab] = useState('all');
+  const { data: allProjects, isLoading: allProjectsLoading, error: allProjectsError } = useProjects(false);
+  const { data: myProjects, isLoading: myProjectsLoading, error: myProjectsError } = useProjects(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     category: 'all',
@@ -33,6 +34,7 @@ const ProjectListPage = () => {
   const { session } = useSupabase();
 
   useEffect(() => {
+    const projects = activeTab === 'all' ? allProjects : myProjects;
     if (projects) {
       const filtered = projects.filter(project => 
         (searchTerm === '' || project.project_name.toLowerCase().includes(searchTerm.toLowerCase()) || (project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase()))) &&
@@ -50,7 +52,7 @@ const ProjectListPage = () => {
 
       setDisplayedProjects(sorted);
     }
-  }, [projects, searchTerm, filters, sortBy]);
+  }, [allProjects, myProjects, activeTab, searchTerm, filters, sortBy]);
 
   const handleSkillAdd = (e) => {
     if (e.key === 'Enter' && e.target.value) {
@@ -76,14 +78,19 @@ const ProjectListPage = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-0">
-          {isMyProjects ? 'My Projects' : 'Available Projects'}
-        </h1>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-0">Projects</h1>
         <Button onClick={() => navigate('/projects/create')}>
           <Plus className="mr-2 h-4 w-4" /> Create Project
         </Button>
       </div>
       
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+        <TabsList>
+          <TabsTrigger value="all">All Projects</TabsTrigger>
+          <TabsTrigger value="my">My Projects</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <div className="flex-grow">
           <div className="relative">
@@ -181,16 +188,43 @@ const ProjectListPage = () => {
         </div>
       </div>
 
-      {isLoading && <div className="text-center py-8">Loading projects...</div>}
-      {error && <div className="text-center text-red-500 py-8">Error loading projects: {error.message}</div>}
-      
-      {!isLoading && !error && displayedProjects.length > 0 ? (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {displayedProjects.map((project) => (
-            <Card key={project.project_id} className="relative">
-              <CardContent className="p-0">
-                <ProjectCard project={project} />
-                {isProjectOwner(project) && (
+      <TabsContent value="all">
+        {allProjectsLoading && <div className="text-center py-8">Loading all projects...</div>}
+        {allProjectsError && <div className="text-center text-red-500 py-8">Error loading all projects: {allProjectsError.message}</div>}
+        {!allProjectsLoading && !allProjectsError && displayedProjects.length > 0 ? (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {displayedProjects.map((project) => (
+              <Card key={project.project_id} className="relative">
+                <CardContent className="p-0">
+                  <ProjectCard project={project} />
+                  {isProjectOwner(project) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="absolute top-2 right-2"
+                      onClick={() => navigate(`/projects/edit/${project.project_id}`)}
+                    >
+                      Edit
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">No projects found matching your criteria.</div>
+        )}
+      </TabsContent>
+
+      <TabsContent value="my">
+        {myProjectsLoading && <div className="text-center py-8">Loading your projects...</div>}
+        {myProjectsError && <div className="text-center text-red-500 py-8">Error loading your projects: {myProjectsError.message}</div>}
+        {!myProjectsLoading && !myProjectsError && displayedProjects.length > 0 ? (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {displayedProjects.map((project) => (
+              <Card key={project.project_id} className="relative">
+                <CardContent className="p-0">
+                  <ProjectCard project={project} />
                   <Button
                     variant="outline"
                     size="sm"
@@ -199,14 +233,14 @@ const ProjectListPage = () => {
                   >
                     Edit
                   </Button>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-8">No projects found matching your criteria.</div>
-      )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">You haven't created any projects yet.</div>
+        )}
+      </TabsContent>
     </div>
   );
 };
