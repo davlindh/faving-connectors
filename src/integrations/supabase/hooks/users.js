@@ -27,7 +27,13 @@ export const useCreateUser = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (newUser) => {
-      const { data, error } = await supabase.from('users').insert([newUser]).select();
+      // Remove user_id from newUser object if it exists
+      const { user_id, ...userDataWithoutId } = newUser;
+      
+      const { data, error } = await supabase
+        .from('users')
+        .insert([userDataWithoutId])
+        .select();
       if (error) throw error;
       return data[0];
     },
