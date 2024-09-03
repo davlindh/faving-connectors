@@ -42,7 +42,7 @@ const NavItem = ({ icon: Icon, title, to, subItems, isActive, onClick }) => {
         onClick={handleClick}
       >
         <div className="flex items-center">
-          <Icon className="mr-2 h-4 w-4" />
+          {Icon && <Icon className="mr-2 h-4 w-4" />}
           <span>{title}</span>
         </div>
         {subItems && (isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />)}
