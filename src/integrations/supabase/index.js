@@ -9,6 +9,7 @@ import * as userHooks from './hooks/users.js';
 import * as bookingRequestHooks from './hooks/booking_requests.js';
 import * as messageHooks from './hooks/messages.js';
 import * as projectInterestHooks from './hooks/project_interests.js';
+import * as teamMemberHooks from './hooks/team_members.js';
 
 export {
   supabase,
@@ -80,3 +81,9 @@ export const {
   useCreateProjectInterest,
   useProjectInterests,
 } = projectInterestHooks;
+
+export const {
+  useTeamMemberRequests,
+  useCreateTeamMemberRequest,
+  useUpdateTeamMemberRequest,
+} = teamMemberHooks;
