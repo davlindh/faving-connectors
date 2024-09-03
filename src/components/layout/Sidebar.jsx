@@ -18,8 +18,11 @@ import {
   FileText,
   Calendar,
   BarChart,
-  X
+  X,
+  LogOut
 } from 'lucide-react';
+import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
+import { toast } from 'sonner';
 
 const SidebarItem = ({ icon: Icon, title, to, isActive, onClick }) => (
   <Button
@@ -40,6 +43,16 @@ const SidebarItem = ({ icon: Icon, title, to, isActive, onClick }) => (
 
 const Sidebar = ({ open, setOpen }) => {
   const location = useLocation();
+  const { supabase, session } = useSupabase();
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.success('Logged out successfully');
+    } catch (error) {
+      toast.error('Error logging out');
+    }
+  };
 
   const navItems = [
     { icon: Home, title: "Home", to: "/" },
@@ -53,9 +66,14 @@ const Sidebar = ({ open, setOpen }) => {
     { icon: BarChart, title: "Analytics", to: "/analytics" },
     { icon: Settings, title: "Settings", to: "/settings" },
     { icon: HelpCircle, title: "Help", to: "/help" },
-    { icon: LogIn, title: "Login", to: "/login" },
-    { icon: UserPlus, title: "Register", to: "/register" },
   ];
+
+  const authItems = session
+    ? [{ icon: LogOut, title: "Logout", onClick: handleLogout }]
+    : [
+        { icon: LogIn, title: "Login", to: "/auth/login" },
+        { icon: UserPlus, title: "Register", to: "/auth/signup" },
+      ];
 
   const sidebarContent = (
     <>
@@ -70,6 +88,17 @@ const Sidebar = ({ open, setOpen }) => {
               {...item}
               isActive={location.pathname === item.to}
               onClick={() => setOpen(false)}
+            />
+          ))}
+          {authItems.map((item, index) => (
+            <SidebarItem
+              key={index}
+              {...item}
+              isActive={location.pathname === item.to}
+              onClick={() => {
+                if (item.onClick) item.onClick();
+                setOpen(false);
+              }}
             />
           ))}
         </nav>
