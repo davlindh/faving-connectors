@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import FaveScore from '../shared/FaveScore';
+import ExpressInterestButton from './ExpressInterestButton';
 
 const ProjectDetailPage = () => {
   const { projectId } = useParams();
@@ -37,6 +38,7 @@ const ProjectDetailPage = () => {
   if (!project) return <div className="text-center mt-8">Project not found</div>;
 
   const isOwner = session?.user?.id === project.creator_id;
+  const hasExpressedInterest = project.interested_users?.some(user => user.user_id === session?.user?.id);
 
   const handleDelete = async () => {
     try {
@@ -170,7 +172,24 @@ const ProjectDetailPage = () => {
             <TabsContent value="team">
               <div className="space-y-4">
                 <h3 className="text-xl font-semibold">Team Members</h3>
-                <p>This project currently has no additional team members.</p>
+                {project.team_members && project.team_members.length > 0 ? (
+                  project.team_members.map((member, index) => (
+                    <Card key={index}>
+                      <CardContent className="flex items-center p-4">
+                        <Avatar className="h-10 w-10 mr-4">
+                          <AvatarImage src={member.avatar_url} alt={`${member.first_name} ${member.last_name}`} />
+                          <AvatarFallback>{member.first_name[0]}{member.last_name[0]}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-semibold">{member.first_name} {member.last_name}</p>
+                          <p className="text-sm text-gray-500">{member.role}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <p>This project currently has no additional team members.</p>
+                )}
               </div>
             </TabsContent>
             <TabsContent value="tasks">
@@ -217,8 +236,18 @@ const ProjectDetailPage = () => {
           </Tabs>
         </CardContent>
         <CardFooter className="flex justify-between">
-          <Button variant="outline">Join Project</Button>
-          <Button>Support Project</Button>
+          {!isOwner && (
+            <ExpressInterestButton
+              projectId={project.project_id}
+              hasExpressedInterest={hasExpressedInterest}
+            />
+          )}
+          <Button asChild>
+            <Link to={`/messages?projectId=${project.project_id}`}>
+              <MessageSquare className="mr-2 h-4 w-4" />
+              Contact Project Owner
+            </Link>
+          </Button>
         </CardFooter>
       </Card>
     </div>
