@@ -27,15 +27,15 @@ const AdminPanel = () => {
   if (requestsLoading || projectLoading) return <div className="text-center py-8">Loading...</div>;
   if (requestsError || projectError) return <div className="text-center text-red-500 py-8">Error: {requestsError?.message || projectError?.message}</div>;
 
-  const pendingRequests = requests.filter(request => request.status === 'pending');
-  const approvedRequests = requests.filter(request => request.status === 'approved');
-  const rejectedRequests = requests.filter(request => request.status === 'rejected');
+  const pendingRequests = requests?.filter(request => request.status === 'pending') || [];
+  const approvedRequests = requests?.filter(request => request.status === 'approved') || [];
+  const rejectedRequests = requests?.filter(request => request.status === 'rejected') || [];
 
   return (
     <div className="max-w-4xl mx-auto p-4">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Team Management for {project.project_name}</CardTitle>
+          <CardTitle className="text-2xl">Team Management for {project?.project_name}</CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
