@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useProject, useUpdateProject, useDeleteProject } from '@/integrations/supabase';
+import { useProject, useUpdateProject, useDeleteProject, useCreateTeamMemberRequest } from '@/integrations/supabase';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar, DollarSign, MapPin, User, ArrowLeft, Edit, Trash, Star, FileText, MessageSquare } from 'lucide-react';
+import { Calendar, DollarSign, MapPin, User, ArrowLeft, Edit, Trash, Star, FileText, MessageSquare, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -32,6 +32,7 @@ const ProjectDetailPage = () => {
   const deleteProject = useDeleteProject();
   const { session } = useSupabase();
   const [activeTab, setActiveTab] = useState('overview');
+  const createTeamMemberRequest = useCreateTeamMemberRequest();
 
   if (isLoading) return <div className="text-center mt-8">Loading project details...</div>;
   if (error) return <div className="text-center mt-8 text-red-500">Error loading project: {error.message}</div>;
@@ -47,6 +48,19 @@ const ProjectDetailPage = () => {
       navigate('/projects');
     } catch (error) {
       toast.error('Failed to delete project');
+    }
+  };
+
+  const handleJoinTeam = async () => {
+    if (!session?.user?.id) {
+      toast.error('You must be logged in to join a team');
+      return;
+    }
+    try {
+      await createTeamMemberRequest.mutateAsync({ projectId, userId: session.user.id });
+      toast.success('Team join request sent successfully');
+    } catch (error) {
+      toast.error('Failed to send team join request');
     }
   };
 
@@ -189,6 +203,11 @@ const ProjectDetailPage = () => {
                   ))
                 ) : (
                   <p>This project currently has no additional team members.</p>
+                )}
+                {!isOwner && (
+                  <Button onClick={handleJoinTeam} className="mt-4">
+                    <UserPlus className="mr-2 h-4 w-4" /> Request to Join Team
+                  </Button>
                 )}
               </div>
             </TabsContent>

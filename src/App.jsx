@@ -13,6 +13,7 @@ import ProfilePage from "./components/profile/ProfilePage";
 import ArticleCreationForm from "./components/knowledgeBase/ArticleCreationForm";
 import ArticleDetailPage from "./components/knowledgeBase/ArticleDetailPage";
 import ProjectForm from "./components/project/ProjectForm";
+import AdminPanel from "./components/admin/AdminPanel";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ const App = () => (
                     <Route path="/profile/:profileId" element={<ProfilePage />} />
                     <Route path="/knowledge-base/create" element={<ArticleCreationForm />} />
                     <Route path="/knowledge-base/:articleId" element={<ArticleDetailPage />} />
+                    <Route path="/admin/project/:projectId" element={<AdminPanel />} />
                   </Routes>
                 </Layout>
               </BrowserRouter>
