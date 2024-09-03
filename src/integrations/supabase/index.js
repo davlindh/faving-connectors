@@ -7,6 +7,7 @@ import * as projectHooks from './hooks/projects.js';
 import * as skillHooks from './hooks/skills.js';
 import * as userHooks from './hooks/users.js';
 import * as bookingRequestHooks from './hooks/booking_requests.js';
+import * as messageHooks from './hooks/messages.js';
 
 export {
   supabase,
@@ -68,3 +69,8 @@ export const {
   useBookingRequests,
   useUpdateBookingRequest,
 } = bookingRequestHooks;
+
+export const {
+  useMessages,
+  useCreateMessage,
+} = messageHooks;
