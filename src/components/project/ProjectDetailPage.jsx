@@ -87,6 +87,9 @@ const ProjectDetailPage = () => {
               <Button variant="outline" size="sm" onClick={() => navigate(`/projects/edit/${projectId}`)}>
                 <Edit className="mr-2 h-4 w-4" /> Edit Project
               </Button>
+              <Button variant="outline" size="sm" onClick={() => navigate(`/admin/project/${projectId}`)}>
+                <UserPlus className="mr-2 h-4 w-4" /> Manage Team
+              </Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive" size="sm">
