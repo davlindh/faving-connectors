@@ -12,15 +12,9 @@ const dummyConversations = [
   { id: 3, name: 'Bob Johnson', lastMessage: 'Thanks for your help!', avatar: '/path/to/bob.jpg' },
 ];
 
-const dummyMessages = [
-  { id: 1, sender: 'John Doe', content: 'Hey, how are you?', timestamp: '10:00 AM' },
-  { id: 2, sender: 'You', content: 'I'm doing well, thanks! How about you?', timestamp: '10:05 AM' },
-  { id: 3, sender: 'John Doe', content: 'Great! I wanted to ask about the project timeline.', timestamp: '10:10 AM' },
-];
-
 const MessagingInterface = () => {
   const [activeConversation, setActiveConversation] = useState(null);
-  const [messages, setMessages] = useState(dummyMessages);
+  const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
 
   const handleSendMessage = (e) => {
