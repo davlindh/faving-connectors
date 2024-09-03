@@ -7,7 +7,7 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { X, Search, Plus, Filter } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Popover,
   PopoverContent,
@@ -17,7 +17,9 @@ import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import { Card, CardContent } from "@/components/ui/card";
 
 const ProjectListPage = () => {
-  const { data: projects, isLoading, error } = useProjects();
+  const location = useLocation();
+  const isMyProjects = location.pathname.includes('my-projects');
+  const { data: projects, isLoading, error } = useProjects(isMyProjects);
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     category: 'all',
@@ -74,7 +76,9 @@ const ProjectListPage = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-0">Available Projects</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-0">
+          {isMyProjects ? 'My Projects' : 'Available Projects'}
+        </h1>
         <Button onClick={() => navigate('/projects/create')}>
           <Plus className="mr-2 h-4 w-4" /> Create Project
         </Button>

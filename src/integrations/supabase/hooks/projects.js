@@ -1,10 +1,21 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../supabase';
 
-export const useProjects = () => useQuery({
-  queryKey: ['projects'],
+export const useProjects = (myProjects = false) => useQuery({
+  queryKey: ['projects', myProjects],
   queryFn: async () => {
-    const { data, error } = await supabase.from('projects').select('*');
+    let query = supabase.from('projects').select('*');
+    
+    if (myProjects) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        query = query.eq('creator_id', user.id);
+      } else {
+        throw new Error('User not authenticated');
+      }
+    }
+    
+    const { data, error } = await query;
     if (error) throw error;
     return data;
   },
