@@ -1,8 +1,38 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../supabase';
 
-export const useTeamMemberRequests = (projectId) => useQuery({
-  queryKey: ['team_member_requests', projectId],
+export const useTeam = (teamId) => useQuery({
+  queryKey: ['team', teamId],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from('teams')
+      .select(`
+        *,
+        members:team_members(*)
+      `)
+      .eq('team_id', teamId)
+      .single();
+    if (error) throw error;
+    return data;
+  },
+  enabled: !!teamId,
+});
+
+export const useTeamProjects = (teamId) => useQuery({
+  queryKey: ['team_projects', teamId],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .eq('team_id', teamId);
+    if (error) throw error;
+    return data;
+  },
+  enabled: !!teamId,
+});
+
+export const useTeamMemberRequests = (teamId) => useQuery({
+  queryKey: ['team_member_requests', teamId],
   queryFn: async () => {
     const { data, error } = await supabase
       .from('team_member_requests')
@@ -10,26 +40,26 @@ export const useTeamMemberRequests = (projectId) => useQuery({
         *,
         user:users(*)
       `)
-      .eq('project_id', projectId);
+      .eq('team_id', teamId);
     if (error) throw error;
     return data;
   },
-  enabled: !!projectId,
+  enabled: !!teamId,
 });
 
 export const useCreateTeamMemberRequest = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ projectId, userId }) => {
+    mutationFn: async ({ teamId, userId }) => {
       const { data, error } = await supabase
         .from('team_member_requests')
-        .insert({ project_id: projectId, user_id: userId, status: 'pending' })
+        .insert({ team_id: teamId, user_id: userId, status: 'pending' })
         .select();
       if (error) throw error;
       return data[0];
     },
-    onSuccess: (_, { projectId }) => {
-      queryClient.invalidateQueries(['team_member_requests', projectId]);
+    onSuccess: (_, { teamId }) => {
+      queryClient.invalidateQueries(['team_member_requests', teamId]);
     },
   });
 };
@@ -47,7 +77,8 @@ export const useUpdateTeamMemberRequest = () => {
       return data[0];
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['team_member_requests', data.project_id]);
+      queryClient.invalidateQueries(['team_member_requests', data.team_id]);
+      queryClient.invalidateQueries(['team', data.team_id]);
     },
   });
 };

@@ -14,6 +14,7 @@ import ArticleCreationForm from "./components/knowledgeBase/ArticleCreationForm"
 import ArticleDetailPage from "./components/knowledgeBase/ArticleDetailPage";
 import ProjectForm from "./components/project/ProjectForm";
 import AdminPanel from "./components/admin/AdminPanel";
+import TeamPage from "./components/team/TeamPage";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ const App = () => (
                     <Route path="/knowledge-base/create" element={<ArticleCreationForm />} />
                     <Route path="/knowledge-base/:articleId" element={<ArticleDetailPage />} />
                     <Route path="/admin/project/:projectId" element={<AdminPanel />} />
+                    <Route path="/team/:teamId" element={<TeamPage />} />
                   </Routes>
                 </Layout>
               </BrowserRouter>
