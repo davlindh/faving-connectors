@@ -12,12 +12,14 @@ const AuthForm = ({ mode = 'login' }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const { signIn, signUp } = useSupabase();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    setIsLoading(true);
     try {
       let result;
       if (mode === 'login') {
@@ -38,6 +40,8 @@ const AuthForm = ({ mode = 'login' }) => {
     } catch (error) {
       console.error('Auth error:', error);
       handleAuthError(error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -50,6 +54,17 @@ const AuthForm = ({ mode = 'login' }) => {
       setError('An account with this email already exists. Please log in or use a different email.');
     } else {
       setError(`An error occurred: ${error.message}`);
+    }
+  };
+
+  const handleResendConfirmation = async () => {
+    try {
+      const { error } = await signUp({ email, password });
+      if (error) throw error;
+      toast.success('Confirmation email resent. Please check your inbox.');
+    } catch (error) {
+      console.error('Resend confirmation error:', error);
+      toast.error('Failed to resend confirmation email. Please try again.');
     }
   };
 
@@ -88,13 +103,18 @@ const AuthForm = ({ mode = 'login' }) => {
           {error && (
             <Alert variant="destructive" className="mt-4">
               <AlertDescription>{error}</AlertDescription>
+              {error.includes('confirm your email') && (
+                <Button onClick={handleResendConfirmation} variant="link" className="mt-2 p-0">
+                  Resend confirmation email
+                </Button>
+              )}
             </Alert>
           )}
         </form>
       </CardContent>
       <CardFooter className="flex flex-col items-center">
-        <Button className="w-full mb-2" onClick={handleSubmit}>
-          {mode === 'login' ? 'Login' : 'Sign Up'}
+        <Button className="w-full mb-2" onClick={handleSubmit} disabled={isLoading}>
+          {isLoading ? 'Processing...' : (mode === 'login' ? 'Login' : 'Sign Up')}
         </Button>
         {mode === 'login' ? (
           <p className="text-sm">
