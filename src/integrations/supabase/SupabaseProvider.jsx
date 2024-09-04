@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from './supabase';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const SupabaseContext = createContext(null);
 
@@ -15,6 +17,7 @@ export const useSupabase = () => {
 export const SupabaseProvider = ({ children }) => {
   const [session, setSession] = useState(null);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -31,12 +34,25 @@ export const SupabaseProvider = ({ children }) => {
     return () => subscription.unsubscribe();
   }, [queryClient]);
 
+  const signOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      setSession(null);
+      queryClient.clear();
+      navigate('/');
+      toast.success('Logged out successfully');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Failed to log out. Please try again.');
+    }
+  };
+
   const value = {
     supabase,
     session,
     signUp: (data) => supabase.auth.signUp(data),
     signIn: (data) => supabase.auth.signInWithPassword(data),
-    signOut: () => supabase.auth.signOut(),
+    signOut,
   };
 
   return <SupabaseContext.Provider value={value}>{children}</SupabaseContext.Provider>;
