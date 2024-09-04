@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import { useTeam, useTeamProjects, useTeamMemberRequests, useUpdateTeamMemberRequest } from '@/integrations/supabase';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,25 +40,21 @@ const TeamPage = () => {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="projects">Projects</TabsTrigger>
+              <TabsTrigger value="members">Members</TabsTrigger>
               <TabsTrigger value="requests">Join Requests</TabsTrigger>
             </TabsList>
             <TabsContent value="overview">
-              <h3 className="text-xl font-semibold mb-4">Team Members</h3>
-              {teamMembers.map((member) => (
-                <div key={member.user_id} className="flex items-center mb-4">
-                  <Avatar className="h-10 w-10 mr-4">
-                    <AvatarImage src={member.avatar_url} alt={`${member.first_name} ${member.last_name}`} />
-                    <AvatarFallback>{member.first_name[0]}{member.last_name[0]}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-semibold">{member.first_name} {member.last_name}</p>
-                    <p className="text-sm text-gray-500">{member.role}</p>
-                  </div>
-                </div>
-              ))}
+              <h3 className="text-xl font-semibold mb-4">Team Overview</h3>
+              <p>{team?.description}</p>
+              <div className="mt-4">
+                <h4 className="font-semibold">Team Stats:</h4>
+                <p>Total Members: {teamMembers.length}</p>
+                <p>Total Projects: {projects?.length || 0}</p>
+                <p>Pending Requests: {pendingRequests.length}</p>
+              </div>
             </TabsContent>
             <TabsContent value="projects">
               <h3 className="text-xl font-semibold mb-4">Team Projects</h3>
@@ -67,6 +63,27 @@ const TeamPage = () => {
                   <ProjectCard key={project.project_id} project={project} />
                 ))}
               </div>
+              {projects?.length === 0 && <p>No projects found for this team.</p>}
+            </TabsContent>
+            <TabsContent value="members">
+              <h3 className="text-xl font-semibold mb-4">Team Members</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {teamMembers.map((member) => (
+                  <Card key={member.user_id}>
+                    <CardContent className="flex items-center p-4">
+                      <Avatar className="h-10 w-10 mr-4">
+                        <AvatarImage src={member.avatar_url} alt={`${member.first_name} ${member.last_name}`} />
+                        <AvatarFallback>{member.first_name[0]}{member.last_name[0]}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-semibold">{member.first_name} {member.last_name}</p>
+                        <p className="text-sm text-gray-500">{member.role}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+              {teamMembers.length === 0 && <p>No members in this team yet.</p>}
             </TabsContent>
             <TabsContent value="requests">
               <h3 className="text-xl font-semibold mb-4">Pending Join Requests</h3>

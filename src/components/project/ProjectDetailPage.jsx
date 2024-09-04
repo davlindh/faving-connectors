@@ -23,7 +23,6 @@ import {
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import FaveScore from '../shared/FaveScore';
 import ExpressInterestButton from './ExpressInterestButton';
-import TeamManagement from '../team/TeamManagement';
 
 const ProjectDetailPage = () => {
   const { projectId } = useParams();
@@ -91,9 +90,6 @@ const ProjectDetailPage = () => {
               <Button variant="outline" size="sm" onClick={() => navigate(`/projects/edit/${projectId}`)}>
                 <Edit className="mr-2 h-4 w-4" /> Edit Project
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setActiveTab('team')}>
-                <UserPlus className="mr-2 h-4 w-4" /> Manage Team
-              </Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive" size="sm">
@@ -118,13 +114,12 @@ const ProjectDetailPage = () => {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="impact">Impact</TabsTrigger>
               <TabsTrigger value="team">Team</TabsTrigger>
               <TabsTrigger value="tasks">Tasks</TabsTrigger>
               <TabsTrigger value="resources">Resources</TabsTrigger>
-              {isOwner && <TabsTrigger value="manage">Manage Team</TabsTrigger>}
             </TabsList>
             <TabsContent value="overview">
               <div className="space-y-4">
@@ -266,11 +261,6 @@ const ProjectDetailPage = () => {
                 )}
               </div>
             </TabsContent>
-            {isOwner && (
-              <TabsContent value="manage">
-                <TeamManagement projectId={projectId} />
-              </TabsContent>
-            )}
           </Tabs>
         </CardContent>
         <CardFooter className="flex justify-between">
