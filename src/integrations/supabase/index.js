@@ -84,6 +84,8 @@ export const {
 } = projectInterestHooks;
 
 export const {
+  useTeam,
+  useTeamProjects,
   useTeamMemberRequests,
   useCreateTeamMemberRequest,
   useUpdateTeamMemberRequest,
