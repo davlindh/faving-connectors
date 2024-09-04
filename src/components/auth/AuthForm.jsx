@@ -5,15 +5,19 @@ import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import { toast } from 'sonner';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Link } from 'react-router-dom';
 
 const AuthForm = ({ mode = 'login' }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState(null);
   const { signIn, signUp } = useSupabase();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
     try {
       let result;
       if (mode === 'login') {
@@ -24,11 +28,28 @@ const AuthForm = ({ mode = 'login' }) => {
 
       if (result.error) throw result.error;
 
-      toast.success(mode === 'login' ? 'Logged in successfully' : 'Signed up successfully');
-      navigate('/');
+      if (mode === 'login') {
+        toast.success('Logged in successfully');
+        navigate('/');
+      } else {
+        toast.success('Signed up successfully. Please check your email to confirm your account.');
+        navigate('/login');
+      }
     } catch (error) {
       console.error('Auth error:', error);
-      toast.error(error.message || 'An error occurred during authentication');
+      handleAuthError(error);
+    }
+  };
+
+  const handleAuthError = (error) => {
+    if (error.message === 'Email not confirmed') {
+      setError('Please confirm your email address. Check your inbox for a confirmation link.');
+    } else if (error.message === 'Invalid login credentials') {
+      setError('Invalid email or password. Please try again.');
+    } else if (error.message === 'User already registered') {
+      setError('An account with this email already exists. Please log in or use a different email.');
+    } else {
+      setError(`An error occurred: ${error.message}`);
     }
   };
 
@@ -64,12 +85,26 @@ const AuthForm = ({ mode = 'login' }) => {
               />
             </div>
           </div>
+          {error && (
+            <Alert variant="destructive" className="mt-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
         </form>
       </CardContent>
-      <CardFooter>
-        <Button className="w-full" onClick={handleSubmit}>
+      <CardFooter className="flex flex-col items-center">
+        <Button className="w-full mb-2" onClick={handleSubmit}>
           {mode === 'login' ? 'Login' : 'Sign Up'}
         </Button>
+        {mode === 'login' ? (
+          <p className="text-sm">
+            Don't have an account? <Link to="/register" className="text-blue-500 hover:underline">Sign up</Link>
+          </p>
+        ) : (
+          <p className="text-sm">
+            Already have an account? <Link to="/login" className="text-blue-500 hover:underline">Log in</Link>
+          </p>
+        )}
       </CardFooter>
     </Card>
   );
