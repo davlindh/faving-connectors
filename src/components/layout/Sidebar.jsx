@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -43,11 +43,13 @@ const SidebarItem = ({ icon: Icon, title, to, isActive, onClick }) => (
 
 const Sidebar = ({ open, setOpen }) => {
   const location = useLocation();
-  const { supabase, session } = useSupabase();
+  const navigate = useNavigate();
+  const { session, signOut } = useSupabase();
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
+      await signOut();
+      navigate('/');
       toast.success('Logged out successfully');
     } catch (error) {
       toast.error('Error logging out');
@@ -71,8 +73,8 @@ const Sidebar = ({ open, setOpen }) => {
   const authItems = session
     ? [{ icon: LogOut, title: "Logout", onClick: handleLogout }]
     : [
-        { icon: LogIn, title: "Login", to: "/auth/login" },
-        { icon: UserPlus, title: "Register", to: "/auth/signup" },
+        { icon: LogIn, title: "Login", to: "/login" },
+        { icon: UserPlus, title: "Register", to: "/register" },
       ];
 
   const sidebarContent = (
