@@ -122,144 +122,25 @@ const ProjectDetailPage = () => {
               <TabsTrigger value="resources">Resources</TabsTrigger>
             </TabsList>
             <TabsContent value="overview">
-              <div className="space-y-4">
-                <p className="text-gray-600">{project.description}</p>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex items-center">
-                    <DollarSign className="w-5 h-5 mr-2 text-gray-500" />
-                    <span className="font-semibold">Budget: ${project.budget}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Calendar className="w-5 h-5 mr-2 text-gray-500" />
-                    <span className="font-semibold">Start Date: {new Date(project.start_date).toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Calendar className="w-5 h-5 mr-2 text-gray-500" />
-                    <span className="font-semibold">End Date: {new Date(project.end_date).toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <User className="w-5 h-5 mr-2 text-gray-500" />
-                    <span className="font-semibold">Status: {project.status}</span>
-                  </div>
-                </div>
-                {project.required_skills && project.required_skills.length > 0 && (
-                  <div>
-                    <h3 className="text-xl font-semibold mb-2">Required Skills</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {project.required_skills.map((skill, index) => (
-                        <Badge key={index} variant="outline">{skill}</Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                <div>
-                  <h3 className="text-xl font-semibold mb-2">Project Creator</h3>
-                  <Card>
-                    <CardContent className="flex items-center p-4">
-                      <Avatar className="h-12 w-12 mr-4">
-                        <AvatarImage src={project.creator?.profile?.avatar_url} alt={`${project.creator?.profile?.first_name} ${project.creator?.profile?.last_name}`} />
-                        <AvatarFallback>{project.creator?.profile?.first_name?.[0]}{project.creator?.profile?.last_name?.[0]}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-semibold">{project.creator?.profile?.first_name} {project.creator?.profile?.last_name}</p>
-                        <p className="text-sm text-gray-500">{project.creator?.profile?.location}</p>
-                        <Link to={`/profile/${project.creator?.user_id}`} className="text-blue-500 hover:underline">View Profile</Link>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
+              <OverviewTab project={project} />
             </TabsContent>
             <TabsContent value="impact">
-              <div className="space-y-4">
-                <h3 className="text-xl font-semibold">Impact Metrics</h3>
-                {project.impact_metrics && project.impact_metrics.length > 0 ? (
-                  project.impact_metrics.map((metric, index) => (
-                    <div key={index} className="flex justify-between items-center">
-                      <span>{metric.name}</span>
-                      <Progress value={metric.value} max={metric.target} className="w-1/2" />
-                      <span>{metric.value}/{metric.target}</span>
-                    </div>
-                  ))
-                ) : (
-                  <p>No impact metrics available for this project.</p>
-                )}
-              </div>
+              <ImpactTab project={project} />
             </TabsContent>
             <TabsContent value="team">
-              <div className="space-y-4">
-                <h3 className="text-xl font-semibold">Team Members</h3>
-                {project.team_members && project.team_members.length > 0 ? (
-                  project.team_members.map((member, index) => (
-                    <Card key={index}>
-                      <CardContent className="flex items-center p-4">
-                        <Avatar className="h-10 w-10 mr-4">
-                          <AvatarImage src={member.avatar_url} alt={`${member.first_name} ${member.last_name}`} />
-                          <AvatarFallback>{member.first_name[0]}{member.last_name[0]}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-semibold">{member.first_name} {member.last_name}</p>
-                          <p className="text-sm text-gray-500">{member.role}</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                ) : (
-                  <p>This project currently has no additional team members.</p>
-                )}
-                {!isOwner && !isTeamMember && !hasPendingRequest && (
-                  <Button onClick={handleJoinTeam} className="mt-4">
-                    <UserPlus className="mr-2 h-4 w-4" /> Request to Join Team
-                  </Button>
-                )}
-                {hasPendingRequest && (
-                  <p className="text-sm text-gray-500 mt-4">Your request to join this team is pending approval.</p>
-                )}
-                {isTeamMember && (
-                  <p className="text-sm text-green-500 mt-4">You are a member of this team.</p>
-                )}
-              </div>
+              <TeamTab
+                project={project}
+                isOwner={isOwner}
+                isTeamMember={isTeamMember}
+                hasPendingRequest={hasPendingRequest}
+                onJoinTeam={handleJoinTeam}
+              />
             </TabsContent>
             <TabsContent value="tasks">
-              <div className="space-y-4">
-                <h3 className="text-xl font-semibold">Project Tasks</h3>
-                {project.tasks && project.tasks.length > 0 ? (
-                  project.tasks.map((task, index) => (
-                    <Card key={index}>
-                      <CardHeader>
-                        <CardTitle>{task.title}</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p>{task.description}</p>
-                        <p className="text-sm text-gray-500 mt-2">Assigned to: {task.assignee}</p>
-                        <p className="text-sm text-gray-500">Due: {new Date(task.due_date).toLocaleDateString()}</p>
-                      </CardContent>
-                    </Card>
-                  ))
-                ) : (
-                  <p>No tasks have been added to this project yet.</p>
-                )}
-              </div>
+              <TasksTab project={project} />
             </TabsContent>
             <TabsContent value="resources">
-              <div className="space-y-4">
-                <h3 className="text-xl font-semibold">Project Resources</h3>
-                {project.resources && project.resources.length > 0 ? (
-                  project.resources.map((resource, index) => (
-                    <div key={index} className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <FileText className="w-5 h-5 mr-2 text-gray-500" />
-                        <span>{resource.name}</span>
-                      </div>
-                      <Button asChild variant="link">
-                        <a href={resource.url} target="_blank" rel="noopener noreferrer">View</a>
-                      </Button>
-                    </div>
-                  ))
-                ) : (
-                  <p>No resources have been added to this project yet.</p>
-                )}
-              </div>
+              <ResourcesTab project={project} />
             </TabsContent>
           </Tabs>
         </CardContent>
@@ -281,5 +162,150 @@ const ProjectDetailPage = () => {
     </div>
   );
 };
+
+const OverviewTab = ({ project }) => (
+  <div className="space-y-4">
+    <p className="text-gray-600">{project.description}</p>
+    <div className="grid grid-cols-2 gap-4">
+      <div className="flex items-center">
+        <DollarSign className="w-5 h-5 mr-2 text-gray-500" />
+        <span className="font-semibold">Budget: ${project.budget}</span>
+      </div>
+      <div className="flex items-center">
+        <Calendar className="w-5 h-5 mr-2 text-gray-500" />
+        <span className="font-semibold">Start Date: {new Date(project.start_date).toLocaleDateString()}</span>
+      </div>
+      <div className="flex items-center">
+        <Calendar className="w-5 h-5 mr-2 text-gray-500" />
+        <span className="font-semibold">End Date: {new Date(project.end_date).toLocaleDateString()}</span>
+      </div>
+      <div className="flex items-center">
+        <User className="w-5 h-5 mr-2 text-gray-500" />
+        <span className="font-semibold">Status: {project.status}</span>
+      </div>
+    </div>
+    {project.required_skills && project.required_skills.length > 0 && (
+      <div>
+        <h3 className="text-xl font-semibold mb-2">Required Skills</h3>
+        <div className="flex flex-wrap gap-2">
+          {project.required_skills.map((skill, index) => (
+            <Badge key={index} variant="outline">{skill}</Badge>
+          ))}
+        </div>
+      </div>
+    )}
+    <div>
+      <h3 className="text-xl font-semibold mb-2">Project Creator</h3>
+      <Card>
+        <CardContent className="flex items-center p-4">
+          <Avatar className="h-12 w-12 mr-4">
+            <AvatarImage src={project.creator?.profile?.avatar_url} alt={`${project.creator?.profile?.first_name} ${project.creator?.profile?.last_name}`} />
+            <AvatarFallback>{project.creator?.profile?.first_name?.[0]}{project.creator?.profile?.last_name?.[0]}</AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="font-semibold">{project.creator?.profile?.first_name} {project.creator?.profile?.last_name}</p>
+            <p className="text-sm text-gray-500">{project.creator?.profile?.location}</p>
+            <Link to={`/profile/${project.creator?.user_id}`} className="text-blue-500 hover:underline">View Profile</Link>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  </div>
+);
+
+const ImpactTab = ({ project }) => (
+  <div className="space-y-4">
+    <h3 className="text-xl font-semibold">Impact Metrics</h3>
+    {project.impact_metrics && project.impact_metrics.length > 0 ? (
+      project.impact_metrics.map((metric, index) => (
+        <div key={index} className="flex justify-between items-center">
+          <span>{metric.name}</span>
+          <Progress value={metric.value} max={metric.target} className="w-1/2" />
+          <span>{metric.value}/{metric.target}</span>
+        </div>
+      ))
+    ) : (
+      <p>No impact metrics available for this project.</p>
+    )}
+  </div>
+);
+
+const TeamTab = ({ project, isOwner, isTeamMember, hasPendingRequest, onJoinTeam }) => (
+  <div className="space-y-4">
+    <h3 className="text-xl font-semibold">Team Members</h3>
+    {project.team_members && project.team_members.length > 0 ? (
+      project.team_members.map((member, index) => (
+        <Card key={index}>
+          <CardContent className="flex items-center p-4">
+            <Avatar className="h-10 w-10 mr-4">
+              <AvatarImage src={member.avatar_url} alt={`${member.first_name} ${member.last_name}`} />
+              <AvatarFallback>{member.first_name[0]}{member.last_name[0]}</AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="font-semibold">{member.first_name} {member.last_name}</p>
+              <p className="text-sm text-gray-500">{member.role}</p>
+            </div>
+          </CardContent>
+        </Card>
+      ))
+    ) : (
+      <p>This project currently has no additional team members.</p>
+    )}
+    {!isOwner && !isTeamMember && !hasPendingRequest && (
+      <Button onClick={onJoinTeam} className="mt-4">
+        <UserPlus className="mr-2 h-4 w-4" /> Request to Join Team
+      </Button>
+    )}
+    {hasPendingRequest && (
+      <p className="text-sm text-gray-500 mt-4">Your request to join this team is pending approval.</p>
+    )}
+    {isTeamMember && (
+      <p className="text-sm text-green-500 mt-4">You are a member of this team.</p>
+    )}
+  </div>
+);
+
+const TasksTab = ({ project }) => (
+  <div className="space-y-4">
+    <h3 className="text-xl font-semibold">Project Tasks</h3>
+    {project.tasks && project.tasks.length > 0 ? (
+      project.tasks.map((task, index) => (
+        <Card key={index}>
+          <CardHeader>
+            <CardTitle>{task.title}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>{task.description}</p>
+            <p className="text-sm text-gray-500 mt-2">Assigned to: {task.assignee}</p>
+            <p className="text-sm text-gray-500">Due: {new Date(task.due_date).toLocaleDateString()}</p>
+          </CardContent>
+        </Card>
+      ))
+    ) : (
+      <p>No tasks have been added to this project yet.</p>
+    )}
+  </div>
+);
+
+const ResourcesTab = ({ project }) => (
+  <div className="space-y-4">
+    <h3 className="text-xl font-semibold">Project Resources</h3>
+    {project.resources && project.resources.length > 0 ? (
+      project.resources.map((resource, index) => (
+        <div key={index} className="flex items-center justify-between">
+          <div className="flex items-center">
+            <FileText className="w-5 h-5 mr-2 text-gray-500" />
+            <span>{resource.name}</span>
+          </div>
+          <Button asChild variant="link">
+            <a href={resource.url} target="_blank" rel="noopener noreferrer">View</a>
+          </Button>
+        </div>
+      ))
+    ) : (
+      <p>No resources have been added to this project yet.</p>
+    )}
+  </div>
+);
 
 export default ProjectDetailPage;
