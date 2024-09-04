@@ -1,30 +1,34 @@
 import React, { useState } from 'react';
-import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
+import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import { toast } from 'sonner';
 
 const AuthForm = ({ mode = 'login' }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { supabase } = useSupabase();
+  const { signIn, signUp } = useSupabase();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       let result;
       if (mode === 'login') {
-        result = await supabase.auth.signInWithPassword({ email, password });
+        result = await signIn({ email, password });
       } else {
-        result = await supabase.auth.signUp({ email, password });
+        result = await signUp({ email, password });
       }
 
       if (result.error) throw result.error;
 
       toast.success(mode === 'login' ? 'Logged in successfully' : 'Signed up successfully');
+      navigate('/');
     } catch (error) {
-      toast.error(error.message);
+      console.error('Auth error:', error);
+      toast.error(error.message || 'An error occurred during authentication');
     }
   };
 

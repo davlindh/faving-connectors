@@ -58,7 +58,7 @@ const Sidebar = ({ open, setOpen }) => {
 
   const navItems = [
     { icon: Home, title: "Home", to: "/" },
-    { icon: User, title: "Profile", to: "/profile" },
+    { icon: User, title: "Profile", to: session ? `/profile/${session.user.id}` : "/login" },
     { icon: Briefcase, title: "Projects", to: "/projects" },
     { icon: BookOpen, title: "Knowledge Base", to: "/knowledge-base" },
     { icon: MessageSquare, title: "Messages", to: "/messages" },
