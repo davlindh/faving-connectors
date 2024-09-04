@@ -24,9 +24,9 @@ const MessagingInterface = () => {
   );
 
   const filteredProfiles = profiles?.filter(profile => 
-    profile.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    profile.last_name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    profile.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    profile.last_name?.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -49,6 +49,14 @@ const MessagingInterface = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  if (profilesLoading) {
+    return <div className="text-center p-4">Loading profiles...</div>;
+  }
+
+  if (profilesError) {
+    return <div className="text-center p-4 text-red-500">Error loading profiles: {profilesError.message}</div>;
+  }
+
   return (
     <div className="flex h-[calc(100vh-4rem)] border rounded-lg overflow-hidden bg-white">
       <div className="w-1/3 border-r flex flex-col">
@@ -66,9 +74,7 @@ const MessagingInterface = () => {
           </div>
         </div>
         <ScrollArea className="flex-grow">
-          {profilesLoading && <p className="p-4">Loading profiles...</p>}
-          {profilesError && <p className="p-4 text-red-500">Error loading profiles: {profilesError.message}</p>}
-          {filteredProfiles && filteredProfiles.map((profile) => (
+          {filteredProfiles.map((profile) => (
             <div
               key={profile.user_id}
               className={`flex items-center p-4 hover:bg-gray-100 cursor-pointer ${
