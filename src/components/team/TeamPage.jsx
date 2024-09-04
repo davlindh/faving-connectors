@@ -24,7 +24,7 @@ const TeamPage = () => {
       await updateRequest.mutateAsync({ requestId, status });
       toast.success(`Request ${status} successfully`);
     } catch (error) {
-      toast.error(`Failed to ${status} request`);
+      toast.error(`Failed to ${status} request: ${error.message}`);
     }
   };
 
