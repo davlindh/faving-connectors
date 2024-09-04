@@ -20,13 +20,13 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <SupabaseProvider>
-      <SupabaseAuthProvider>
-        <ProfileProvider>
-          <ProjectProvider>
-            <TooltipProvider>
-              <Toaster />
-              <BrowserRouter>
+    <BrowserRouter>
+      <SupabaseProvider>
+        <SupabaseAuthProvider>
+          <ProfileProvider>
+            <ProjectProvider>
+              <TooltipProvider>
+                <Toaster />
                 <Layout>
                   <Routes>
                     {navItems.map(({ to, page: PageComponent }) => (
@@ -42,12 +42,12 @@ const App = () => (
                     <Route path="/team/:teamId" element={<TeamPage />} />
                   </Routes>
                 </Layout>
-              </BrowserRouter>
-            </TooltipProvider>
-          </ProjectProvider>
-        </ProfileProvider>
-      </SupabaseAuthProvider>
-    </SupabaseProvider>
+              </TooltipProvider>
+            </ProjectProvider>
+          </ProfileProvider>
+        </SupabaseAuthProvider>
+      </SupabaseProvider>
+    </BrowserRouter>
   </QueryClientProvider>
 );
 
