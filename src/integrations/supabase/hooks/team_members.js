@@ -6,11 +6,15 @@ export const useTeamMemberRequests = (projectId) => useQuery({
   queryFn: async () => {
     const { data, error } = await supabase
       .from('team_member_requests')
-      .select('*, user:users(*)')
+      .select(`
+        *,
+        user:users(*)
+      `)
       .eq('project_id', projectId);
     if (error) throw error;
     return data;
   },
+  enabled: !!projectId,
 });
 
 export const useCreateTeamMemberRequest = () => {
