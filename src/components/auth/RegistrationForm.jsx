@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
-import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { useNavigate } from 'react-router-dom';
+import { useCreateProfile, useCreateUser } from '@/integrations/supabase';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { useCreateProfile, useCreateUser } from '@/integrations/supabase';
+import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
+import { toast } from 'sonner';
 
 const formSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
@@ -96,10 +97,12 @@ const RegistrationForm = () => {
           updated_at: now,
         });
 
-        navigate('/');
+        toast.success('Registration successful! Please check your email to verify your account.');
+        navigate('/login');
       }
     } catch (error) {
-      setError(error.message);
+      console.error('Registration error:', error);
+      setError(error.message || 'An error occurred during registration. Please try again.');
     }
   };
 
