@@ -1,5 +1,6 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import Contracts from './Contracts';
 
 const ContractsPage = () => {
   return (
@@ -9,7 +10,7 @@ const ContractsPage = () => {
           <CardTitle>Contracts</CardTitle>
         </CardHeader>
         <CardContent>
-          <p>This is the Contracts page. Content will be added here.</p>
+          <Contracts />
         </CardContent>
       </Card>
     </div>

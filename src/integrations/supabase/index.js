@@ -10,6 +10,7 @@ import * as bookingRequestHooks from './hooks/booking_requests.js';
 import * as messageHooks from './hooks/messages.js';
 import * as projectInterestHooks from './hooks/project_interests.js';
 import * as teamMemberHooks from './hooks/team_members.js';
+import * as contractHooks from './hooks/contracts.js';
 
 export {
   supabase,
@@ -87,3 +88,10 @@ export const {
   useCreateTeamMemberRequest,
   useUpdateTeamMemberRequest,
 } = teamMemberHooks;
+
+export const {
+  useContracts,
+  useCreateContract,
+  useUpdateContract,
+  useDeleteContract,
+} = contractHooks;
