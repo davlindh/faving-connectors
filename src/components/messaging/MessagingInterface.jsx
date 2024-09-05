@@ -10,24 +10,38 @@ import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useLocation } from 'react-router-dom';
 
 const MessagingInterface = () => {
-  const { data: profiles, isLoading: profilesLoading, error: profilesError } = useProfiles();
   const [activeConversation, setActiveConversation] = useState(null);
   const [newMessage, setNewMessage] = useState('');
-  const { session } = useSupabase();
-  const createMessage = useCreateMessage();
-  const startConversation = useStartConversation();
   const [searchTerm, setSearchTerm] = useState('');
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const { session } = useSupabase();
+  const location = useLocation();
   
-  const { data: messages, isLoading: messagesLoading, error: messagesError } = useMessages(
+  const { data: profiles, isLoading: profilesLoading } = useProfiles();
+  const createMessage = useCreateMessage();
+  const startConversation = useStartConversation();
+
+  const { data: messages, isLoading: messagesLoading } = useMessages(
     session?.user?.id,
     activeConversation?.user_id
   );
 
-  const { data: recentConversations, isLoading: recentConversationsLoading, error: recentConversationsError } = useRecentConversations(session?.user?.id);
+  const { data: recentConversations, isLoading: recentConversationsLoading } = useRecentConversations(session?.user?.id);
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const recipientId = searchParams.get('recipientId');
+    if (recipientId) {
+      const recipient = profiles?.find(profile => profile.user_id === recipientId);
+      if (recipient) {
+        setActiveConversation(recipient);
+      }
+    }
+  }, [location, profiles]);
 
   const filteredProfiles = profiles?.filter(profile => 
     profile.user_id !== session?.user?.id &&
@@ -88,11 +102,6 @@ const MessagingInterface = () => {
 
   if (profilesLoading || recentConversationsLoading) {
     return <div className="text-center p-4">Loading conversations...</div>;
-  }
-
-  if (profilesError || recentConversationsError) {
-    console.error('Error loading data:', profilesError || recentConversationsError);
-    // Continue rendering the component with available data
   }
 
   return (
@@ -192,7 +201,6 @@ const MessagingInterface = () => {
           <CardContent className="p-0 flex-grow overflow-hidden">
             <ScrollArea className="h-full p-4">
               {messagesLoading && <p className="text-center">Loading messages...</p>}
-              {messagesError && <p className="text-center text-red-500">Error loading messages: {messagesError.message}</p>}
               {messages && messages.map((message) => (
                 <div key={message.message_id} className={`mb-4 ${message.sender_id === session.user.id ? 'text-right' : ''}`}>
                   <div className={`inline-block p-2 rounded-lg ${message.sender_id === session.user.id ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}>
