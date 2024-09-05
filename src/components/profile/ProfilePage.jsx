@@ -20,7 +20,7 @@ const ProfilePage = () => {
   const { profileId } = useParams();
   const { session } = useSupabase();
   const userId = session?.user?.id;
-  const { data: profile, isLoading: profileLoading, error: profileError } = useProfile(profileId || userId);
+  const { data: profile, isLoading: profileLoading, error: profileError, refetch: refetchProfile } = useProfile(profileId || userId);
   const { data: user, isLoading: userLoading, error: userError } = useUser(profile?.user_id);
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('about');
@@ -35,6 +35,11 @@ const ProfilePage = () => {
       setIsCreatingProfile(true);
     }
   }, [profileError, isOwnProfile]);
+
+  useEffect(() => {
+    // Refetch profile data when the component mounts or when profileId changes
+    refetchProfile();
+  }, [profileId, refetchProfile]);
 
   const handleCreateProfile = async () => {
     if (!session?.user?.id) {
@@ -55,7 +60,7 @@ const ProfilePage = () => {
       await createProfile.mutateAsync(newProfile);
       toast.success('Profile created successfully');
       setIsCreatingProfile(false);
-      window.location.reload(); // Reload the page to fetch the new profile
+      refetchProfile();
     } catch (error) {
       console.error('Error creating profile:', error);
       toast.error('Failed to create profile');
