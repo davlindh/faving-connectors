@@ -15,6 +15,7 @@ import ECKTSlider from '../shared/ECKTSlider.jsx';
 import { useProfile, useUser, useUpdateProfile, useCreateProfile } from '@/integrations/supabase';
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from 'sonner';
+import { DialogContent, DialogHeader, DialogTitle, Dialog, DialogTrigger } from "@/components/ui/dialog";
 
 const ProfilePage = () => {
   const { profileId } = useParams();
