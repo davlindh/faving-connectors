@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useProject, useUpdateProject, useDeleteProject, useCreateTeamMemberRequest, useTeamMemberRequests } from '@/integrations/supabase';
+import { useProject, useUpdateProject, useDeleteProject, useCreateTeamMemberRequest, useTeamMemberRequests, useImpactMetrics, useCreateImpactMetric, useUpdateImpactMetric, useDeleteImpactMetric } from '@/integrations/supabase';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +23,7 @@ import {
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import FaveScore from '../shared/FaveScore';
 import ExpressInterestButton from './ExpressInterestButton';
+import ImpactMetricForm from './ImpactMetricForm';
 
 const ProjectDetailPage = () => {
   const { projectId } = useParams();
@@ -34,8 +35,12 @@ const ProjectDetailPage = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const createTeamMemberRequest = useCreateTeamMemberRequest();
   const { data: teamMemberRequests, isLoading: isLoadingRequests } = useTeamMemberRequests(projectId);
+  const { data: impactMetrics, isLoading: isLoadingImpactMetrics } = useImpactMetrics(projectId);
+  const createImpactMetric = useCreateImpactMetric();
+  const updateImpactMetric = useUpdateImpactMetric();
+  const deleteImpactMetric = useDeleteImpactMetric();
 
-  if (isLoading) return <div className="text-center mt-8">Loading project details...</div>;
+  if (isLoading || isLoadingImpactMetrics) return <div className="text-center mt-8">Loading project details...</div>;
   if (error) return <div className="text-center mt-8 text-red-500">Error loading project: {error.message}</div>;
   if (!project) return <div className="text-center mt-8">Project not found</div>;
 
@@ -64,6 +69,33 @@ const ProjectDetailPage = () => {
       toast.success('Team join request sent successfully');
     } catch (error) {
       toast.error('Failed to send team join request');
+    }
+  };
+
+  const handleCreateImpactMetric = async (newMetric) => {
+    try {
+      await createImpactMetric.mutateAsync({ ...newMetric, project_id: projectId });
+      toast.success('Impact metric created successfully');
+    } catch (error) {
+      toast.error('Failed to create impact metric');
+    }
+  };
+
+  const handleUpdateImpactMetric = async (metricId, updates) => {
+    try {
+      await updateImpactMetric.mutateAsync({ metricId, updates });
+      toast.success('Impact metric updated successfully');
+    } catch (error) {
+      toast.error('Failed to update impact metric');
+    }
+  };
+
+  const handleDeleteImpactMetric = async (metricId) => {
+    try {
+      await deleteImpactMetric.mutateAsync(metricId);
+      toast.success('Impact metric deleted successfully');
+    } catch (error) {
+      toast.error('Failed to delete impact metric');
     }
   };
 
@@ -125,7 +157,13 @@ const ProjectDetailPage = () => {
               <OverviewTab project={project} />
             </TabsContent>
             <TabsContent value="impact">
-              <ImpactTab project={project} />
+              <ImpactTab
+                impactMetrics={impactMetrics}
+                isOwner={isOwner}
+                onCreateMetric={handleCreateImpactMetric}
+                onUpdateMetric={handleUpdateImpactMetric}
+                onDeleteMetric={handleDeleteImpactMetric}
+              />
             </TabsContent>
             <TabsContent value="team">
               <TeamTab
@@ -213,33 +251,37 @@ const OverviewTab = ({ project }) => (
   </div>
 );
 
-const ImpactTab = ({ project }) => (
+const ImpactTab = ({ impactMetrics, isOwner, onCreateMetric, onUpdateMetric, onDeleteMetric }) => (
   <div className="space-y-4">
     <h3 className="text-xl font-semibold">Impact Metrics</h3>
-    {project.impact_metrics && project.impact_metrics.length > 0 ? (
-      project.impact_metrics.map((metric, index) => (
-        <div key={index} className="space-y-2">
-          <div className="flex justify-between items-center">
-            <span className="font-medium">{metric.name}</span>
-            <span className="text-sm text-gray-500">{metric.value} / {metric.target}</span>
-          </div>
-          <Progress value={(metric.value / metric.target) * 100} className="w-full" />
-          <p className="text-sm text-gray-600">{metric.description}</p>
-        </div>
+    {impactMetrics && impactMetrics.length > 0 ? (
+      impactMetrics.map((metric) => (
+        <Card key={metric.metric_id} className="mb-4">
+          <CardContent className="p-4">
+            <div className="flex justify-between items-center mb-2">
+              <h4 className="font-semibold">{metric.description}</h4>
+              <span className="text-sm text-gray-500">Score: {metric.impact_score}</span>
+            </div>
+            <Progress value={metric.impact_score} max={100} className="w-full" />
+            {isOwner && (
+              <div className="mt-2 flex justify-end space-x-2">
+                <Button size="sm" variant="outline" onClick={() => onUpdateMetric(metric.metric_id, { description: 'Updated description' })}>
+                  Edit
+                </Button>
+                <Button size="sm" variant="destructive" onClick={() => onDeleteMetric(metric.metric_id)}>
+                  Delete
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       ))
     ) : (
       <p>No impact metrics available for this project.</p>
     )}
-    <div className="mt-6">
-      <h4 className="font-semibold mb-2">Overall Impact Score</h4>
-      <div className="flex items-center">
-        <BarChart className="w-6 h-6 mr-2 text-blue-500" />
-        <span className="text-2xl font-bold">{project.impact_score || 'N/A'}</span>
-      </div>
-      <p className="text-sm text-gray-600 mt-2">
-        This score represents the overall impact of the project based on its metrics and goals.
-      </p>
-    </div>
+    {isOwner && (
+      <ImpactMetricForm onSubmit={onCreateMetric} />
+    )}
   </div>
 );
 

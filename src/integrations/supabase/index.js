@@ -11,6 +11,7 @@ import * as messageHooks from './hooks/messages.js';
 import * as projectInterestHooks from './hooks/project_interests.js';
 import * as teamMemberHooks from './hooks/team_members.js';
 import * as contractHooks from './hooks/contracts.js';
+import * as impactMetricHooks from './hooks/impact_metrics.js';
 
 export {
   supabase,
@@ -97,3 +98,10 @@ export const {
   useUpdateContract,
   useDeleteContract,
 } = contractHooks;
+
+export const {
+  useImpactMetrics,
+  useCreateImpactMetric,
+  useUpdateImpactMetric,
+  useDeleteImpactMetric,
+} = impactMetricHooks;
