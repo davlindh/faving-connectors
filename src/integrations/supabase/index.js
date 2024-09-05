@@ -78,7 +78,7 @@ export const {
   useMessages,
   useCreateMessage,
   useRecentConversations,
-  useStartConversation, // Add this line to export useStartConversation
+  useStartConversation,
 } = messageHooks;
 
 export const {
@@ -87,10 +87,12 @@ export const {
 } = projectInterestHooks;
 
 export const {
-  useTeam,
-  useTeamProjects,
-  useTeamMemberRequests,
+  useProjectTeamMembers,
+  useAddProjectTeamMember,
+  useUpdateProjectTeamMember,
+  useRemoveProjectTeamMember,
   useCreateTeamMemberRequest,
+  useTeamMemberRequests,
   useUpdateTeamMemberRequest,
 } = teamMemberHooks;
 
