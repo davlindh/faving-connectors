@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar, DollarSign, MapPin, User, ArrowLeft, Edit, Trash, Star, FileText, MessageSquare, UserPlus, Users } from 'lucide-react';
+import { Calendar, DollarSign, MapPin, User, ArrowLeft, Edit, Trash, Star, FileText, MessageSquare, UserPlus, Users, BarChart } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -218,15 +218,28 @@ const ImpactTab = ({ project }) => (
     <h3 className="text-xl font-semibold">Impact Metrics</h3>
     {project.impact_metrics && project.impact_metrics.length > 0 ? (
       project.impact_metrics.map((metric, index) => (
-        <div key={index} className="flex justify-between items-center">
-          <span>{metric.name}</span>
-          <Progress value={metric.value} max={metric.target} className="w-1/2" />
-          <span>{metric.value}/{metric.target}</span>
+        <div key={index} className="space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="font-medium">{metric.name}</span>
+            <span className="text-sm text-gray-500">{metric.value} / {metric.target}</span>
+          </div>
+          <Progress value={(metric.value / metric.target) * 100} className="w-full" />
+          <p className="text-sm text-gray-600">{metric.description}</p>
         </div>
       ))
     ) : (
       <p>No impact metrics available for this project.</p>
     )}
+    <div className="mt-6">
+      <h4 className="font-semibold mb-2">Overall Impact Score</h4>
+      <div className="flex items-center">
+        <BarChart className="w-6 h-6 mr-2 text-blue-500" />
+        <span className="text-2xl font-bold">{project.impact_score || 'N/A'}</span>
+      </div>
+      <p className="text-sm text-gray-600 mt-2">
+        This score represents the overall impact of the project based on its metrics and goals.
+      </p>
+    </div>
   </div>
 );
 
