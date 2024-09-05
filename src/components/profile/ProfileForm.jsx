@@ -46,9 +46,14 @@ const ProfileForm = ({ profile, onEditComplete }) => {
           name="location"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Location</FormLabel>
+              <FormLabel htmlFor="location">Location</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="e.g. New York, USA" />
+                <Input
+                  {...field}
+                  id="location"
+                  placeholder="e.g. New York, USA"
+                  autoComplete="address-level2"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -59,9 +64,15 @@ const ProfileForm = ({ profile, onEditComplete }) => {
           name="bio"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Bio</FormLabel>
+              <FormLabel htmlFor="bio">Bio</FormLabel>
               <FormControl>
-                <Textarea {...field} placeholder="Tell us about yourself" rows={4} />
+                <Textarea
+                  {...field}
+                  id="bio"
+                  placeholder="Tell us about yourself"
+                  rows={4}
+                  autoComplete="off"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -72,9 +83,14 @@ const ProfileForm = ({ profile, onEditComplete }) => {
           name="avatar_url"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Avatar URL</FormLabel>
+              <FormLabel htmlFor="avatar_url">Avatar URL</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="https://example.com/avatar.jpg" />
+                <Input
+                  {...field}
+                  id="avatar_url"
+                  placeholder="https://example.com/avatar.jpg"
+                  autoComplete="photo"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
