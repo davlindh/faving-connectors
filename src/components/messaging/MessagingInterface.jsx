@@ -8,6 +8,7 @@ import { Send, Search } from 'lucide-react';
 import { useProfiles, useMessages, useCreateMessage } from '@/integrations/supabase';
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 const MessagingInterface = () => {
   const { data: profiles, isLoading: profilesLoading, error: profilesError } = useProfiles();
@@ -24,8 +25,9 @@ const MessagingInterface = () => {
   );
 
   const filteredProfiles = profiles?.filter(profile => 
-    profile.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    profile.last_name?.toLowerCase().includes(searchTerm.toLowerCase())
+    profile.user_id !== session?.user?.id &&
+    (profile.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    profile.last_name?.toLowerCase().includes(searchTerm.toLowerCase()))
   ) || [];
 
   const handleSendMessage = async (e) => {
@@ -40,8 +42,10 @@ const MessagingInterface = () => {
         sent_at: new Date().toISOString(),
       });
       setNewMessage('');
+      toast.success('Message sent successfully');
     } catch (error) {
       console.error('Error sending message:', error);
+      toast.error('Failed to send message. Please try again.');
     }
   };
 
@@ -61,7 +65,7 @@ const MessagingInterface = () => {
     <div className="flex h-[calc(100vh-4rem)] border rounded-lg overflow-hidden bg-white">
       <div className="w-1/3 border-r flex flex-col">
         <div className="p-4 border-b">
-          <h2 className="text-xl font-semibold mb-2">Profiles</h2>
+          <h2 className="text-xl font-semibold mb-2">Conversations</h2>
           <div className="relative">
             <Input
               type="text"
