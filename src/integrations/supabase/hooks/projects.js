@@ -4,7 +4,13 @@ import { supabase } from '../supabase';
 export const useProjects = (userId = null) => useQuery({
   queryKey: ['projects', userId],
   queryFn: async () => {
-    let query = supabase.from('projects').select('*');
+    let query = supabase.from('projects').select(`
+      *,
+      creator:users!creator_id(*),
+      impact_metrics:project_impact_metrics(*),
+      tasks:project_tasks(*),
+      team_members:project_team_members(*)
+    `);
     
     if (userId) {
       query = query.eq('creator_id', userId);
@@ -28,6 +34,7 @@ export const useProject = (projectId) => useQuery({
         creator:users!creator_id(*),
         impact_metrics:project_impact_metrics(*),
         tasks:project_tasks(*),
+        team_members:project_team_members(*),
         resources:project_resources(*)
       `)
       .eq('project_id', projectId)
@@ -103,3 +110,42 @@ export const useDeleteProject = () => {
     },
   });
 };
+
+export const useProjectImpactMetrics = (projectId) => useQuery({
+  queryKey: ['project_impact_metrics', projectId],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from('project_impact_metrics')
+      .select('*')
+      .eq('project_id', projectId);
+    if (error) throw error;
+    return data;
+  },
+  enabled: !!projectId,
+});
+
+export const useProjectTasks = (projectId) => useQuery({
+  queryKey: ['project_tasks', projectId],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from('project_tasks')
+      .select('*')
+      .eq('project_id', projectId);
+    if (error) throw error;
+    return data;
+  },
+  enabled: !!projectId,
+});
+
+export const useProjectTeamMembers = (projectId) => useQuery({
+  queryKey: ['project_team_members', projectId],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from('project_team_members')
+      .select('*')
+      .eq('project_id', projectId);
+    if (error) throw error;
+    return data;
+  },
+  enabled: !!projectId,
+});

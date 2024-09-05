@@ -13,9 +13,29 @@ const Index = () => {
   const { data: profiles, isLoading: profilesLoading, error: profilesError } = useProfiles();
   const { data: articles, isLoading: articlesLoading, error: articlesError } = useKnowledgeBase();
 
+  const calculateProjectRating = (project) => {
+    let rating = 0;
+    if (project.impact_metrics && project.impact_metrics.length > 0) {
+      const avgImpact = project.impact_metrics.reduce((sum, metric) => sum + metric.impact_score, 0) / project.impact_metrics.length;
+      rating += avgImpact * 0.4; // 40% weight to impact
+    }
+    if (project.tasks && project.tasks.length > 0) {
+      const completedTasks = project.tasks.filter(task => task.status === 'completed').length;
+      const taskProgress = completedTasks / project.tasks.length;
+      rating += taskProgress * 30; // 30% weight to task progress
+    }
+    if (project.team_members) {
+      rating += Math.min(project.team_members.length * 5, 30); // Up to 30% based on team size (max 6 members)
+    }
+    return rating;
+  };
+
   const getFeaturedProjects = (projects) => {
     if (!projects) return [];
-    return projects.sort((a, b) => new Date(b.start_date) - new Date(a.start_date)).slice(0, 3);
+    return projects
+      .map(project => ({ ...project, rating: calculateProjectRating(project) }))
+      .sort((a, b) => b.rating - a.rating)
+      .slice(0, 3);
   };
 
   const getFeaturedUsers = (profiles) => {
@@ -75,12 +95,14 @@ const Index = () => {
         <h2 className="text-3xl font-semibold mb-8">Featured Projects</h2>
         {projectsLoading && <div className="text-center py-8">Loading projects...</div>}
         {projectsError && <div className="text-center text-red-500 py-8">Error loading projects: {projectsError.message}</div>}
-        {featuredProjects.length > 0 && (
+        {featuredProjects.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {featuredProjects.map((project) => (
               <ProjectCard key={project.project_id} project={project} />
             ))}
           </div>
+        ) : (
+          <div className="text-center py-8">No featured projects available at the moment.</div>
         )}
         <div className="text-center mt-8">
           <Button asChild variant="outline" size="lg">
