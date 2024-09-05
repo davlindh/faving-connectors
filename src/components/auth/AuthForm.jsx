@@ -52,6 +52,10 @@ const AuthForm = ({ mode = 'login' }) => {
     } catch (error) {
       console.error('Auth error:', error);
       toast.error(error.message || 'An error occurred during authentication');
+      form.setError('root', { 
+        type: 'manual',
+        message: error.message || 'An error occurred during authentication'
+      });
     } finally {
       setIsLoading(false);
     }
