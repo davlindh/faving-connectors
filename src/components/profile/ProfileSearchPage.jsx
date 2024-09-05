@@ -39,7 +39,7 @@ const ProfileSearchPage = () => {
       {error && <p className="text-center text-red-500 py-4">Error: {error.message}</p>}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {filteredProfiles.map((profile) => (
-          <Card key={profile.profile_id}>
+          <Card key={profile.user_id}>
             <CardContent className="p-6">
               <div className="flex items-center">
                 <Avatar className="h-12 w-12 mr-4">
@@ -49,7 +49,7 @@ const ProfileSearchPage = () => {
                 <div>
                   <h2 className="font-semibold">{profile.first_name} {profile.last_name}</h2>
                   <p className="text-sm text-gray-500 mb-2">{profile.location}</p>
-                  <Link to={`/profile/${profile.profile_id}`} className="text-blue-500 hover:underline text-sm">
+                  <Link to={`/profile/${profile.user_id}`} className="text-blue-500 hover:underline text-sm">
                     View Profile
                   </Link>
                 </div>
