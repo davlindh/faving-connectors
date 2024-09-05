@@ -12,6 +12,7 @@ import * as projectInterestHooks from './hooks/project_interests.js';
 import * as teamMemberHooks from './hooks/team_members.js';
 import * as contractHooks from './hooks/contracts.js';
 import * as impactMetricHooks from './hooks/impact_metrics.js';
+import * as teamHooks from './hooks/teams.js';
 
 export {
   supabase,
@@ -109,3 +110,11 @@ export const {
   useUpdateImpactMetric,
   useDeleteImpactMetric,
 } = impactMetricHooks;
+
+export const {
+  useTeam,
+  useTeamProjects,
+  useCreateTeam,
+  useUpdateTeam,
+  useDeleteTeam,
+} = teamHooks;
