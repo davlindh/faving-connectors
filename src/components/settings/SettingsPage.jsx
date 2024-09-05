@@ -73,6 +73,10 @@ const SettingsPage = () => {
     }
   }, [user, profile, profileLoading, profileError, userForm, profileForm, session]);
 
+  const formatDate = (date) => {
+    return date.toISOString().replace('T', ' ').replace('Z', '+00');
+  };
+
   const onSubmit = async (userData, profileData) => {
     if (!userId) {
       toast.error('User ID not found. Please log in again.');
@@ -80,7 +84,7 @@ const SettingsPage = () => {
     }
 
     try {
-      const now = new Date().toISOString();
+      const now = formatDate(new Date());
       
       // Handle user data
       const userPayload = {
