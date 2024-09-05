@@ -8,7 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useProfile, useCreateProfile, useUpdateProfile, useUser, useUpdateUser } from '@/integrations/supabase';
+import { useProfile, useCreateProfile, useUpdateProfile, useUser, useCreateUser, useUpdateUser } from '@/integrations/supabase';
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import { toast } from 'sonner';
 
@@ -30,9 +30,10 @@ const SettingsPage = () => {
   const { data: user, isLoading: userLoading, error: userError } = useUser(userId);
   const createProfile = useCreateProfile();
   const updateProfile = useUpdateProfile();
+  const createUser = useCreateUser();
   const updateUser = useUpdateUser();
   const navigate = useNavigate();
-  const [isCreating, setIsCreating] = useState(false);
+  const [isCreatingProfile, setIsCreatingProfile] = useState(false);
 
   const userForm = useForm({
     resolver: zodResolver(userSchema),
@@ -65,33 +66,43 @@ const SettingsPage = () => {
         avatar_url: profile.avatar_url || '',
       });
     } else if (!profileLoading && !profileError) {
-      setIsCreating(true);
+      setIsCreatingProfile(true);
     }
   }, [user, profile, profileLoading, profileError, userForm, profileForm]);
 
   const onSubmit = async (userData, profileData) => {
+    if (!userId) {
+      toast.error('User ID not found. Please log in again.');
+      return;
+    }
+
     try {
-      if (isCreating) {
+      // Handle user data
+      if (user) {
+        await updateUser.mutateAsync({ userId, updates: userData });
+      } else {
+        await createUser.mutateAsync({ ...userData, user_id: userId });
+      }
+
+      // Handle profile data
+      if (isCreatingProfile) {
         await createProfile.mutateAsync({
           user_id: userId,
           ...profileData,
         });
         toast.success('Profile created successfully');
       } else {
-        await updateUser.mutateAsync({
-          userId,
-          updates: userData,
-        });
         await updateProfile.mutateAsync({
           userId,
           updates: profileData,
         });
         toast.success('Settings updated successfully');
       }
+      
       navigate('/profile/' + userId);
     } catch (error) {
       console.error('Settings update error:', error);
-      toast.error(isCreating ? 'Failed to create profile' : 'Failed to update settings');
+      toast.error(isCreatingProfile ? 'Failed to create profile' : 'Failed to update settings');
     }
   };
 
@@ -102,7 +113,7 @@ const SettingsPage = () => {
     <div className="container mx-auto px-4 py-8">
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
-          <CardTitle>{isCreating ? 'Create Your Profile' : 'Edit Your Settings'}</CardTitle>
+          <CardTitle>{isCreatingProfile ? 'Create Your Profile' : 'Edit Your Settings'}</CardTitle>
         </CardHeader>
         <CardContent>
           <Form {...userForm}>
@@ -186,7 +197,7 @@ const SettingsPage = () => {
               <div className="flex justify-end space-x-2">
                 <Button type="button" variant="outline" onClick={() => navigate(-1)}>Cancel</Button>
                 <Button type="submit">
-                  {isCreating ? 'Create Profile' : 'Update Settings'}
+                  {isCreatingProfile ? 'Create Profile' : 'Update Settings'}
                 </Button>
               </div>
             </form>
