@@ -28,7 +28,7 @@ const ProfilePage = () => {
   const updateProfile = useUpdateProfile();
   const createProfile = useCreateProfile();
   const [isCreatingProfile, setIsCreatingProfile] = useState(false);
-  const { data: userProjects, isLoading: projectsLoading, error: projectsError } = useProjects(true);
+  const { data: userProjects, isLoading: projectsLoading, error: projectsError } = useProjects(profile?.user_id);
 
   const isOwnProfile = session?.user?.id === profile?.user_id;
 
