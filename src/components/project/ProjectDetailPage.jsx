@@ -251,7 +251,7 @@ const ImpactTab = ({ impactMetrics, isOwner, onCreateMetric, onUpdateMetric, onD
           <CardContent className="p-4">
             <div className="flex justify-between items-center mb-2">
               <h4 className="font-semibold">{metric.description}</h4>
-              <span className="text-sm text-gray-500">Score: {metric.impact_score}</span>
+              <span className="text-sm text-gray-500">Score: {metric.impact_score}%</span>
             </div>
             <Progress value={metric.impact_score} max={100} className="w-full" />
             {isOwner && (

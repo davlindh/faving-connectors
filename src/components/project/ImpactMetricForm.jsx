@@ -1,10 +1,11 @@
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Slider } from "@/components/ui/slider";
 import { useCreateImpactMetric, useUpdateImpactMetric } from '@/integrations/supabase';
 import { toast } from 'sonner';
 
@@ -21,7 +22,7 @@ const ImpactMetricForm = ({ projectId, metric = null, onSuccess }) => {
     resolver: zodResolver(impactMetricSchema),
     defaultValues: {
       description: metric?.description || '',
-      impact_score: metric?.impact_score || 0,
+      impact_score: metric?.impact_score || 50,
     },
   });
 
@@ -60,11 +61,21 @@ const ImpactMetricForm = ({ projectId, metric = null, onSuccess }) => {
         <FormField
           control={form.control}
           name="impact_score"
-          render={({ field }) => (
+          render={({ field: { onChange, value } }) => (
             <FormItem>
-              <FormLabel>Impact Score (0-100)</FormLabel>
+              <FormLabel>Impact Score</FormLabel>
               <FormControl>
-                <Input {...field} type="number" min="0" max="100" step="1" />
+                <div className="flex items-center space-x-4">
+                  <Slider
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={[value]}
+                    onValueChange={(vals) => onChange(vals[0])}
+                    className="w-full"
+                  />
+                  <span className="w-12 text-center">{value}%</span>
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
