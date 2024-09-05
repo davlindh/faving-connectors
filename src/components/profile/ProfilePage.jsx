@@ -12,9 +12,10 @@ import ServiceForm from './ServiceForm.jsx';
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import FaveScore from '../shared/FaveScore.jsx';
 import ECKTSlider from '../shared/ECKTSlider.jsx';
-import { useProfile, useUser, useUpdateProfile, useCreateProfile } from '@/integrations/supabase';
+import { useProfile, useUser, useUpdateProfile, useCreateProfile, useProjects } from '@/integrations/supabase';
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from 'sonner';
+import ProjectCard from '../project/ProjectCard';
 
 const ProfilePage = () => {
   const { profileId } = useParams();
@@ -27,6 +28,7 @@ const ProfilePage = () => {
   const updateProfile = useUpdateProfile();
   const createProfile = useCreateProfile();
   const [isCreatingProfile, setIsCreatingProfile] = useState(false);
+  const { data: userProjects, isLoading: projectsLoading, error: projectsError } = useProjects(true);
 
   const isOwnProfile = session?.user?.id === profile?.user_id;
 
@@ -37,7 +39,6 @@ const ProfilePage = () => {
   }, [profileError, isOwnProfile]);
 
   useEffect(() => {
-    // Refetch profile data when the component mounts or when profileId changes
     refetchProfile();
   }, [profileId, refetchProfile]);
 
@@ -165,11 +166,12 @@ const ProfilePage = () => {
             </Tabs>
           ) : (
             <Tabs defaultValue="about">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="about">About</TabsTrigger>
                 <TabsTrigger value="skills">Skills</TabsTrigger>
                 <TabsTrigger value="services">Services</TabsTrigger>
                 <TabsTrigger value="eckt">ECKT & Feedback</TabsTrigger>
+                <TabsTrigger value="projects">Projects</TabsTrigger>
               </TabsList>
               <TabsContent value="about">
                 <h3 className="font-semibold mb-2">Bio</h3>
@@ -192,6 +194,22 @@ const ProfilePage = () => {
                   readOnly={!isOwnProfile}
                 />
               </TabsContent>
+              <TabsContent value="projects">
+                <h3 className="font-semibold mb-2">Projects</h3>
+                {projectsLoading ? (
+                  <p>Loading projects...</p>
+                ) : projectsError ? (
+                  <p>Error loading projects: {projectsError.message}</p>
+                ) : userProjects && userProjects.length > 0 ? (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {userProjects.map((project) => (
+                      <ProjectCard key={project.project_id} project={project} />
+                    ))}
+                  </div>
+                ) : (
+                  <p>No projects found for this user.</p>
+                )}
+              </TabsContent>
             </Tabs>
           )}
         </CardContent>
@@ -203,18 +221,13 @@ const ProfilePage = () => {
 const ProfileSkeleton = () => (
   <div className="container mx-auto px-4 py-8">
     <Card>
-      <CardHeader className="flex flex-col sm:flex-row items-center gap-4">
-        <Skeleton className="w-24 h-24 rounded-full" />
-        <div className="flex-grow">
-          <Skeleton className="h-8 w-48 mb-2" />
-          <Skeleton className="h-4 w-32 mb-2" />
-          <Skeleton className="h-4 w-24" />
-        </div>
+      <CardHeader>
+        <Skeleton className="h-8 w-1/3" />
       </CardHeader>
       <CardContent>
-        <Skeleton className="h-10 w-full mb-4" />
-        <Skeleton className="h-24 w-full mb-4" />
-        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-4 w-full mb-4" />
+        <Skeleton className="h-4 w-2/3 mb-4" />
+        <Skeleton className="h-4 w-1/2" />
       </CardContent>
     </Card>
   </div>
