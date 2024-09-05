@@ -67,3 +67,56 @@ export const useRemoveProjectTeamMember = () => {
     },
   });
 };
+
+export const useCreateTeamMemberRequest = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ projectId, userId, role }) => {
+      const { data, error } = await supabase
+        .from('team_member_requests')
+        .insert({ project_id: projectId, user_id: userId, role, status: 'pending' })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(['team_member_requests', data.project_id]);
+    },
+  });
+};
+
+export const useTeamMemberRequests = (projectId) => useQuery({
+  queryKey: ['team_member_requests', projectId],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from('team_member_requests')
+      .select('*, user:users(*)')
+      .eq('project_id', projectId);
+    if (error) throw error;
+    return data;
+  },
+  enabled: !!projectId,
+});
+
+export const useUpdateTeamMemberRequest = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ requestId, status }) => {
+      const { data, error } = await supabase
+        .from('team_member_requests')
+        .update({ status })
+        .eq('id', requestId)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(['team_member_requests', data.project_id]);
+      if (data.status === 'approved') {
+        queryClient.invalidateQueries(['project_team_members', data.project_id]);
+      }
+    },
+  });
+};
