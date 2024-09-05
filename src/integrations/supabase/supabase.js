@@ -9,6 +9,9 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true
+  },
+  headers: {
+    'Accept': 'application/json'
   }
 });
 
