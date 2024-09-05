@@ -58,7 +58,7 @@ export const useCreateMessage = () => {
 export const useRecentConversations = (userId) => useQuery({
   queryKey: ['recentConversations', userId],
   queryFn: async () => {
-    const { data, error } = await supabase.rpc('get_recent_conversations', { user_id: userId });
+    const { data, error } = await supabase.rpc('get_recent_conversations', { p_user_id: userId });
     if (error) {
       console.error('Error fetching recent conversations:', error);
       return []; // Return an empty array instead of throwing an error

@@ -78,6 +78,7 @@ export const {
   useMessages,
   useCreateMessage,
   useRecentConversations,
+  useStartConversation, // Add this line to export useStartConversation
 } = messageHooks;
 
 export const {
