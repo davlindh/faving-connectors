@@ -7,19 +7,32 @@ import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Link } from 'react-router-dom';
+import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
 
 const AuthForm = ({ mode = 'login' }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(null);
+  const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const { signIn, signUp } = useSupabase();
   const navigate = useNavigate();
 
+  const validateForm = () => {
+    const newErrors = {};
+    if (!email) newErrors.email = 'Email is required';
+    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = 'Email is invalid';
+    if (!password) newErrors.password = 'Password is required';
+    else if (password.length < 6) newErrors.password = 'Password must be at least 6 characters';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
+    if (!validateForm()) return;
+
     setIsLoading(true);
+    setErrors({});
     try {
       let result;
       if (mode === 'login') {
@@ -47,13 +60,13 @@ const AuthForm = ({ mode = 'login' }) => {
 
   const handleAuthError = (error) => {
     if (error.message === 'Email not confirmed') {
-      setError('Please confirm your email address. Check your inbox for a confirmation link.');
+      setErrors({ general: 'Please confirm your email address. Check your inbox for a confirmation link.' });
     } else if (error.message === 'Invalid login credentials') {
-      setError('Invalid email or password. Please try again.');
+      setErrors({ general: 'Invalid email or password. Please try again.' });
     } else if (error.message === 'User already registered') {
-      setError('An account with this email already exists. Please log in or use a different email.');
+      setErrors({ email: 'An account with this email already exists. Please log in or use a different email.' });
     } else {
-      setError(`An error occurred: ${error.message}`);
+      setErrors({ general: `An error occurred: ${error.message}` });
     }
   };
 
@@ -89,7 +102,9 @@ const AuthForm = ({ mode = 'login' }) => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete={mode === 'login' ? 'username' : 'email'}
+                className={errors.email ? 'border-red-500' : ''}
               />
+              {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
             </div>
             <div className="flex flex-col space-y-1.5">
               <Input
@@ -101,13 +116,16 @@ const AuthForm = ({ mode = 'login' }) => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                className={errors.password ? 'border-red-500' : ''}
               />
+              {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
             </div>
           </div>
-          {error && (
+          {errors.general && (
             <Alert variant="destructive" className="mt-4">
-              <AlertDescription>{error}</AlertDescription>
-              {error.includes('confirm your email') && (
+              <ExclamationTriangleIcon className="h-4 w-4" />
+              <AlertDescription>{errors.general}</AlertDescription>
+              {errors.general.includes('confirm your email') && (
                 <Button onClick={handleResendConfirmation} variant="link" className="mt-2 p-0">
                   Resend confirmation email
                 </Button>
