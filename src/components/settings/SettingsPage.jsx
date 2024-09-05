@@ -8,13 +8,16 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useProfile, useCreateProfile, useUpdateProfile } from '@/integrations/supabase';
+import { useProfile, useCreateProfile, useUpdateProfile, useUser, useUpdateUser } from '@/integrations/supabase';
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import { toast } from 'sonner';
 
-const profileSchema = z.object({
+const userSchema = z.object({
   first_name: z.string().min(1, 'First name is required'),
   last_name: z.string().min(1, 'Last name is required'),
+});
+
+const profileSchema = z.object({
   location: z.string().max(100, 'Location must be 100 characters or less').optional(),
   bio: z.string().max(500, 'Bio must be 500 characters or less').optional(),
   avatar_url: z.string().url('Invalid URL').optional().or(z.literal('')),
@@ -23,17 +26,25 @@ const profileSchema = z.object({
 const SettingsPage = () => {
   const { session } = useSupabase();
   const userId = session?.user?.id;
-  const { data: profile, isLoading, error } = useProfile(userId);
+  const { data: profile, isLoading: profileLoading, error: profileError } = useProfile(userId);
+  const { data: user, isLoading: userLoading, error: userError } = useUser(userId);
   const createProfile = useCreateProfile();
   const updateProfile = useUpdateProfile();
+  const updateUser = useUpdateUser();
   const navigate = useNavigate();
   const [isCreating, setIsCreating] = useState(false);
 
-  const form = useForm({
-    resolver: zodResolver(profileSchema),
+  const userForm = useForm({
+    resolver: zodResolver(userSchema),
     defaultValues: {
       first_name: '',
       last_name: '',
+    },
+  });
+
+  const profileForm = useForm({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
       location: '',
       bio: '',
       avatar_url: '',
@@ -41,55 +52,63 @@ const SettingsPage = () => {
   });
 
   useEffect(() => {
+    if (user) {
+      userForm.reset({
+        first_name: user.first_name || '',
+        last_name: user.last_name || '',
+      });
+    }
     if (profile) {
-      form.reset({
-        first_name: profile.first_name || '',
-        last_name: profile.last_name || '',
+      profileForm.reset({
         location: profile.location || '',
         bio: profile.bio || '',
         avatar_url: profile.avatar_url || '',
       });
-    } else if (!isLoading && !error) {
+    } else if (!profileLoading && !profileError) {
       setIsCreating(true);
     }
-  }, [profile, isLoading, error, form]);
+  }, [user, profile, profileLoading, profileError, userForm, profileForm]);
 
-  const onSubmit = async (data) => {
+  const onSubmit = async (userData, profileData) => {
     try {
       if (isCreating) {
         await createProfile.mutateAsync({
           user_id: userId,
-          ...data,
+          ...profileData,
         });
         toast.success('Profile created successfully');
       } else {
+        await updateUser.mutateAsync({
+          userId,
+          updates: userData,
+        });
         await updateProfile.mutateAsync({
           userId,
-          updates: data,
+          updates: profileData,
         });
-        toast.success('Profile updated successfully');
+        toast.success('Settings updated successfully');
       }
       navigate('/profile/' + userId);
     } catch (error) {
-      console.error('Profile operation error:', error);
-      toast.error(isCreating ? 'Failed to create profile' : 'Failed to update profile');
+      console.error('Settings update error:', error);
+      toast.error(isCreating ? 'Failed to create profile' : 'Failed to update settings');
     }
   };
 
-  if (isLoading) return <div className="text-center py-8">Loading settings...</div>;
-  if (error) return <div className="text-center text-red-500 py-8">Error loading settings: {error.message}</div>;
+  if (userLoading || profileLoading) return <div className="text-center py-8">Loading settings...</div>;
+  if (userError || profileError) return <div className="text-center text-red-500 py-8">Error loading settings: {userError?.message || profileError?.message}</div>;
 
   return (
     <div className="container mx-auto px-4 py-8">
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
-          <CardTitle>{isCreating ? 'Create Your Profile' : 'Edit Your Profile'}</CardTitle>
+          <CardTitle>{isCreating ? 'Create Your Profile' : 'Edit Your Settings'}</CardTitle>
         </CardHeader>
         <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <Form {...userForm}>
+            <form onSubmit={userForm.handleSubmit((userData) => profileForm.handleSubmit((profileData) => onSubmit(userData, profileData))())} className="space-y-6">
               <FormField
-                control={form.control}
+                control={userForm.control}
                 name="first_name"
                 render={({ field }) => (
                   <FormItem>
@@ -102,7 +121,7 @@ const SettingsPage = () => {
                 )}
               />
               <FormField
-                control={form.control}
+                control={userForm.control}
                 name="last_name"
                 render={({ field }) => (
                   <FormItem>
@@ -115,7 +134,7 @@ const SettingsPage = () => {
                 )}
               />
               <FormField
-                control={form.control}
+                control={profileForm.control}
                 name="location"
                 render={({ field }) => (
                   <FormItem>
@@ -128,7 +147,7 @@ const SettingsPage = () => {
                 )}
               />
               <FormField
-                control={form.control}
+                control={profileForm.control}
                 name="bio"
                 render={({ field }) => (
                   <FormItem>
@@ -147,7 +166,7 @@ const SettingsPage = () => {
                 )}
               />
               <FormField
-                control={form.control}
+                control={profileForm.control}
                 name="avatar_url"
                 render={({ field }) => (
                   <FormItem>
@@ -167,7 +186,7 @@ const SettingsPage = () => {
               <div className="flex justify-end space-x-2">
                 <Button type="button" variant="outline" onClick={() => navigate(-1)}>Cancel</Button>
                 <Button type="submit">
-                  {isCreating ? 'Create Profile' : 'Update Profile'}
+                  {isCreating ? 'Create Profile' : 'Update Settings'}
                 </Button>
               </div>
             </form>
