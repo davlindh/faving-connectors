@@ -7,7 +7,7 @@ import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Link } from 'react-router-dom';
-import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
+import { ExclamationTriangle } from 'lucide-react';
 
 const AuthForm = ({ mode = 'login' }) => {
   const [email, setEmail] = useState('');
@@ -123,7 +123,7 @@ const AuthForm = ({ mode = 'login' }) => {
           </div>
           {errors.general && (
             <Alert variant="destructive" className="mt-4">
-              <ExclamationTriangleIcon className="h-4 w-4" />
+              <ExclamationTriangle className="h-4 w-4" />
               <AlertDescription>{errors.general}</AlertDescription>
               {errors.general.includes('confirm your email') && (
                 <Button onClick={handleResendConfirmation} variant="link" className="mt-2 p-0">
