@@ -153,6 +153,7 @@ const ProjectDetailPage = () => {
                 onCreateMetric={handleCreateImpactMetric}
                 onUpdateMetric={handleUpdateImpactMetric}
                 onDeleteMetric={handleDeleteImpactMetric}
+                projectId={projectId}
               />
             </TabsContent>
             <TabsContent value="team">
@@ -241,7 +242,7 @@ const OverviewTab = ({ project }) => (
   </div>
 );
 
-const ImpactTab = ({ impactMetrics, isOwner, onCreateMetric, onUpdateMetric, onDeleteMetric }) => (
+const ImpactTab = ({ impactMetrics, isOwner, onCreateMetric, onUpdateMetric, onDeleteMetric, projectId }) => (
   <div className="space-y-4">
     <h3 className="text-xl font-semibold">Impact Metrics</h3>
     {impactMetrics && impactMetrics.length > 0 ? (
@@ -270,7 +271,7 @@ const ImpactTab = ({ impactMetrics, isOwner, onCreateMetric, onUpdateMetric, onD
       <p>No impact metrics available for this project.</p>
     )}
     {isOwner && (
-      <ImpactMetricForm onSubmit={onCreateMetric} />
+      <ImpactMetricForm projectId={projectId} onSuccess={() => {}} />
     )}
   </div>
 );

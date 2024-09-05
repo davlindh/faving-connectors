@@ -5,7 +5,7 @@ export const useImpactMetrics = (projectId) => useQuery({
   queryKey: ['impact_metrics', projectId],
   queryFn: async () => {
     const { data, error } = await supabase
-      .from('impact_metrics')
+      .from('project_impact_metrics')
       .select('*')
       .eq('project_id', projectId);
     if (error) throw error;
@@ -19,7 +19,7 @@ export const useCreateImpactMetric = () => {
   return useMutation({
     mutationFn: async (newMetric) => {
       const { data, error } = await supabase
-        .from('impact_metrics')
+        .from('project_impact_metrics')
         .insert([newMetric])
         .select();
       if (error) throw error;
@@ -36,7 +36,7 @@ export const useUpdateImpactMetric = () => {
   return useMutation({
     mutationFn: async ({ metricId, updates }) => {
       const { data, error } = await supabase
-        .from('impact_metrics')
+        .from('project_impact_metrics')
         .update(updates)
         .eq('metric_id', metricId)
         .select();
@@ -54,7 +54,7 @@ export const useDeleteImpactMetric = () => {
   return useMutation({
     mutationFn: async (metricId) => {
       const { data, error } = await supabase
-        .from('impact_metrics')
+        .from('project_impact_metrics')
         .delete()
         .eq('metric_id', metricId)
         .select();
