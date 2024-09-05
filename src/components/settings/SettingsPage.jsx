@@ -80,13 +80,15 @@ const SettingsPage = () => {
     }
 
     try {
+      const now = new Date().toISOString();
+      
       // Handle user data
       const userPayload = {
         ...userData,
         user_id: userId,
         email: session.user.email,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        created_at: now,
+        updated_at: now,
       };
 
       if (user) {
@@ -100,8 +102,8 @@ const SettingsPage = () => {
         await createProfile.mutateAsync({
           user_id: userId,
           ...profileData,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+          created_at: now,
+          updated_at: now,
         });
         toast.success('Profile created successfully');
       } else {
@@ -109,7 +111,7 @@ const SettingsPage = () => {
           userId,
           updates: {
             ...profileData,
-            updated_at: new Date().toISOString(),
+            updated_at: now,
           },
         });
         toast.success('Settings updated successfully');
