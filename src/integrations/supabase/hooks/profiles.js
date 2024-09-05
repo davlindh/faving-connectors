@@ -24,11 +24,14 @@ export const useProfile = (userId) => useQuery({
         // No rows returned
         return null;
       }
+      console.error('Profile fetch error:', error);
       throw error;
     }
     return data;
   },
   enabled: !!userId,
+  retry: 3,
+  retryDelay: 1000,
 });
 
 export const useCreateProfile = () => {

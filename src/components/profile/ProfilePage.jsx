@@ -71,6 +71,16 @@ const ProfilePage = () => {
     return <ProfileSkeleton />;
   }
 
+  if (profileError) {
+    console.error('Profile error:', profileError);
+    return <div className="text-center mt-8">Error loading profile: {profileError.message}</div>;
+  }
+
+  if (userError) {
+    console.error('User error:', userError);
+    return <div className="text-center mt-8">Error loading user data: {userError.message}</div>;
+  }
+
   if (isCreatingProfile) {
     return (
       <div className="container mx-auto px-4 py-8">
