@@ -15,7 +15,6 @@ import ECKTSlider from '../shared/ECKTSlider.jsx';
 import { useProfile, useUser, useUpdateProfile, useCreateProfile } from '@/integrations/supabase';
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from 'sonner';
-import { DialogContent, DialogHeader, DialogTitle, Dialog, DialogTrigger } from "@/components/ui/dialog";
 
 const ProfilePage = () => {
   const { profileId } = useParams();
@@ -27,14 +26,15 @@ const ProfilePage = () => {
   const [activeTab, setActiveTab] = useState('about');
   const updateProfile = useUpdateProfile();
   const createProfile = useCreateProfile();
+  const [isCreatingProfile, setIsCreatingProfile] = useState(false);
 
   const isOwnProfile = session?.user?.id === profile?.user_id;
 
   useEffect(() => {
-    if (profileError && profileError.message.includes("No rows returned")) {
-      handleCreateProfile();
+    if (profileError && profileError.message.includes("No rows returned") && isOwnProfile) {
+      setIsCreatingProfile(true);
     }
-  }, [profileError]);
+  }, [profileError, isOwnProfile]);
 
   const handleCreateProfile = async () => {
     if (!session?.user?.id) {
@@ -54,6 +54,7 @@ const ProfilePage = () => {
 
       await createProfile.mutateAsync(newProfile);
       toast.success('Profile created successfully');
+      setIsCreatingProfile(false);
       window.location.reload(); // Reload the page to fetch the new profile
     } catch (error) {
       console.error('Error creating profile:', error);
@@ -65,13 +66,18 @@ const ProfilePage = () => {
     return <ProfileSkeleton />;
   }
 
-  if (profileError && !profile) {
+  if (isCreatingProfile) {
     return (
-      <div className="text-center mt-8">
-        <p className="text-red-500 mb-4">Error: {profileError.message}</p>
-        {isOwnProfile && (
-          <Button onClick={handleCreateProfile}>Create Profile</Button>
-        )}
+      <div className="container mx-auto px-4 py-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Create Your Profile</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">You don't have a profile yet. Let's create one!</p>
+            <Button onClick={handleCreateProfile}>Create Profile</Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
