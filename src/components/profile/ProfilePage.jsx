@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,7 +12,7 @@ import ServiceForm from './ServiceForm.jsx';
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import FaveScore from '../shared/FaveScore.jsx';
 import ECKTSlider from '../shared/ECKTSlider.jsx';
-import { useProfile, useUser, useUpdateProfile } from '@/integrations/supabase';
+import { useProfile, useUser, useUpdateProfile, useCreateProfile } from '@/integrations/supabase';
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from 'sonner';
 
@@ -25,15 +25,54 @@ const ProfilePage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('about');
   const updateProfile = useUpdateProfile();
+  const createProfile = useCreateProfile();
 
   const isOwnProfile = session?.user?.id === profile?.user_id;
+
+  useEffect(() => {
+    if (profileError && profileError.message.includes("invalid input syntax for type uuid")) {
+      handleCreateProfile();
+    }
+  }, [profileError]);
+
+  const handleCreateProfile = async () => {
+    if (!session?.user?.id) {
+      toast.error('You must be logged in to create a profile');
+      return;
+    }
+
+    try {
+      const newProfile = {
+        user_id: session.user.id,
+        first_name: '',
+        last_name: '',
+        bio: '',
+        location: '',
+        avatar_url: '',
+      };
+
+      await createProfile.mutateAsync(newProfile);
+      toast.success('Profile created successfully');
+      window.location.reload(); // Reload the page to fetch the new profile
+    } catch (error) {
+      console.error('Error creating profile:', error);
+      toast.error('Failed to create profile');
+    }
+  };
 
   if (profileLoading || userLoading) {
     return <ProfileSkeleton />;
   }
 
-  if (profileError || userError) {
-    return <div className="text-center mt-8 text-red-500">Error: {profileError?.message || userError?.message}</div>;
+  if (profileError && !profile) {
+    return (
+      <div className="text-center mt-8">
+        <p className="text-red-500 mb-4">Error: {profileError.message}</p>
+        {isOwnProfile && (
+          <Button onClick={handleCreateProfile}>Create Profile</Button>
+        )}
+      </div>
+    );
   }
 
   if (!profile || !user) {
