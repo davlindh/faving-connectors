@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Send, Search, Paperclip } from 'lucide-react';
+import { Send, Search, Paperclip, MessageSquare } from 'lucide-react';
 import { useProfiles, useMessages, useCreateMessage, useRecentConversations, useStartConversation } from '@/integrations/supabase';
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import { format } from 'date-fns';
@@ -166,6 +166,17 @@ const MessagingInterface = () => {
                   <h3 className="font-medium">{profile.first_name} {profile.last_name}</h3>
                   <p className="text-sm text-gray-500 truncate">{profile.location || 'No location set'}</p>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="ml-auto"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleStartConversation(profile.user_id);
+                  }}
+                >
+                  <MessageSquare className="h-4 w-4" />
+                </Button>
               </div>
             ))}
           </div>
