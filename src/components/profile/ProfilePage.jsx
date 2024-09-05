@@ -20,8 +20,8 @@ import ProjectCard from '../project/ProjectCard';
 const ProfilePage = () => {
   const { profileId } = useParams();
   const { session } = useSupabase();
-  const userId = session?.user?.id;
-  const { data: profile, isLoading: profileLoading, error: profileError, refetch: refetchProfile } = useProfile(profileId || userId);
+  const userId = profileId || session?.user?.id;
+  const { data: profile, isLoading: profileLoading, error: profileError, refetch: refetchProfile } = useProfile(userId);
   const { data: user, isLoading: userLoading, error: userError } = useUser(profile?.user_id);
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('about');
