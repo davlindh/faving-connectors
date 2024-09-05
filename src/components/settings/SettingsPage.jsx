@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 const userSchema = z.object({
   first_name: z.string().min(1, 'First name is required'),
   last_name: z.string().min(1, 'Last name is required'),
+  email: z.string().email('Invalid email address'),
 });
 
 const profileSchema = z.object({
@@ -40,6 +41,7 @@ const SettingsPage = () => {
     defaultValues: {
       first_name: '',
       last_name: '',
+      email: '',
     },
   });
 
@@ -57,6 +59,7 @@ const SettingsPage = () => {
       userForm.reset({
         first_name: user.first_name || '',
         last_name: user.last_name || '',
+        email: user.email || '',
       });
     }
     if (profile) {
@@ -78,10 +81,16 @@ const SettingsPage = () => {
 
     try {
       // Handle user data
+      const userPayload = {
+        ...userData,
+        user_id: userId,
+        email: session.user.email, // Ensure email is always included
+      };
+
       if (user) {
-        await updateUser.mutateAsync({ userId, updates: userData });
+        await updateUser.mutateAsync({ userId, updates: userPayload });
       } else {
-        await createUser.mutateAsync({ ...userData, user_id: userId });
+        await createUser.mutateAsync(userPayload);
       }
 
       // Handle profile data
@@ -139,6 +148,19 @@ const SettingsPage = () => {
                     <FormLabel htmlFor="last_name">Last Name</FormLabel>
                     <FormControl>
                       <Input {...field} id="last_name" placeholder="Enter your last name" autoComplete="family-name" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={userForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel htmlFor="email">Email</FormLabel>
+                    <FormControl>
+                      <Input {...field} id="email" type="email" placeholder="Enter your email" autoComplete="email" disabled />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
