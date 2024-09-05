@@ -4,11 +4,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Send, Search } from 'lucide-react';
-import { useProfiles, useMessages, useCreateMessage } from '@/integrations/supabase';
+import { Send, Search, Paperclip } from 'lucide-react';
+import { useProfiles, useMessages, useCreateMessage, useRecentConversations } from '@/integrations/supabase';
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { useSubscription } from '@/hooks/useSubscription';
 
 const MessagingInterface = () => {
   const { data: profiles, isLoading: profilesLoading, error: profilesError } = useProfiles();
@@ -18,11 +19,14 @@ const MessagingInterface = () => {
   const createMessage = useCreateMessage();
   const [searchTerm, setSearchTerm] = useState('');
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
   
   const { data: messages, isLoading: messagesLoading, error: messagesError } = useMessages(
     session?.user?.id,
     activeConversation?.user_id
   );
+
+  const { data: recentConversations, isLoading: recentConversationsLoading, error: recentConversationsError } = useRecentConversations(session?.user?.id);
 
   const filteredProfiles = profiles?.filter(profile => 
     profile.user_id !== session?.user?.id &&
@@ -30,18 +34,31 @@ const MessagingInterface = () => {
     profile.last_name?.toLowerCase().includes(searchTerm.toLowerCase()))
   ) || [];
 
+  useSubscription('new_message', (payload) => {
+    if (payload.new.recipient_id === session?.user?.id) {
+      // Refresh messages or add the new message to the state
+      // This depends on how you want to handle real-time updates
+    }
+  });
+
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (newMessage.trim() === '' || !activeConversation) return;
+    if (newMessage.trim() === '' && !fileInputRef.current.files[0]) return;
 
     try {
-      await createMessage.mutateAsync({
-        sender_id: session.user.id,
-        recipient_id: activeConversation.user_id,
-        content: newMessage,
-        sent_at: new Date().toISOString(),
-      });
+      const formData = new FormData();
+      formData.append('sender_id', session.user.id);
+      formData.append('recipient_id', activeConversation.user_id);
+      formData.append('content', newMessage);
+      formData.append('sent_at', new Date().toISOString());
+
+      if (fileInputRef.current.files[0]) {
+        formData.append('attachment', fileInputRef.current.files[0]);
+      }
+
+      await createMessage.mutateAsync(formData);
       setNewMessage('');
+      fileInputRef.current.value = '';
       toast.success('Message sent successfully');
     } catch (error) {
       console.error('Error sending message:', error);
@@ -53,12 +70,12 @@ const MessagingInterface = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  if (profilesLoading) {
-    return <div className="text-center p-4">Loading profiles...</div>;
+  if (profilesLoading || recentConversationsLoading) {
+    return <div className="text-center p-4">Loading conversations...</div>;
   }
 
-  if (profilesError) {
-    return <div className="text-center p-4 text-red-500">Error loading profiles: {profilesError.message}</div>;
+  if (profilesError || recentConversationsError) {
+    return <div className="text-center p-4 text-red-500">Error loading conversations: {profilesError?.message || recentConversationsError?.message}</div>;
   }
 
   return (
@@ -78,24 +95,50 @@ const MessagingInterface = () => {
           </div>
         </div>
         <ScrollArea className="flex-grow">
-          {filteredProfiles.map((profile) => (
-            <div
-              key={profile.user_id}
-              className={`flex items-center p-4 hover:bg-gray-100 cursor-pointer ${
-                activeConversation?.user_id === profile.user_id ? 'bg-gray-200' : ''
-              }`}
-              onClick={() => setActiveConversation(profile)}
-            >
-              <Avatar className="h-10 w-10 mr-3">
-                <AvatarImage src={profile.avatar_url} alt={`${profile.first_name} ${profile.last_name}`} />
-                <AvatarFallback>{profile.first_name?.[0]}{profile.last_name?.[0]}</AvatarFallback>
-              </Avatar>
-              <div>
-                <h3 className="font-medium">{profile.first_name} {profile.last_name}</h3>
-                <p className="text-sm text-gray-500 truncate">{profile.location || 'No location set'}</p>
-              </div>
+          {recentConversations && recentConversations.length > 0 && (
+            <div className="p-4 border-b">
+              <h3 className="font-semibold mb-2">Recent Conversations</h3>
+              {recentConversations.map((conversation) => (
+                <div
+                  key={conversation.user_id}
+                  className={`flex items-center p-2 hover:bg-gray-100 cursor-pointer ${
+                    activeConversation?.user_id === conversation.user_id ? 'bg-gray-200' : ''
+                  }`}
+                  onClick={() => setActiveConversation(conversation)}
+                >
+                  <Avatar className="h-10 w-10 mr-3">
+                    <AvatarImage src={conversation.avatar_url} alt={`${conversation.first_name} ${conversation.last_name}`} />
+                    <AvatarFallback>{conversation.first_name?.[0]}{conversation.last_name?.[0]}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h3 className="font-medium">{conversation.first_name} {conversation.last_name}</h3>
+                    <p className="text-sm text-gray-500 truncate">{conversation.last_message}</p>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          )}
+          <div className="p-4">
+            <h3 className="font-semibold mb-2">All Profiles</h3>
+            {filteredProfiles.map((profile) => (
+              <div
+                key={profile.user_id}
+                className={`flex items-center p-2 hover:bg-gray-100 cursor-pointer ${
+                  activeConversation?.user_id === profile.user_id ? 'bg-gray-200' : ''
+                }`}
+                onClick={() => setActiveConversation(profile)}
+              >
+                <Avatar className="h-10 w-10 mr-3">
+                  <AvatarImage src={profile.avatar_url} alt={`${profile.first_name} ${profile.last_name}`} />
+                  <AvatarFallback>{profile.first_name?.[0]}{profile.last_name?.[0]}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <h3 className="font-medium">{profile.first_name} {profile.last_name}</h3>
+                  <p className="text-sm text-gray-500 truncate">{profile.location || 'No location set'}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </ScrollArea>
       </div>
       <div className="w-2/3 flex flex-col">
@@ -113,6 +156,11 @@ const MessagingInterface = () => {
                 <div key={message.message_id} className={`mb-4 ${message.sender_id === session.user.id ? 'text-right' : ''}`}>
                   <div className={`inline-block p-2 rounded-lg ${message.sender_id === session.user.id ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}>
                     <p>{message.content}</p>
+                    {message.attachment_url && (
+                      <a href={message.attachment_url} target="_blank" rel="noopener noreferrer" className="text-sm underline">
+                        View Attachment
+                      </a>
+                    )}
                     <span className="text-xs text-gray-500 mt-1 block">
                       {format(new Date(message.sent_at), 'MMM d, yyyy HH:mm')}
                     </span>
@@ -131,7 +179,23 @@ const MessagingInterface = () => {
             onChange={(e) => setNewMessage(e.target.value)}
             disabled={!activeConversation}
           />
-          <Button type="submit" disabled={!activeConversation || newMessage.trim() === ''}>
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            onChange={() => {}} // Add any necessary logic for file selection
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={() => fileInputRef.current.click()}
+            disabled={!activeConversation}
+            className="mr-2"
+          >
+            <Paperclip className="h-4 w-4" />
+          </Button>
+          <Button type="submit" disabled={!activeConversation || (newMessage.trim() === '' && !fileInputRef.current?.files[0])}>
             <Send className="h-4 w-4" />
           </Button>
         </form>
