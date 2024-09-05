@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useProjects } from '@/integrations/supabase';
 import ProjectCard from './ProjectCard';
 import { Input } from "@/components/ui/input";
@@ -8,19 +8,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { X, Search, Plus, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useInView } from 'react-intersection-observer';
+
+const PROJECTS_PER_PAGE = 9;
 
 const ProjectListPage = () => {
   const [activeTab, setActiveTab] = useState('all');
-  const { data: allProjects, isLoading: allProjectsLoading, error: allProjectsError } = useProjects(false);
-  const { data: myProjects, isLoading: myProjectsLoading, error: myProjectsError } = useProjects(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     category: 'all',
@@ -30,10 +27,18 @@ const ProjectListPage = () => {
   });
   const [sortBy, setSortBy] = useState('latest');
   const [displayedProjects, setDisplayedProjects] = useState([]);
+  const [page, setPage] = useState(1);
   const navigate = useNavigate();
   const { session } = useSupabase();
 
-  useEffect(() => {
+  const { data: allProjects, isLoading: allProjectsLoading, error: allProjectsError } = useProjects(false);
+  const { data: myProjects, isLoading: myProjectsLoading, error: myProjectsError } = useProjects(true);
+
+  const { ref, inView } = useInView({
+    threshold: 0,
+  });
+
+  const loadMoreProjects = useCallback(() => {
     const projects = activeTab === 'all' ? allProjects : myProjects;
     if (projects) {
       const filtered = projects.filter(project => 
@@ -50,9 +55,20 @@ const ProjectListPage = () => {
         return 0;
       });
 
-      setDisplayedProjects(sorted);
+      const newProjects = sorted.slice(0, page * PROJECTS_PER_PAGE);
+      setDisplayedProjects(newProjects);
     }
-  }, [allProjects, myProjects, activeTab, searchTerm, filters, sortBy]);
+  }, [allProjects, myProjects, activeTab, searchTerm, filters, sortBy, page]);
+
+  useEffect(() => {
+    loadMoreProjects();
+  }, [loadMoreProjects]);
+
+  useEffect(() => {
+    if (inView) {
+      setPage(prevPage => prevPage + 1);
+    }
+  }, [inView]);
 
   const handleSkillAdd = (e) => {
     if (e.key === 'Enter' && e.target.value) {
@@ -241,6 +257,9 @@ const ProjectListPage = () => {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Infinite scroll trigger */}
+      <div ref={ref} className="h-10" />
     </div>
   );
 };
