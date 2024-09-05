@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Send, Search, Paperclip } from 'lucide-react';
-import { useProfiles, useMessages, useCreateMessage, useRecentConversations } from '@/integrations/supabase';
+import { useProfiles, useMessages, useCreateMessage, useRecentConversations, useStartConversation } from '@/integrations/supabase';
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -17,6 +17,7 @@ const MessagingInterface = () => {
   const [newMessage, setNewMessage] = useState('');
   const { session } = useSupabase();
   const createMessage = useCreateMessage();
+  const startConversation = useStartConversation();
   const [searchTerm, setSearchTerm] = useState('');
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -66,6 +67,21 @@ const MessagingInterface = () => {
     }
   };
 
+  const handleStartConversation = async (recipientId) => {
+    try {
+      await startConversation.mutateAsync({
+        senderId: session.user.id,
+        recipientId,
+        content: 'Hello! I would like to start a conversation.',
+      });
+      setActiveConversation({ user_id: recipientId });
+      toast.success('Conversation started successfully');
+    } catch (error) {
+      console.error('Error starting conversation:', error);
+      toast.error('Failed to start conversation. Please try again.');
+    }
+  };
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -75,7 +91,8 @@ const MessagingInterface = () => {
   }
 
   if (profilesError || recentConversationsError) {
-    return <div className="text-center p-4 text-red-500">Error loading conversations: {profilesError?.message || recentConversationsError?.message}</div>;
+    console.error('Error loading data:', profilesError || recentConversationsError);
+    // Continue rendering the component with available data
   }
 
   return (
@@ -100,19 +117,26 @@ const MessagingInterface = () => {
               <h3 className="font-semibold mb-2">Recent Conversations</h3>
               {recentConversations.map((conversation) => (
                 <div
-                  key={conversation.user_id}
+                  key={conversation.message_id}
                   className={`flex items-center p-2 hover:bg-gray-100 cursor-pointer ${
-                    activeConversation?.user_id === conversation.user_id ? 'bg-gray-200' : ''
+                    activeConversation?.user_id === conversation.sender_id ? 'bg-gray-200' : ''
                   }`}
-                  onClick={() => setActiveConversation(conversation)}
+                  onClick={() => setActiveConversation({
+                    user_id: conversation.sender_id === session.user.id ? conversation.recipient_id : conversation.sender_id,
+                    first_name: conversation.sender_id === session.user.id ? conversation.recipient_first_name : conversation.sender_first_name,
+                    last_name: conversation.sender_id === session.user.id ? conversation.recipient_last_name : conversation.sender_last_name,
+                  })}
                 >
                   <Avatar className="h-10 w-10 mr-3">
-                    <AvatarImage src={conversation.avatar_url} alt={`${conversation.first_name} ${conversation.last_name}`} />
-                    <AvatarFallback>{conversation.first_name?.[0]}{conversation.last_name?.[0]}</AvatarFallback>
+                    <AvatarFallback>{conversation.sender_first_name[0]}{conversation.sender_last_name[0]}</AvatarFallback>
                   </Avatar>
                   <div>
-                    <h3 className="font-medium">{conversation.first_name} {conversation.last_name}</h3>
-                    <p className="text-sm text-gray-500 truncate">{conversation.last_message}</p>
+                    <h3 className="font-medium">
+                      {conversation.sender_id === session.user.id
+                        ? `${conversation.recipient_first_name} ${conversation.recipient_last_name}`
+                        : `${conversation.sender_first_name} ${conversation.sender_last_name}`}
+                    </h3>
+                    <p className="text-sm text-gray-500 truncate">{conversation.content}</p>
                   </div>
                 </div>
               ))}
@@ -126,7 +150,13 @@ const MessagingInterface = () => {
                 className={`flex items-center p-2 hover:bg-gray-100 cursor-pointer ${
                   activeConversation?.user_id === profile.user_id ? 'bg-gray-200' : ''
                 }`}
-                onClick={() => setActiveConversation(profile)}
+                onClick={() => {
+                  if (recentConversations?.some(conv => conv.sender_id === profile.user_id || conv.recipient_id === profile.user_id)) {
+                    setActiveConversation(profile);
+                  } else {
+                    handleStartConversation(profile.user_id);
+                  }
+                }}
               >
                 <Avatar className="h-10 w-10 mr-3">
                   <AvatarImage src={profile.avatar_url} alt={`${profile.first_name} ${profile.last_name}`} />

@@ -59,8 +59,34 @@ export const useRecentConversations = (userId) => useQuery({
   queryKey: ['recentConversations', userId],
   queryFn: async () => {
     const { data, error } = await supabase.rpc('get_recent_conversations', { user_id: userId });
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching recent conversations:', error);
+      return []; // Return an empty array instead of throwing an error
+    }
     return data;
   },
   enabled: !!userId,
 });
+
+export const useStartConversation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ senderId, recipientId, content }) => {
+      const { data, error } = await supabase
+        .from('messages')
+        .insert([{
+          sender_id: senderId,
+          recipient_id: recipientId,
+          content: content,
+          sent_at: new Date().toISOString(),
+        }])
+        .select();
+      if (error) throw error;
+      return data[0];
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(['recentConversations', data.sender_id]);
+      queryClient.invalidateQueries(['messages', data.sender_id, data.recipient_id]);
+    },
+  });
+};
