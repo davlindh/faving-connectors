@@ -7,7 +7,6 @@ if (!supabaseUrl || !supabaseKey) {
   throw new Error('Missing Supabase environment variables');
 }
 
-// Create a single instance of the Supabase client
 const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
     autoRefreshToken: true,
@@ -17,12 +16,19 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
   global: {
     headers: {
       'apikey': supabaseKey,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
     },
+  },
+  fetch: (url, options) => {
+    options.headers = {
+      ...options.headers,
+      'Accept': 'application/json, application/vnd.pgrst.object+json',
+    };
+    return fetch(url, options);
   },
 });
 
-// Export the single instance
 export { supabase };
 
-// Export a function that returns the same instance
 export const getSupabase = () => supabase;
