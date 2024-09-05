@@ -1,84 +1,69 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../supabase';
 
-export const useTeam = (teamId) => useQuery({
-  queryKey: ['team', teamId],
+export const useTeamMembers = (projectId) => useQuery({
+  queryKey: ['team_members', projectId],
   queryFn: async () => {
     const { data, error } = await supabase
-      .from('teams')
-      .select(`
-        *,
-        members:team_members(*)
-      `)
-      .eq('team_id', teamId)
-      .single();
+      .from('project_team_members')
+      .select('*, user:users(*)')
+      .eq('project_id', projectId);
     if (error) throw error;
     return data;
   },
-  enabled: !!teamId,
+  enabled: !!projectId,
 });
 
-export const useTeamProjects = (teamId) => useQuery({
-  queryKey: ['team_projects', teamId],
-  queryFn: async () => {
-    const { data, error } = await supabase
-      .from('projects')
-      .select('*')
-      .eq('team_id', teamId);
-    if (error) throw error;
-    return data;
-  },
-  enabled: !!teamId,
-});
-
-export const useTeamMemberRequests = (teamId) => useQuery({
-  queryKey: ['team_member_requests', teamId],
-  queryFn: async () => {
-    const { data, error } = await supabase
-      .from('team_member_requests')
-      .select(`
-        *,
-        user:users(*)
-      `)
-      .eq('team_id', teamId);
-    if (error) throw error;
-    return data;
-  },
-  enabled: !!teamId,
-});
-
-export const useCreateTeamMemberRequest = () => {
+export const useAddTeamMember = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ teamId, userId }) => {
+    mutationFn: async ({ projectId, userId, role }) => {
       const { data, error } = await supabase
-        .from('team_member_requests')
-        .insert({ team_id: teamId, user_id: userId, status: 'pending' })
-        .select();
+        .from('project_team_members')
+        .insert({ project_id: projectId, user_id: userId, role })
+        .select()
+        .single();
       if (error) throw error;
-      return data[0];
+      return data;
     },
-    onSuccess: (_, { teamId }) => {
-      queryClient.invalidateQueries(['team_member_requests', teamId]);
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(['team_members', data.project_id]);
     },
   });
 };
 
-export const useUpdateTeamMemberRequest = () => {
+export const useUpdateTeamMember = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ requestId, status }) => {
+    mutationFn: async ({ id, updates }) => {
       const { data, error } = await supabase
-        .from('team_member_requests')
-        .update({ status })
-        .eq('id', requestId)
-        .select();
+        .from('project_team_members')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
       if (error) throw error;
-      return data[0];
+      return data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['team_member_requests', data.team_id]);
-      queryClient.invalidateQueries(['team', data.team_id]);
+      queryClient.invalidateQueries(['team_members', data.project_id]);
+    },
+  });
+};
+
+export const useRemoveTeamMember = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, projectId }) => {
+      const { error } = await supabase
+        .from('project_team_members')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      return { id, projectId };
+    },
+    onSuccess: ({ projectId }) => {
+      queryClient.invalidateQueries(['team_members', projectId]);
     },
   });
 };

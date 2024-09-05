@@ -14,6 +14,7 @@ import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import FaveScore from '../shared/FaveScore';
 import ExpressInterestButton from './ExpressInterestButton';
 import ImpactMetricForm from './ImpactMetricForm';
+import TeamManagement from './TeamManagement';
 
 const ProjectDetailPage = () => {
   const { projectId } = useParams();
@@ -157,13 +158,7 @@ const ProjectDetailPage = () => {
               />
             </TabsContent>
             <TabsContent value="team">
-              <TeamTab
-                project={project}
-                isOwner={isOwner}
-                isTeamMember={isTeamMember}
-                hasPendingRequest={hasPendingRequest}
-                onJoinTeam={handleJoinTeam}
-              />
+              <TeamManagement projectId={projectId} />
             </TabsContent>
             <TabsContent value="tasks">
               <TasksTab project={project} />
@@ -272,41 +267,6 @@ const ImpactTab = ({ impactMetrics, isOwner, onCreateMetric, onUpdateMetric, onD
     )}
     {isOwner && (
       <ImpactMetricForm projectId={projectId} onSuccess={() => {}} />
-    )}
-  </div>
-);
-
-const TeamTab = ({ project, isOwner, isTeamMember, hasPendingRequest, onJoinTeam }) => (
-  <div className="space-y-4">
-    <h3 className="text-xl font-semibold">Team Members</h3>
-    {project.team_members && project.team_members.length > 0 ? (
-      project.team_members.map((member, index) => (
-        <Card key={index}>
-          <CardContent className="flex items-center p-4">
-            <Avatar className="h-10 w-10 mr-4">
-              <AvatarImage src={member.avatar_url} alt={`${member.first_name} ${member.last_name}`} />
-              <AvatarFallback>{member.first_name[0]}{member.last_name[0]}</AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="font-semibold">{member.first_name} {member.last_name}</p>
-              <p className="text-sm text-gray-500">{member.role}</p>
-            </div>
-          </CardContent>
-        </Card>
-      ))
-    ) : (
-      <p>This project currently has no additional team members.</p>
-    )}
-    {!isOwner && !isTeamMember && !hasPendingRequest && (
-      <Button onClick={onJoinTeam} className="mt-4">
-        <UserPlus className="mr-2 h-4 w-4" /> Request to Join Team
-      </Button>
-    )}
-    {hasPendingRequest && (
-      <p className="text-sm text-gray-500 mt-4">Your request to join this team is pending approval.</p>
-    )}
-    {isTeamMember && (
-      <p className="text-sm text-green-500 mt-4">You are a member of this team.</p>
     )}
   </div>
 );
