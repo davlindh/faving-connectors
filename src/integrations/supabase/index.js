@@ -77,6 +77,7 @@ export const {
 export const {
   useMessages,
   useCreateMessage,
+  useRecentConversations,
 } = messageHooks;
 
 export const {

@@ -20,7 +20,6 @@ export const useCreateMessage = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (formData) => {
-      // First, upload the file if it exists
       let attachment_url = null;
       if (formData.get('attachment')) {
         const file = formData.get('attachment');
@@ -37,7 +36,6 @@ export const useCreateMessage = () => {
         attachment_url = publicUrl;
       }
 
-      // Then, create the message
       const { data, error } = await supabase
         .from('messages')
         .insert([{
@@ -60,8 +58,7 @@ export const useCreateMessage = () => {
 export const useRecentConversations = (userId) => useQuery({
   queryKey: ['recentConversations', userId],
   queryFn: async () => {
-    const { data, error } = await supabase
-      .rpc('get_recent_conversations', { user_id: userId });
+    const { data, error } = await supabase.rpc('get_recent_conversations', { user_id: userId });
     if (error) throw error;
     return data;
   },
