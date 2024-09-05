@@ -82,21 +82,25 @@ const AuthForm = ({ mode = 'login' }) => {
             <div className="flex flex-col space-y-1.5">
               <Input
                 id="email"
+                name="email"
                 placeholder="Email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                autoComplete="email"
               />
             </div>
             <div className="flex flex-col space-y-1.5">
               <Input
                 id="password"
+                name="password"
                 placeholder="Password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
               />
             </div>
           </div>
