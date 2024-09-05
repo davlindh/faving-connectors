@@ -98,21 +98,20 @@ const SettingsPage = () => {
       }
 
       // Handle profile data
+      const profilePayload = {
+        ...profileData,
+        user_id: userId,
+        created_at: now,
+        updated_at: now,
+      };
+
       if (isCreatingProfile) {
-        await createProfile.mutateAsync({
-          user_id: userId,
-          ...profileData,
-          created_at: now,
-          updated_at: now,
-        });
+        await createProfile.mutateAsync(profilePayload);
         toast.success('Profile created successfully');
       } else {
         await updateProfile.mutateAsync({
           userId,
-          updates: {
-            ...profileData,
-            updated_at: now,
-          },
+          updates: profilePayload,
         });
         toast.success('Settings updated successfully');
       }
