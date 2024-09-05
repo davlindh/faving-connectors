@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../supabase';
 
-export const useTeamMembers = (projectId) => useQuery({
-  queryKey: ['team_members', projectId],
+export const useProjectTeamMembers = (projectId) => useQuery({
+  queryKey: ['project_team_members', projectId],
   queryFn: async () => {
     const { data, error } = await supabase
       .from('project_team_members')
@@ -14,7 +14,7 @@ export const useTeamMembers = (projectId) => useQuery({
   enabled: !!projectId,
 });
 
-export const useAddTeamMember = () => {
+export const useAddProjectTeamMember = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ projectId, userId, role }) => {
@@ -27,12 +27,12 @@ export const useAddTeamMember = () => {
       return data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['team_members', data.project_id]);
+      queryClient.invalidateQueries(['project_team_members', data.project_id]);
     },
   });
 };
 
-export const useUpdateTeamMember = () => {
+export const useUpdateProjectTeamMember = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, updates }) => {
@@ -46,12 +46,12 @@ export const useUpdateTeamMember = () => {
       return data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['team_members', data.project_id]);
+      queryClient.invalidateQueries(['project_team_members', data.project_id]);
     },
   });
 };
 
-export const useRemoveTeamMember = () => {
+export const useRemoveProjectTeamMember = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, projectId }) => {
@@ -63,7 +63,7 @@ export const useRemoveTeamMember = () => {
       return { id, projectId };
     },
     onSuccess: ({ projectId }) => {
-      queryClient.invalidateQueries(['team_members', projectId]);
+      queryClient.invalidateQueries(['project_team_members', projectId]);
     },
   });
 };
