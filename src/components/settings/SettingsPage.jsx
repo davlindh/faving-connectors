@@ -41,7 +41,7 @@ const SettingsPage = () => {
     defaultValues: {
       first_name: '',
       last_name: '',
-      email: '',
+      email: session?.user?.email || '',
     },
   });
 
@@ -59,7 +59,7 @@ const SettingsPage = () => {
       userForm.reset({
         first_name: user.first_name || '',
         last_name: user.last_name || '',
-        email: user.email || '',
+        email: session?.user?.email || '',
       });
     }
     if (profile) {
@@ -71,7 +71,7 @@ const SettingsPage = () => {
     } else if (!profileLoading && !profileError) {
       setIsCreatingProfile(true);
     }
-  }, [user, profile, profileLoading, profileError, userForm, profileForm]);
+  }, [user, profile, profileLoading, profileError, userForm, profileForm, session]);
 
   const onSubmit = async (userData, profileData) => {
     if (!userId) {
