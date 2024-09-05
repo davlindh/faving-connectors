@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useProject, useUpdateProject, useDeleteProject, useTeamMemberRequests, useImpactMetrics, useCreateImpactMetric, useUpdateImpactMetric, useDeleteImpactMetric } from '@/integrations/supabase';
+import { useProject, useUpdateProject, useDeleteProject, useCreateTeamMemberRequest, useTeamMemberRequests, useImpactMetrics, useCreateImpactMetric, useUpdateImpactMetric, useDeleteImpactMetric } from '@/integrations/supabase';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +24,7 @@ const ProjectDetailPage = () => {
   const deleteProject = useDeleteProject();
   const { session } = useSupabase();
   const [activeTab, setActiveTab] = useState('overview');
+  const createTeamMemberRequest = useCreateTeamMemberRequest();
   const { data: teamMemberRequests, isLoading: isLoadingRequests } = useTeamMemberRequests(projectId);
   const { data: impactMetrics, isLoading: isLoadingImpactMetrics } = useImpactMetrics(projectId);
   const createImpactMetric = useCreateImpactMetric();
@@ -37,6 +38,7 @@ const ProjectDetailPage = () => {
   const isOwner = session?.user?.id === project.creator_id;
   const hasExpressedInterest = project.interested_users?.some(user => user.user_id === session?.user?.id);
   const isTeamMember = project.team_members?.some(member => member.user_id === session?.user?.id);
+  const hasPendingRequest = teamMemberRequests?.some(request => request.user_id === session?.user?.id && request.status === 'pending');
 
   const handleDelete = async () => {
     try {
@@ -45,6 +47,19 @@ const ProjectDetailPage = () => {
       navigate('/projects');
     } catch (error) {
       toast.error('Failed to delete project');
+    }
+  };
+
+  const handleJoinTeam = async () => {
+    if (!session?.user?.id) {
+      toast.error('You must be logged in to join a team');
+      return;
+    }
+    try {
+      await createTeamMemberRequest.mutateAsync({ projectId, userId: session.user.id });
+      toast.success('Team join request sent successfully');
+    } catch (error) {
+      toast.error('Failed to send team join request');
     }
   };
 
