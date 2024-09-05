@@ -13,14 +13,22 @@ export const useUsers = () => useQuery({
 export const useUser = (userId) => useQuery({
   queryKey: ['users', userId],
   queryFn: async () => {
+    if (!userId) return null;
     const { data, error } = await supabase
       .from('users')
       .select('*')
       .eq('user_id', userId)
       .single();
-    if (error) throw error;
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // No rows returned
+        return null;
+      }
+      throw error;
+    }
     return data;
   },
+  enabled: !!userId,
 });
 
 export const useCreateUser = () => {

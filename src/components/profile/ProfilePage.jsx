@@ -30,7 +30,7 @@ const ProfilePage = () => {
   const isOwnProfile = session?.user?.id === profile?.user_id;
 
   useEffect(() => {
-    if (profileError && profileError.message.includes("invalid input syntax for type uuid")) {
+    if (profileError && profileError.message.includes("No rows returned")) {
       handleCreateProfile();
     }
   }, [profileError]);
