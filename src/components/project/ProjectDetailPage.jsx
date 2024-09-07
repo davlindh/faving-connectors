@@ -15,6 +15,7 @@ import FaveScore from '../shared/FaveScore';
 import ExpressInterestButton from './ExpressInterestButton';
 import ImpactMetricForm from './ImpactMetricForm';
 import ECKTSlider from '../shared/ECKTSlider';
+import { format } from 'date-fns';
 
 const ProjectDetailPage = () => {
   const { projectId } = useParams();
@@ -176,15 +177,15 @@ const OverviewTab = ({ project }) => (
     <div className="grid grid-cols-2 gap-4">
       <div className="flex items-center">
         <DollarSign className="w-5 h-5 mr-2 text-gray-500" />
-        <span className="font-semibold">Budget: ${project.budget}</span>
+        <span className="font-semibold">Budget: ${project.budget.toLocaleString()}</span>
       </div>
       <div className="flex items-center">
         <Calendar className="w-5 h-5 mr-2 text-gray-500" />
-        <span className="font-semibold">Start Date: {new Date(project.start_date).toLocaleDateString()}</span>
+        <span className="font-semibold">Start Date: {format(new Date(project.start_date), 'PPP')}</span>
       </div>
       <div className="flex items-center">
         <Calendar className="w-5 h-5 mr-2 text-gray-500" />
-        <span className="font-semibold">End Date: {new Date(project.end_date).toLocaleDateString()}</span>
+        <span className="font-semibold">End Date: {format(new Date(project.end_date), 'PPP')}</span>
       </div>
       <div className="flex items-center">
         <User className="w-5 h-5 mr-2 text-gray-500" />
@@ -205,21 +206,94 @@ const OverviewTab = ({ project }) => (
 );
 
 const TeamTab = ({ teamMembers, isLoading, isOwner, onAddMember, onUpdateMember, onRemoveMember }) => {
-  // Implementation remains the same
+  if (isLoading) return <div>Loading team members...</div>;
+  
+  return (
+    <div>
+      <h3 className="text-xl font-semibold mb-4">Project Team</h3>
+      {teamMembers && teamMembers.length > 0 ? (
+        <div className="space-y-4">
+          {teamMembers.map((member) => (
+            <Card key={member.id}>
+              <CardContent className="flex items-center justify-between p-4">
+                <div className="flex items-center">
+                  <Avatar className="h-10 w-10 mr-4">
+                    <AvatarImage src={member.user.avatar_url} alt={`${member.user.first_name} ${member.user.last_name}`} />
+                    <AvatarFallback>{member.user.first_name[0]}{member.user.last_name[0]}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-semibold">{member.user.first_name} {member.user.last_name}</p>
+                    <p className="text-sm text-gray-500">{member.role}</p>
+                  </div>
+                </div>
+                {isOwner && (
+                  <div>
+                    <Button variant="outline" size="sm" className="mr-2" onClick={() => onUpdateMember(member.id, { role: 'New Role' })}>
+                      Edit Role
+                    </Button>
+                    <Button variant="destructive" size="sm" onClick={() => onRemoveMember(member.id)}>
+                      Remove
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <p>No team members yet.</p>
+      )}
+      {isOwner && (
+        <Button className="mt-4" onClick={() => onAddMember('user_id', 'New Member Role')}>
+          <UserPlus className="mr-2 h-4 w-4" /> Add Team Member
+        </Button>
+      )}
+    </div>
+  );
 };
 
 const TasksTab = ({ project }) => (
   <div>
     <h3 className="text-xl font-semibold mb-4">Project Tasks</h3>
-    {/* Implement tasks list and management here */}
-    <p>Task management feature coming soon.</p>
+    {project.tasks && project.tasks.length > 0 ? (
+      <div className="space-y-4">
+        {project.tasks.map((task, index) => (
+          <Card key={index}>
+            <CardContent className="p-4">
+              <h4 className="font-semibold">{task.title}</h4>
+              <p className="text-sm text-gray-600">{task.description}</p>
+              <div className="flex justify-between items-center mt-2">
+                <Badge variant={task.status === 'completed' ? 'success' : 'secondary'}>{task.status}</Badge>
+                <span className="text-sm text-gray-500">Due: {format(new Date(task.due_date), 'PP')}</span>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    ) : (
+      <p>No tasks have been added to this project yet.</p>
+    )}
   </div>
 );
 
 const ImpactTab = ({ project }) => (
   <div>
     <h3 className="text-xl font-semibold mb-4">Project Impact</h3>
-    {/* Implement impact metrics and management here */}
+    {project.impact_metrics && project.impact_metrics.length > 0 ? (
+      <div className="space-y-4">
+        {project.impact_metrics.map((metric, index) => (
+          <Card key={index}>
+            <CardContent className="p-4">
+              <h4 className="font-semibold">{metric.description}</h4>
+              <Progress value={metric.impact_score} className="mt-2" />
+              <p className="text-sm text-gray-600 mt-1">Impact Score: {metric.impact_score}%</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    ) : (
+      <p>No impact metrics have been added to this project yet.</p>
+    )}
     <ImpactMetricForm projectId={project.project_id} />
   </div>
 );
