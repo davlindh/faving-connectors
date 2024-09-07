@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import NavigationTree from './NavigationTree';
 import {
   Home,
   User,
@@ -19,27 +20,12 @@ import {
   Calendar,
   BarChart,
   X,
-  LogOut
+  LogOut,
+  Users,
+  Folder
 } from 'lucide-react';
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import { toast } from 'sonner';
-
-const SidebarItem = ({ icon: Icon, title, to, isActive, onClick }) => (
-  <Button
-    variant="ghost"
-    className={cn(
-      "w-full justify-start text-left font-normal",
-      isActive && "bg-accent"
-    )}
-    asChild
-    onClick={onClick}
-  >
-    <Link to={to}>
-      {Icon && <Icon className="mr-2 h-4 w-4" />}
-      <span>{title}</span>
-    </Link>
-  </Button>
-);
 
 const Sidebar = ({ open, setOpen }) => {
   const location = useLocation();
@@ -56,25 +42,55 @@ const Sidebar = ({ open, setOpen }) => {
     }
   };
 
-  const navItems = [
-    { icon: Home, title: "Home", to: "/" },
-    { icon: User, title: "Profile", to: session ? `/profile/${session.user.id}` : "/login" },
-    { icon: Briefcase, title: "Projects", to: "/projects" },
-    { icon: BookOpen, title: "Knowledge Base", to: "/knowledge-base" },
-    { icon: MessageSquare, title: "Messages", to: "/messages" },
-    { icon: Search, title: "Find Profiles", to: "/find-profiles" },
-    { icon: FileText, title: "Contracts", to: "/contracts" },
-    { icon: Calendar, title: "Calendar", to: "/calendar" },
-    { icon: BarChart, title: "Analytics", to: "/analytics" },
-    { icon: Settings, title: "Settings", to: "/settings" },
-    { icon: HelpCircle, title: "Help", to: "/help" },
+  const navigationItems = [
+    {
+      title: "Dashboard",
+      icon: Home,
+      to: "/",
+    },
+    {
+      title: "Projects",
+      icon: Briefcase,
+      children: [
+        { title: "All Projects", to: "/projects" },
+        { title: "My Projects", to: "/projects/my-projects" },
+        { title: "Create Project", to: "/projects/create" },
+      ],
+    },
+    {
+      title: "Knowledge Base",
+      icon: BookOpen,
+      children: [
+        { title: "Articles", to: "/knowledge-base" },
+        { title: "Create Article", to: "/knowledge-base/create" },
+      ],
+    },
+    {
+      title: "Community",
+      icon: Users,
+      children: [
+        { title: "Find Profiles", to: "/find-profiles", icon: Search },
+        { title: "Messages", to: "/messages", icon: MessageSquare },
+      ],
+    },
+    {
+      title: "Resources",
+      icon: Folder,
+      children: [
+        { title: "Contracts", to: "/contracts", icon: FileText },
+        { title: "Calendar", to: "/calendar", icon: Calendar },
+        { title: "Analytics", to: "/analytics", icon: BarChart },
+      ],
+    },
+    { title: "Settings", to: "/settings", icon: Settings },
+    { title: "Help", to: "/help", icon: HelpCircle },
   ];
 
   const authItems = session
-    ? [{ icon: LogOut, title: "Logout", onClick: handleLogout }]
+    ? [{ title: "Logout", icon: LogOut, onClick: handleLogout }]
     : [
-        { icon: LogIn, title: "Login", to: "/login" },
-        { icon: UserPlus, title: "Register", to: "/register" },
+        { title: "Login", to: "/login", icon: LogIn },
+        { title: "Register", to: "/register", icon: UserPlus },
       ];
 
   const sidebarContent = (
@@ -83,26 +99,38 @@ const Sidebar = ({ open, setOpen }) => {
         <Link to="/" className="text-xl font-bold">Faving</Link>
       </div>
       <ScrollArea className="flex-grow">
-        <nav className="space-y-1 p-2">
-          {navItems.map((item) => (
-            <SidebarItem
-              key={item.to}
-              {...item}
-              isActive={location.pathname === item.to}
-              onClick={() => setOpen(false)}
-            />
-          ))}
-          {authItems.map((item, index) => (
-            <SidebarItem
-              key={index}
-              {...item}
-              isActive={location.pathname === item.to}
-              onClick={() => {
-                if (item.onClick) item.onClick();
-                setOpen(false);
-              }}
-            />
-          ))}
+        <nav className="p-4">
+          <NavigationTree items={navigationItems} />
+          <div className="mt-4 pt-4 border-t">
+            {session && (
+              <Link to={`/profile/${session.user.id}`} className="flex items-center mb-4 text-sm hover:text-primary transition-colors">
+                <User className="mr-2 h-4 w-4" />
+                My Profile
+              </Link>
+            )}
+            {authItems.map((item, index) => (
+              <div key={index} className="mb-2">
+                {item.to ? (
+                  <Link
+                    to={item.to}
+                    className="flex items-center text-sm hover:text-primary transition-colors"
+                  >
+                    {item.icon && <item.icon className="mr-2 h-4 w-4" />}
+                    {item.title}
+                  </Link>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-sm"
+                    onClick={item.onClick}
+                  >
+                    {item.icon && <item.icon className="mr-2 h-4 w-4" />}
+                    {item.title}
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
         </nav>
       </ScrollArea>
     </>
@@ -110,7 +138,7 @@ const Sidebar = ({ open, setOpen }) => {
 
   return (
     <>
-      <aside className="hidden lg:flex lg:flex-col w-64 bg-white border-r">
+      <aside className="hidden lg:flex lg:flex-col w-64 bg-white dark:bg-gray-800 border-r">
         {sidebarContent}
       </aside>
       <Sheet open={open} onOpenChange={setOpen}>
