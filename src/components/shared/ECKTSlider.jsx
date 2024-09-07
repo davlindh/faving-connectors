@@ -15,6 +15,7 @@ const ECKTSlider = ({ origin, readOnly = false }) => {
   const [score, setScore] = useState(0);
   const [percentage, setPercentage] = useState(0);
   const [total, setTotal] = useState(0);
+  const [weightedAverage, setWeightedAverage] = useState(0);
   const { data: existingFeedback, isLoading } = useFeedback(origin);
   const createFeedback = useCreateFeedback();
   const updateFeedback = useUpdateFeedback();
@@ -28,6 +29,7 @@ const ECKTSlider = ({ origin, readOnly = false }) => {
       setScore(feedback.score);
       setPercentage(feedback.percentage);
       setTotal(feedback.total);
+      setWeightedAverage(feedback.weighted_average || 0);
     }
   }, [existingFeedback]);
 
@@ -49,9 +51,10 @@ const ECKTSlider = ({ origin, readOnly = false }) => {
   };
 
   const updateMetrics = (newValue) => {
-    setScore(newValue);
+    setScore(newValue * 50); // Assuming score is 50 times the value for this example
     setPercentage(newValue);
-    setTotal(newValue);
+    setTotal(newValue * 100); // Assuming total is 100 times the value for this example
+    setWeightedAverage((newValue * 50 + newValue + newValue * 100) / 3); // Simple average of score, percentage, and total
   };
 
   const handleContentChange = (e) => {
@@ -77,6 +80,7 @@ const ECKTSlider = ({ origin, readOnly = false }) => {
       score,
       percentage,
       total,
+      weighted_average: weightedAverage,
     };
 
     try {
@@ -102,7 +106,7 @@ const ECKTSlider = ({ origin, readOnly = false }) => {
       <h3 className="font-semibold mb-4">ECKT Score & Feedback</h3>
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="eckt-score">ECKT Score</Label>
+          <Label htmlFor="eckt-score">ECKT Score (Value)</Label>
           <div className="flex items-center space-x-4">
             <Slider
               id="eckt-score"
@@ -161,9 +165,19 @@ const ECKTSlider = ({ origin, readOnly = false }) => {
             disabled={readOnly}
           />
         </div>
+        <div className="space-y-2">
+          <Label htmlFor="weighted-average">Weighted Average</Label>
+          <Input
+            id="weighted-average"
+            type="number"
+            value={weightedAverage}
+            onChange={(e) => handleInputChange(e, setWeightedAverage)}
+            disabled={readOnly}
+          />
+        </div>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="feedback">Feedback</Label>
+        <Label htmlFor="feedback">Feedback Content</Label>
         <Textarea
           id="feedback"
           placeholder="Provide your feedback here..."
