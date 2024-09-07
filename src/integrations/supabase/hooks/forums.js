@@ -12,6 +12,17 @@ export const useForums = () => useQuery({
   },
 });
 
+export const useTeams = () => useQuery({
+  queryKey: ['teams'],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from('teams')
+      .select('*, members:team_members(*)');
+    if (error) throw error;
+    return data;
+  },
+});
+
 export const useForum = (forumId) => useQuery({
   queryKey: ['forums', forumId],
   queryFn: async () => {
