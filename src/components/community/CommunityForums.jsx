@@ -4,7 +4,9 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from 'react-router-dom';
-import { MessageSquare, Search } from 'lucide-react';
+import { MessageSquare, Search, Plus } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const CommunityForums = () => {
   const { data: forums, isLoading, error } = useForums();
@@ -15,12 +17,19 @@ const CommunityForums = () => {
     forum.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (isLoading) return <div className="text-center py-8">Loading forums...</div>;
+  if (isLoading) return <ForumsSkeleton />;
   if (error) return <div className="text-center text-red-500 py-8">Error loading forums: {error.message}</div>;
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Community Forums</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Community Forums</h1>
+        <Button asChild>
+          <Link to="/community/forums/create">
+            <Plus className="mr-2 h-4 w-4" /> Create Forum
+          </Link>
+        </Button>
+      </div>
       <div className="mb-6">
         <div className="relative">
           <Input
@@ -45,17 +54,49 @@ const CommunityForums = () => {
             <CardContent>
               <p className="text-gray-600 dark:text-gray-300 mb-4">{forum.description}</p>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-500">{forum.topic_count} topics</span>
-                <Button asChild variant="outline" size="sm">
-                  <Link to={`/community/forums/${forum.id}`}>View Forum</Link>
-                </Button>
+                <Badge variant="secondary">{forum.category}</Badge>
+                <span className="text-sm text-gray-500">{forum.thread_count} threads</span>
               </div>
+              <Button asChild variant="outline" size="sm" className="mt-4 w-full">
+                <Link to={`/community/forums/${forum.id}`}>View Forum</Link>
+              </Button>
             </CardContent>
           </Card>
         ))}
       </div>
+      {filteredForums?.length === 0 && (
+        <div className="text-center py-8">No forums found matching your search criteria.</div>
+      )}
     </div>
   );
 };
+
+const ForumsSkeleton = () => (
+  <div className="container mx-auto px-4 py-8">
+    <div className="flex justify-between items-center mb-6">
+      <Skeleton className="h-10 w-48" />
+      <Skeleton className="h-10 w-32" />
+    </div>
+    <Skeleton className="h-10 w-full mb-6" />
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {[...Array(6)].map((_, index) => (
+        <Card key={index}>
+          <CardHeader>
+            <Skeleton className="h-6 w-3/4" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-4 w-full mb-2" />
+            <Skeleton className="h-4 w-5/6 mb-4" />
+            <div className="flex justify-between items-center mb-4">
+              <Skeleton className="h-6 w-20" />
+              <Skeleton className="h-4 w-16" />
+            </div>
+            <Skeleton className="h-9 w-full" />
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  </div>
+);
 
 export default CommunityForums;

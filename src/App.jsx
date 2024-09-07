@@ -24,6 +24,7 @@ import SignUpPage from "./pages/auth/signup";
 import AdminPanel from "./components/admin/AdminPanel";
 import TeamPage from "./components/team/TeamPage";
 import CommunityForums from "./components/community/CommunityForums";
+import ForumThread from "./components/community/ForumThread";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ const App = () => (
                 <Route path="/admin/project/:projectId" element={<AdminPanel />} />
                 <Route path="/team/:teamId" element={<TeamPage />} />
                 <Route path="/community/forums" element={<CommunityForums />} />
+                <Route path="/community/forums/:threadId" element={<ForumThread />} />
               </Routes>
             </Layout>
           </ProjectProvider>
