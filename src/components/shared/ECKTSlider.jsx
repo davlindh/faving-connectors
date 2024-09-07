@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 const ECKTSlider = ({ origin, readOnly = false }) => {
   const categories = ['Effort', 'Creativity', 'Knowledge', 'Time'];
   const [localValue, setLocalValue] = useState([0, 0, 0, 0]);
-  const [localFeedback, setLocalFeedback] = useState('');
+  const [localContent, setLocalContent] = useState('');
   const { data: existingFeedback, isLoading } = useFeedback(origin);
   const createFeedback = useCreateFeedback();
   const updateFeedback = useUpdateFeedback();
@@ -19,8 +19,13 @@ const ECKTSlider = ({ origin, readOnly = false }) => {
   useEffect(() => {
     if (existingFeedback && existingFeedback.length > 0) {
       const feedback = existingFeedback[0];
-      setLocalValue([feedback.effort, feedback.creativity, feedback.knowledge, feedback.time]);
-      setLocalFeedback(feedback.content);
+      setLocalValue([
+        feedback.value,
+        feedback.value,
+        feedback.value,
+        feedback.value
+      ]);
+      setLocalContent(feedback.content);
     }
   }, [existingFeedback]);
 
@@ -32,8 +37,15 @@ const ECKTSlider = ({ origin, readOnly = false }) => {
     }
   };
 
-  const handleFeedbackChange = (e) => {
-    setLocalFeedback(e.target.value);
+  const handleContentChange = (e) => {
+    setLocalContent(e.target.value);
+  };
+
+  const calculateMetrics = (values) => {
+    const total = values.reduce((sum, val) => sum + val, 0);
+    const score = total / values.length;
+    const percentage = (score / 100) * 100;
+    return { total, score, percentage };
   };
 
   const handleSubmit = async () => {
@@ -42,18 +54,16 @@ const ECKTSlider = ({ origin, readOnly = false }) => {
       return;
     }
 
+    const { total, score, percentage } = calculateMetrics(localValue);
+
     const feedbackData = {
       user_id: session.user.id,
       origin,
-      value: localValue.reduce((a, b) => a + b, 0),
-      content: localFeedback,
-      score: localValue.reduce((a, b) => a + b, 0) / localValue.length,
-      percentage: (localValue.reduce((a, b) => a + b, 0) / (100 * localValue.length)) * 100,
-      total: localValue.reduce((a, b) => a + b, 0),
-      effort: localValue[0],
-      creativity: localValue[1],
-      knowledge: localValue[2],
-      time: localValue[3],
+      value: localValue[0], // Using the first value as the overall value
+      content: localContent,
+      score,
+      percentage,
+      total,
     };
 
     try {
@@ -109,8 +119,8 @@ const ECKTSlider = ({ origin, readOnly = false }) => {
         <Textarea
           id="feedback"
           placeholder="Provide your feedback here..."
-          value={localFeedback}
-          onChange={handleFeedbackChange}
+          value={localContent}
+          onChange={handleContentChange}
           rows={4}
           disabled={readOnly}
         />

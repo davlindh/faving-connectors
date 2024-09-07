@@ -205,7 +205,7 @@ const OverviewTab = ({ project }) => (
 );
 
 const TeamTab = ({ teamMembers, isLoading, isOwner, onAddMember, onUpdateMember, onRemoveMember }) => {
-  // ... (TeamTab implementation remains the same)
+  // Implementation remains the same
 };
 
 const TasksTab = ({ project }) => (
