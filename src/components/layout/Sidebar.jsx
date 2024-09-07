@@ -5,13 +5,12 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import NavigationTree from './NavigationTree';
+import CommunitySection from '../community/CommunitySection';
 import {
   Home,
   User,
   Briefcase,
   BookOpen,
-  MessageSquare,
-  Search,
   LogIn,
   UserPlus,
   Settings,
@@ -21,7 +20,6 @@ import {
   BarChart,
   X,
   LogOut,
-  Users,
   Folder
 } from 'lucide-react';
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
@@ -66,14 +64,6 @@ const Sidebar = ({ open, setOpen }) => {
       ],
     },
     {
-      title: "Community",
-      icon: Users,
-      children: [
-        { title: "Find Profiles", to: "/find-profiles", icon: Search },
-        { title: "Messages", to: "/messages", icon: MessageSquare },
-      ],
-    },
-    {
       title: "Resources",
       icon: Folder,
       children: [
@@ -101,6 +91,7 @@ const Sidebar = ({ open, setOpen }) => {
       <ScrollArea className="flex-grow">
         <nav className="p-4">
           <NavigationTree items={navigationItems} />
+          <CommunitySection />
           <div className="mt-4 pt-4 border-t">
             {session && (
               <Link to={`/profile/${session.user.id}`} className="flex items-center mb-4 text-sm hover:text-primary transition-colors">
