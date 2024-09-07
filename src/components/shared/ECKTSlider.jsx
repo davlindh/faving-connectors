@@ -1,13 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { useCreateFeedback, useUpdateFeedback, useFeedback } from '@/integrations/supabase/hooks/feedback';
+import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
+import { toast } from 'sonner';
 
-const ECKTSlider = ({ value, feedback, onChange, readOnly = false }) => {
+const ECKTSlider = ({ origin, readOnly = false }) => {
   const categories = ['Effort', 'Creativity', 'Knowledge', 'Time'];
-  const [localValue, setLocalValue] = useState(value);
-  const [localFeedback, setLocalFeedback] = useState(feedback);
+  const [localValue, setLocalValue] = useState([0, 0, 0, 0]);
+  const [localFeedback, setLocalFeedback] = useState('');
+  const { data: existingFeedback, isLoading } = useFeedback(origin);
+  const createFeedback = useCreateFeedback();
+  const updateFeedback = useUpdateFeedback();
+  const { session } = useSupabase();
+
+  useEffect(() => {
+    if (existingFeedback && existingFeedback.length > 0) {
+      const feedback = existingFeedback[0];
+      setLocalValue([feedback.effort, feedback.creativity, feedback.knowledge, feedback.time]);
+      setLocalFeedback(feedback.content);
+    }
+  }, [existingFeedback]);
 
   const handleSliderChange = (newValue, index) => {
     if (!readOnly) {
@@ -21,9 +36,43 @@ const ECKTSlider = ({ value, feedback, onChange, readOnly = false }) => {
     setLocalFeedback(e.target.value);
   };
 
-  const handleSubmit = () => {
-    onChange(localValue, localFeedback);
+  const handleSubmit = async () => {
+    if (!session?.user?.id) {
+      toast.error('You must be logged in to submit feedback');
+      return;
+    }
+
+    const feedbackData = {
+      user_id: session.user.id,
+      origin,
+      value: localValue.reduce((a, b) => a + b, 0),
+      content: localFeedback,
+      score: localValue.reduce((a, b) => a + b, 0) / localValue.length,
+      percentage: (localValue.reduce((a, b) => a + b, 0) / (100 * localValue.length)) * 100,
+      total: localValue.reduce((a, b) => a + b, 0),
+      effort: localValue[0],
+      creativity: localValue[1],
+      knowledge: localValue[2],
+      time: localValue[3],
+    };
+
+    try {
+      if (existingFeedback && existingFeedback.length > 0) {
+        await updateFeedback.mutateAsync({ feedbackId: existingFeedback[0].feedback_id, updates: feedbackData });
+        toast.success('Feedback updated successfully');
+      } else {
+        await createFeedback.mutateAsync(feedbackData);
+        toast.success('Feedback submitted successfully');
+      }
+    } catch (error) {
+      toast.error('Error submitting feedback');
+      console.error('Feedback submission error:', error);
+    }
   };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="w-full max-w-lg">
@@ -68,7 +117,7 @@ const ECKTSlider = ({ value, feedback, onChange, readOnly = false }) => {
       </div>
       {!readOnly && (
         <Button onClick={handleSubmit} className="mt-4">
-          Save ECKT & Feedback
+          {existingFeedback && existingFeedback.length > 0 ? 'Update' : 'Submit'} Feedback
         </Button>
       )}
     </div>
