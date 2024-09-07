@@ -8,9 +8,8 @@ import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import { toast } from 'sonner';
 
 const ECKTSlider = ({ origin, readOnly = false }) => {
-  const categories = ['Effort', 'Creativity', 'Knowledge', 'Time'];
-  const [localValue, setLocalValue] = useState([0, 0, 0, 0]);
-  const [localContent, setLocalContent] = useState('');
+  const [value, setValue] = useState(0);
+  const [content, setContent] = useState('');
   const { data: existingFeedback, isLoading } = useFeedback(origin);
   const createFeedback = useCreateFeedback();
   const updateFeedback = useUpdateFeedback();
@@ -19,32 +18,25 @@ const ECKTSlider = ({ origin, readOnly = false }) => {
   useEffect(() => {
     if (existingFeedback && existingFeedback.length > 0) {
       const feedback = existingFeedback[0];
-      setLocalValue([
-        feedback.value,
-        feedback.value,
-        feedback.value,
-        feedback.value
-      ]);
-      setLocalContent(feedback.content);
+      setValue(feedback.value);
+      setContent(feedback.content);
     }
   }, [existingFeedback]);
 
-  const handleSliderChange = (newValue, index) => {
+  const handleSliderChange = (newValue) => {
     if (!readOnly) {
-      const updatedValues = [...localValue];
-      updatedValues[index] = newValue[0];
-      setLocalValue(updatedValues);
+      setValue(newValue[0]);
     }
   };
 
   const handleContentChange = (e) => {
-    setLocalContent(e.target.value);
+    setContent(e.target.value);
   };
 
-  const calculateMetrics = (values) => {
-    const total = values.reduce((sum, val) => sum + val, 0);
-    const score = total / values.length;
+  const calculateMetrics = (value) => {
+    const score = value;
     const percentage = (score / 100) * 100;
+    const total = value;
     return { total, score, percentage };
   };
 
@@ -54,13 +46,18 @@ const ECKTSlider = ({ origin, readOnly = false }) => {
       return;
     }
 
-    const { total, score, percentage } = calculateMetrics(localValue);
+    if (!origin) {
+      toast.error('Origin is required for feedback submission');
+      return;
+    }
+
+    const { total, score, percentage } = calculateMetrics(value);
 
     const feedbackData = {
       user_id: session.user.id,
       origin,
-      value: localValue[0], // Using the first value as the overall value
-      content: localContent,
+      value,
+      content,
       score,
       percentage,
       total,
@@ -75,7 +72,7 @@ const ECKTSlider = ({ origin, readOnly = false }) => {
         toast.success('Feedback submitted successfully');
       }
     } catch (error) {
-      toast.error('Error submitting feedback');
+      toast.error('Error submitting feedback: ' + error.message);
       console.error('Feedback submission error:', error);
     }
   };
@@ -88,38 +85,36 @@ const ECKTSlider = ({ origin, readOnly = false }) => {
     <div className="w-full max-w-lg">
       <h3 className="font-semibold mb-4">ECKT Score & Feedback</h3>
       <div className="space-y-6 mb-6">
-        {categories.map((category, index) => (
-          <div key={category} className="space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-medium">{category}</span>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="text-sm font-bold">{localValue[index]}</span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{category} Score: {localValue[index]}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-            <Slider
-              value={[localValue[index]]}
-              onValueChange={(newValue) => handleSliderChange(newValue, index)}
-              max={100}
-              step={1}
-              className="w-full"
-              disabled={readOnly}
-            />
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium">ECKT Score</span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="text-sm font-bold">{value}</span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>ECKT Score: {value}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
-        ))}
+          <Slider
+            value={[value]}
+            onValueChange={handleSliderChange}
+            max={100}
+            step={1}
+            className="w-full"
+            disabled={readOnly}
+          />
+        </div>
       </div>
       <div className="space-y-2">
         <label htmlFor="feedback" className="text-sm font-medium">Feedback</label>
         <Textarea
           id="feedback"
           placeholder="Provide your feedback here..."
-          value={localContent}
+          value={content}
           onChange={handleContentChange}
           rows={4}
           disabled={readOnly}
