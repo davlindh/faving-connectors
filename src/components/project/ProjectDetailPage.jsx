@@ -19,6 +19,7 @@ import { format } from 'date-fns';
 import TaskList from './TaskList';
 import TeamManagement from '../team/TeamManagement';
 import ProjectForm from './ProjectForm';
+import MilestoneManagement from './MilestoneManagement';
 
 const ProjectDetailPage = () => {
   const { projectId } = useParams();
@@ -74,13 +75,14 @@ const ProjectDetailPage = () => {
 
     return (
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="tasks">Tasks</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
           <TabsTrigger value="milestones">Milestones</TabsTrigger>
           <TabsTrigger value="impact">Impact</TabsTrigger>
           <TabsTrigger value="feedback">Feedback</TabsTrigger>
+          <TabsTrigger value="resources">Resources</TabsTrigger>
         </TabsList>
         <TabsContent value="overview">
           <OverviewTab project={project} />
@@ -92,13 +94,16 @@ const ProjectDetailPage = () => {
           <TeamManagement projectId={project.project_id} isOwner={isOwner} />
         </TabsContent>
         <TabsContent value="milestones">
-          <div>Milestone management to be implemented</div>
+          <MilestoneManagement projectId={project.project_id} />
         </TabsContent>
         <TabsContent value="impact">
           <ImpactMetricForm projectId={project.project_id} />
         </TabsContent>
         <TabsContent value="feedback">
           <ECKTSlider origin={`project_${projectId}`} />
+        </TabsContent>
+        <TabsContent value="resources">
+          <ResourcesTab resources={project.resources} />
         </TabsContent>
       </Tabs>
     );
@@ -210,6 +215,26 @@ const OverviewTab = ({ project }) => (
       <Progress value={calculateProgress()} className="w-full" />
       <span className="text-sm text-gray-500 mt-1">{calculateProgress().toFixed(0)}% Complete</span>
     </div>
+  </div>
+);
+
+const ResourcesTab = ({ resources }) => (
+  <div className="space-y-4">
+    <h3 className="text-xl font-semibold">Project Resources</h3>
+    {resources && resources.length > 0 ? (
+      <ul className="space-y-2">
+        {resources.map((resource, index) => (
+          <li key={index} className="flex items-center justify-between p-2 bg-gray-100 rounded">
+            <span>{resource.name}</span>
+            <a href={resource.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+              View Resource
+            </a>
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p>No resources have been added to this project yet.</p>
+    )}
   </div>
 );
 
