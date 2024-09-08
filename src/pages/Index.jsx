@@ -13,39 +13,19 @@ const Index = () => {
   const { data: profiles, isLoading: profilesLoading, error: profilesError } = useProfiles();
   const { data: articles, isLoading: articlesLoading, error: articlesError } = useKnowledgeBase();
 
-  const calculateProjectRating = (project) => {
-    let rating = 0;
-    if (project.impact_metrics && project.impact_metrics.length > 0) {
-      const avgImpact = project.impact_metrics.reduce((sum, metric) => sum + metric.impact_score, 0) / project.impact_metrics.length;
-      rating += avgImpact * 0.4; // 40% weight to impact
-    }
-    if (project.tasks && project.tasks.length > 0) {
-      const completedTasks = project.tasks.filter(task => task.status === 'completed').length;
-      const taskProgress = completedTasks / project.tasks.length;
-      rating += taskProgress * 30; // 30% weight to task progress
-    }
-    if (project.team_members) {
-      rating += Math.min(project.team_members.length * 5, 30); // Up to 30% based on team size (max 6 members)
-    }
-    return rating;
-  };
-
   const getFeaturedProjects = (projects) => {
     if (!projects) return [];
-    return projects
-      .map(project => ({ ...project, rating: calculateProjectRating(project) }))
-      .sort((a, b) => b.rating - a.rating)
-      .slice(0, 3);
+    return projects.slice(0, 3);
   };
 
   const getFeaturedUsers = (profiles) => {
     if (!profiles) return [];
-    return profiles.sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 3);
+    return profiles.slice(0, 3);
   };
 
   const getFeaturedArticles = (articles) => {
     if (!articles) return [];
-    return articles.sort((a, b) => new Date(b.published_at) - new Date(a.published_at)).slice(0, 3);
+    return articles.slice(0, 3);
   };
 
   const featuredProjects = getFeaturedProjects(projects);
@@ -53,12 +33,12 @@ const Index = () => {
   const featuredArticles = getFeaturedArticles(articles);
 
   return (
-    <div className="container mx-auto px-4 py-8 sm:py-12">
+    <div className="container mx-auto px-4 py-12">
       <section className="text-center mb-16">
-        <h1 className="text-4xl sm:text-5xl font-bold mb-4">Welcome to Faving</h1>
-        <p className="text-xl sm:text-2xl text-gray-600 mb-8">Connect, Collaborate, and Create Amazing Projects</p>
+        <h1 className="text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">Welcome to Faving</h1>
+        <p className="text-2xl text-gray-600 mb-8">Connect, Collaborate, and Create Amazing Projects</p>
         <div className="flex justify-center gap-4">
-          <Button asChild size="lg">
+          <Button asChild size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
             <Link to="/projects">Explore Projects</Link>
           </Button>
           <Button asChild size="lg" variant="outline">
@@ -67,32 +47,8 @@ const Index = () => {
         </div>
       </section>
 
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-        <Card className="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900 dark:to-indigo-900">
-          <CardContent className="p-6 text-center">
-            <Briefcase className="mx-auto h-12 w-12 text-blue-600 dark:text-blue-400 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Find Projects</h3>
-            <p className="text-gray-600 dark:text-gray-300">Discover exciting projects that match your skills and interests.</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-900 dark:to-emerald-900">
-          <CardContent className="p-6 text-center">
-            <Users className="mx-auto h-12 w-12 text-green-600 dark:text-green-400 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Connect with Talent</h3>
-            <p className="text-gray-600 dark:text-gray-300">Collaborate with skilled professionals from around the world.</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-yellow-50 to-amber-100 dark:from-yellow-900 dark:to-amber-900">
-          <CardContent className="p-6 text-center">
-            <BookOpen className="mx-auto h-12 w-12 text-yellow-600 dark:text-yellow-400 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Share Knowledge</h3>
-            <p className="text-gray-600 dark:text-gray-300">Contribute to and learn from our extensive knowledge base.</p>
-          </CardContent>
-        </Card>
-      </section>
-
       <section className="mb-16">
-        <h2 className="text-3xl font-semibold mb-8">Featured Projects</h2>
+        <h2 className="text-3xl font-semibold mb-8 text-center">Featured Projects</h2>
         {projectsLoading && <div className="text-center py-8">Loading projects...</div>}
         {projectsError && <div className="text-center text-red-500 py-8">Error loading projects: {projectsError.message}</div>}
         {featuredProjects.length > 0 ? (
@@ -112,7 +68,7 @@ const Index = () => {
       </section>
 
       <section className="mb-16">
-        <h2 className="text-3xl font-semibold mb-8">Featured Users</h2>
+        <h2 className="text-3xl font-semibold mb-8 text-center">Featured Users</h2>
         {profilesLoading && <div className="text-center py-8">Loading users...</div>}
         {profilesError && <div className="text-center text-red-500 py-8">Error loading users: {profilesError.message}</div>}
         {featuredUsers.length > 0 && (
@@ -152,7 +108,7 @@ const Index = () => {
       </section>
 
       <section className="mb-16">
-        <h2 className="text-3xl font-semibold mb-8">Latest from Knowledge Base</h2>
+        <h2 className="text-3xl font-semibold mb-8 text-center">Latest from Knowledge Base</h2>
         {articlesLoading && <div className="text-center py-8">Loading articles...</div>}
         {articlesError && <div className="text-center text-red-500 py-8">Error loading articles: {articlesError.message}</div>}
         {featuredArticles.length > 0 && (
@@ -182,11 +138,11 @@ const Index = () => {
         </div>
       </section>
 
-      <section className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg p-8 mb-16">
+      <section className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg p-12 mb-16">
         <div className="text-center">
-          <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
+          <h2 className="text-4xl font-bold mb-4">Ready to Get Started?</h2>
           <p className="text-xl mb-8">Join our community of innovators and start collaborating on exciting projects today!</p>
-          <Button asChild size="lg" variant="secondary">
+          <Button asChild size="lg" variant="secondary" className="bg-white text-blue-600 hover:bg-gray-100">
             <Link to="/register">Create Your Account</Link>
           </Button>
         </div>
