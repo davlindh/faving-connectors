@@ -115,19 +115,6 @@ export const useDeleteProject = () => {
   });
 };
 
-export const useProjectImpactMetrics = (projectId) => useQuery({
-  queryKey: ['project_impact_metrics', projectId],
-  queryFn: async () => {
-    const { data, error } = await supabase
-      .from('project_impact_metrics')
-      .select('*')
-      .eq('project_id', projectId);
-    if (error) throw error;
-    return data;
-  },
-  enabled: !!projectId,
-});
-
 export const useProjectTasks = (projectId) => useQuery({
   queryKey: ['project_tasks', projectId],
   queryFn: async () => {
@@ -140,6 +127,59 @@ export const useProjectTasks = (projectId) => useQuery({
   },
   enabled: !!projectId,
 });
+
+export const useCreateProjectTask = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (newTask) => {
+      const { data, error } = await supabase
+        .from('project_tasks')
+        .insert([newTask])
+        .select();
+      if (error) throw error;
+      return data[0];
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(['project_tasks', data.project_id]);
+    },
+  });
+};
+
+export const useUpdateProjectTask = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ taskId, updates }) => {
+      const { data, error } = await supabase
+        .from('project_tasks')
+        .update(updates)
+        .eq('task_id', taskId)
+        .select();
+      if (error) throw error;
+      return data[0];
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(['project_tasks', data.project_id]);
+    },
+  });
+};
+
+export const useDeleteProjectTask = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (taskId) => {
+      const { data, error } = await supabase
+        .from('project_tasks')
+        .delete()
+        .eq('task_id', taskId)
+        .select();
+      if (error) throw error;
+      return data[0];
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(['project_tasks', data.project_id]);
+    },
+  });
+};
 
 export const useProjectTeamMembers = (projectId) => useQuery({
   queryKey: ['project_team_members', projectId],

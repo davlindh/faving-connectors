@@ -52,6 +52,10 @@ export const {
   useCreateProject,
   useUpdateProject,
   useDeleteProject,
+  useProjectTasks,
+  useCreateProjectTask,
+  useUpdateProjectTask,
+  useDeleteProjectTask,
 } = projectHooks;
 
 export const {
