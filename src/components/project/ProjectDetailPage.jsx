@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar, DollarSign, MapPin, User, ArrowLeft, Edit, Trash, MessageSquare } from 'lucide-react';
+import { Calendar, DollarSign, MapPin, User, ArrowLeft, Edit, Trash, MessageSquare, CheckCircle, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
@@ -16,6 +16,9 @@ import ExpressInterestButton from './ExpressInterestButton';
 import ImpactMetricForm from './ImpactMetricForm';
 import ECKTSlider from '../shared/ECKTSlider';
 import { format } from 'date-fns';
+import TaskList from './TaskList';
+import MilestoneList from './MilestoneList';
+import TeamMemberList from './TeamMemberList';
 
 const ProjectDetailPage = () => {
   const { projectId } = useParams();
@@ -80,7 +83,7 @@ const ProjectDetailPage = () => {
       </div>
       <div>
         <h4 className="font-semibold mb-2">Project Progress:</h4>
-        <Progress value={33} className="w-full" />
+        <Progress value={project.progress || 0} className="w-full" />
       </div>
     </div>
   );
@@ -88,59 +91,21 @@ const ProjectDetailPage = () => {
   const TeamTab = ({ project, isOwner }) => (
     <div className="space-y-4">
       <h3 className="text-xl font-semibold">Team Members</h3>
-      {project.team_members && project.team_members.length > 0 ? (
-        project.team_members.map((member, index) => (
-          <Card key={index}>
-            <CardContent className="flex items-center justify-between p-4">
-              <div className="flex items-center">
-                <Avatar className="h-10 w-10 mr-4">
-                  <AvatarImage src={member.avatar_url} alt={member.name} />
-                  <AvatarFallback>{member.name[0]}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-semibold">{member.name}</p>
-                  <p className="text-sm text-gray-500">{member.role}</p>
-                </div>
-              </div>
-              {isOwner && (
-                <Button variant="outline" size="sm">Manage</Button>
-              )}
-            </CardContent>
-          </Card>
-        ))
-      ) : (
-        <p>No team members yet.</p>
-      )}
-      {isOwner && (
-        <Button>Add Team Member</Button>
-      )}
+      <TeamMemberList project={project} isOwner={isOwner} />
     </div>
   );
 
   const TasksTab = ({ project, isOwner }) => (
     <div className="space-y-4">
       <h3 className="text-xl font-semibold">Project Tasks</h3>
-      {project.tasks && project.tasks.length > 0 ? (
-        project.tasks.map((task, index) => (
-          <Card key={index}>
-            <CardContent className="p-4">
-              <div className="flex justify-between items-center">
-                <h4 className="font-semibold">{task.title}</h4>
-                <Badge>{task.status}</Badge>
-              </div>
-              <p className="text-sm text-gray-600">{task.description}</p>
-              {isOwner && (
-                <Button variant="outline" size="sm" className="mt-2">Update Status</Button>
-              )}
-            </CardContent>
-          </Card>
-        ))
-      ) : (
-        <p>No tasks created yet.</p>
-      )}
-      {isOwner && (
-        <Button>Add New Task</Button>
-      )}
+      <TaskList project={project} isOwner={isOwner} />
+    </div>
+  );
+
+  const MilestonesTab = ({ project, isOwner }) => (
+    <div className="space-y-4">
+      <h3 className="text-xl font-semibold">Project Milestones</h3>
+      <MilestoneList project={project} isOwner={isOwner} />
     </div>
   );
 
@@ -218,10 +183,11 @@ const ProjectDetailPage = () => {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="team">Team</TabsTrigger>
               <TabsTrigger value="tasks">Tasks</TabsTrigger>
+              <TabsTrigger value="milestones">Milestones</TabsTrigger>
               <TabsTrigger value="impact">Impact</TabsTrigger>
               <TabsTrigger value="feedback">Feedback</TabsTrigger>
             </TabsList>
@@ -233,6 +199,9 @@ const ProjectDetailPage = () => {
             </TabsContent>
             <TabsContent value="tasks">
               <TasksTab project={project} isOwner={isOwner} />
+            </TabsContent>
+            <TabsContent value="milestones">
+              <MilestonesTab project={project} isOwner={isOwner} />
             </TabsContent>
             <TabsContent value="impact">
               <ImpactTab project={project} />
