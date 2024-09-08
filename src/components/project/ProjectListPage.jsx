@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useProjects } from '@/integrations/supabase';
+import { useProjects, useProfile } from '@/integrations/supabase';
 import ProjectCard from './ProjectCard';
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -33,32 +33,48 @@ const ProjectListPage = () => {
 
   const { data: allProjects, isLoading: allProjectsLoading, error: allProjectsError } = useProjects(false);
   const { data: myProjects, isLoading: myProjectsLoading, error: myProjectsError } = useProjects(true);
+  const { data: userProfile, isLoading: profileLoading, error: profileError } = useProfile(session?.user?.id);
 
   const { ref, inView } = useInView({
     threshold: 0,
   });
 
+  const matchProjects = useCallback((projects, userSkills) => {
+    if (!userSkills || userSkills.length === 0) return projects;
+    
+    return projects.map(project => {
+      const matchScore = project.required_skills.reduce((score, skill) => {
+        return userSkills.includes(skill) ? score + 1 : score;
+      }, 0) / project.required_skills.length;
+      
+      return { ...project, matchScore };
+    }).sort((a, b) => b.matchScore - a.matchScore);
+  }, []);
+
   const loadMoreProjects = useCallback(() => {
     const projects = activeTab === 'all' ? allProjects : myProjects;
     if (projects) {
-      const filtered = projects.filter(project => 
+      let filtered = projects.filter(project => 
         (searchTerm === '' || project.project_name.toLowerCase().includes(searchTerm.toLowerCase()) || (project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase()))) &&
         (filters.category === 'all' || project.category === filters.category) &&
         (project.budget >= filters.minBudget && project.budget <= filters.maxBudget) &&
         (filters.skills.length === 0 || (project.required_skills && filters.skills.every(skill => project.required_skills.includes(skill))))
       );
 
+      filtered = matchProjects(filtered, userProfile?.skills);
+
       const sorted = [...filtered].sort((a, b) => {
         if (sortBy === 'latest') return new Date(b.start_date) - new Date(a.start_date);
         if (sortBy === 'budget-high-to-low') return b.budget - a.budget;
         if (sortBy === 'budget-low-to-high') return a.budget - b.budget;
+        if (sortBy === 'match-score') return b.matchScore - a.matchScore;
         return 0;
       });
 
       const newProjects = sorted.slice(0, page * PROJECTS_PER_PAGE);
       setDisplayedProjects(newProjects);
     }
-  }, [allProjects, myProjects, activeTab, searchTerm, filters, sortBy, page]);
+  }, [allProjects, myProjects, activeTab, searchTerm, filters, sortBy, page, userProfile, matchProjects]);
 
   useEffect(() => {
     loadMoreProjects();
@@ -130,6 +146,7 @@ const ProjectListPage = () => {
                 <SelectItem value="latest">Latest</SelectItem>
                 <SelectItem value="budget-high-to-low">Budget: High to Low</SelectItem>
                 <SelectItem value="budget-low-to-high">Budget: Low to High</SelectItem>
+                <SelectItem value="match-score">Best Match</SelectItem>
               </SelectContent>
             </Select>
             <Popover>
