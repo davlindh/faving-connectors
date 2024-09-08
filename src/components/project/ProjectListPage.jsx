@@ -7,7 +7,7 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { X, Search, Plus, Filter } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,6 +29,7 @@ const ProjectListPage = () => {
   const [displayedProjects, setDisplayedProjects] = useState([]);
   const [page, setPage] = useState(1);
   const navigate = useNavigate();
+  const location = useLocation();
   const { session } = useSupabase();
 
   const { data: allProjects, isLoading: allProjectsLoading, error: allProjectsError } = useProjects(false);
@@ -38,6 +39,15 @@ const ProjectListPage = () => {
   const { ref, inView } = useInView({
     threshold: 0,
   });
+
+  useEffect(() => {
+    // Set the active tab based on the current route
+    if (location.pathname.includes('my-projects')) {
+      setActiveTab('my');
+    } else {
+      setActiveTab('all');
+    }
+  }, [location]);
 
   const matchProjects = useCallback((projects, userSkills) => {
     if (!userSkills || userSkills.length === 0) return projects;
@@ -118,8 +128,8 @@ const ProjectListPage = () => {
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
         <TabsList>
-          <TabsTrigger value="all">All Projects</TabsTrigger>
-          <TabsTrigger value="my">My Projects</TabsTrigger>
+          <TabsTrigger value="all" onClick={() => navigate('/projects')}>All Projects</TabsTrigger>
+          <TabsTrigger value="my" onClick={() => navigate('/projects/my-projects')}>My Projects</TabsTrigger>
         </TabsList>
 
         <div className="flex flex-col sm:flex-row gap-4 mb-6 mt-4">

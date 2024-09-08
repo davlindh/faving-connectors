@@ -39,6 +39,7 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/profile/:profileId" element={<ProfilePage />} />
                 <Route path="/projects" element={<ProjectListPage />} />
+                <Route path="/projects/my-projects" element={<ProjectListPage />} />
                 <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
                 <Route path="/projects/create" element={<ProjectForm />} />
                 <Route path="/projects/edit/:projectId" element={<ProjectForm isEditing={true} />} />
