@@ -4,18 +4,16 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import SkillList from './SkillList.jsx';
-import ServiceList from './ServiceList.jsx';
-import ProfileForm from './ProfileForm.jsx';
-import SkillForm from './SkillForm.jsx';
-import ServiceForm from './ServiceForm.jsx';
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
-import FaveScore from '../shared/FaveScore.jsx';
-import ECKTSlider from '../shared/ECKTSlider.jsx';
-import { useProfile, useUser, useUpdateProfile, useCreateProfile, useProjects } from '@/integrations/supabase';
+import { useProfile, useUser, useUpdateProfile, useCreateProfile, useProjects, useSkills, useServices } from '@/integrations/supabase';
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from 'sonner';
+import ProfileForm from './ProfileForm';
+import SkillList from './SkillList';
+import ServiceList from './ServiceList';
 import ProjectCard from '../project/ProjectCard';
+import FaveScore from '../shared/FaveScore';
+import ECKTSlider from '../shared/ECKTSlider';
 
 const ProfilePage = () => {
   const { profileId } = useParams();
@@ -29,6 +27,8 @@ const ProfilePage = () => {
   const createProfile = useCreateProfile();
   const [isCreatingProfile, setIsCreatingProfile] = useState(false);
   const { data: userProjects, isLoading: projectsLoading, error: projectsError } = useProjects(profile?.user_id);
+  const { data: userSkills, isLoading: skillsLoading, error: skillsError } = useSkills(profile?.user_id);
+  const { data: userServices, isLoading: servicesLoading, error: servicesError } = useServices(profile?.user_id);
 
   const isOwnProfile = session?.user?.id === profile?.user_id;
 
@@ -148,67 +148,30 @@ const ProfilePage = () => {
         </CardHeader>
         <CardContent>
           {isEditing ? (
-            <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="about">About</TabsTrigger>
-                <TabsTrigger value="skills">Skills</TabsTrigger>
-                <TabsTrigger value="services">Services</TabsTrigger>
-              </TabsList>
-              <TabsContent value="about">
-                <ProfileForm profile={profile} onEditComplete={handleEditToggle} />
-              </TabsContent>
-              <TabsContent value="skills">
-                <SkillForm profileId={profile.user_id} />
-              </TabsContent>
-              <TabsContent value="services">
-                <ServiceForm profileId={profile.user_id} />
-              </TabsContent>
-            </Tabs>
+            <ProfileForm profile={profile} onEditComplete={handleEditToggle} />
           ) : (
-            <Tabs defaultValue="about">
+            <Tabs defaultValue="about" onValueChange={handleTabChange}>
               <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="about">About</TabsTrigger>
                 <TabsTrigger value="skills">Skills</TabsTrigger>
                 <TabsTrigger value="services">Services</TabsTrigger>
-                <TabsTrigger value="eckt">ECKT & Feedback</TabsTrigger>
                 <TabsTrigger value="projects">Projects</TabsTrigger>
+                <TabsTrigger value="feedback">Feedback</TabsTrigger>
               </TabsList>
               <TabsContent value="about">
-                <h3 className="font-semibold mb-2">Bio</h3>
-                <p className="text-gray-600 mb-4">{profile.bio || "No bio available."}</p>
-                <p className="text-gray-600">Email: {user.email}</p>
+                <AboutTab profile={profile} user={user} />
               </TabsContent>
               <TabsContent value="skills">
-                <h3 className="font-semibold mb-2">Skills</h3>
-                <SkillList profileId={profile.user_id} />
+                <SkillsTab skills={userSkills} isLoading={skillsLoading} error={skillsError} />
               </TabsContent>
               <TabsContent value="services">
-                <h3 className="font-semibold mb-2">Services</h3>
-                <ServiceList profileId={profile.user_id} />
-              </TabsContent>
-              <TabsContent value="eckt">
-                <ECKTSlider 
-                  value={profile.eckt_scores || [0, 0, 0, 0]}
-                  feedback={profile.feedback || ''}
-                  onChange={handleECKTUpdate}
-                  readOnly={!isOwnProfile}
-                />
+                <ServicesTab services={userServices} isLoading={servicesLoading} error={servicesError} />
               </TabsContent>
               <TabsContent value="projects">
-                <h3 className="font-semibold mb-2">Projects</h3>
-                {projectsLoading ? (
-                  <p>Loading projects...</p>
-                ) : projectsError ? (
-                  <p>Error loading projects: {projectsError.message}</p>
-                ) : userProjects && userProjects.length > 0 ? (
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {userProjects.map((project) => (
-                      <ProjectCard key={project.project_id} project={project} />
-                    ))}
-                  </div>
-                ) : (
-                  <p>No projects found for this user.</p>
-                )}
+                <ProjectsTab projects={userProjects} isLoading={projectsLoading} error={projectsError} />
+              </TabsContent>
+              <TabsContent value="feedback">
+                <FeedbackTab profile={profile} isOwnProfile={isOwnProfile} onUpdate={handleECKTUpdate} />
               </TabsContent>
             </Tabs>
           )}
@@ -230,6 +193,71 @@ const ProfileSkeleton = () => (
         <Skeleton className="h-4 w-1/2" />
       </CardContent>
     </Card>
+  </div>
+);
+
+const AboutTab = ({ profile, user }) => (
+  <div>
+    <h3 className="font-semibold mb-2">Bio</h3>
+    <p className="text-gray-600 mb-4">{profile.bio || "No bio available."}</p>
+    <p className="text-gray-600">Email: {user.email}</p>
+  </div>
+);
+
+const SkillsTab = ({ skills, isLoading, error }) => (
+  <div>
+    <h3 className="font-semibold mb-2">Skills</h3>
+    {isLoading ? (
+      <p>Loading skills...</p>
+    ) : error ? (
+      <p>Error loading skills: {error.message}</p>
+    ) : (
+      <SkillList skills={skills} />
+    )}
+  </div>
+);
+
+const ServicesTab = ({ services, isLoading, error }) => (
+  <div>
+    <h3 className="font-semibold mb-2">Services</h3>
+    {isLoading ? (
+      <p>Loading services...</p>
+    ) : error ? (
+      <p>Error loading services: {error.message}</p>
+    ) : (
+      <ServiceList services={services} />
+    )}
+  </div>
+);
+
+const ProjectsTab = ({ projects, isLoading, error }) => (
+  <div>
+    <h3 className="font-semibold mb-2">Projects</h3>
+    {isLoading ? (
+      <p>Loading projects...</p>
+    ) : error ? (
+      <p>Error loading projects: {error.message}</p>
+    ) : projects && projects.length > 0 ? (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {projects.map((project) => (
+          <ProjectCard key={project.project_id} project={project} />
+        ))}
+      </div>
+    ) : (
+      <p>No projects found for this user.</p>
+    )}
+  </div>
+);
+
+const FeedbackTab = ({ profile, isOwnProfile, onUpdate }) => (
+  <div>
+    <h3 className="font-semibold mb-2">Feedback and ECKT Scores</h3>
+    <ECKTSlider 
+      value={profile.eckt_scores || [0, 0, 0, 0]}
+      feedback={profile.feedback || ''}
+      onChange={onUpdate}
+      readOnly={!isOwnProfile}
+    />
   </div>
 );
 
