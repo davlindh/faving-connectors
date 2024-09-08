@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, DollarSign, Clock, MapPin, Users, ArrowRight, Briefcase } from 'lucide-react';
+import { Calendar, DollarSign, Clock, MapPin, Users, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format, differenceInDays } from 'date-fns';
 import { motion } from 'framer-motion';
@@ -58,7 +58,7 @@ const ProjectCard = ({ project }) => {
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
     >
-      <Card className="overflow-hidden transition-all duration-300 hover:shadow-2xl border-t-4 border-primary bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
+      <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg border-t-4 border-primary">
         <CardHeader className="pb-2">
           <div className="flex justify-between items-start mb-2">
             <Badge className={`${getCategoryColor(category)} font-semibold text-sm px-3 py-1 rounded-full transition-all duration-300 ${isHovered ? 'scale-110' : ''}`}>
