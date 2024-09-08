@@ -1,32 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useNavigate } from 'react-router-dom';
-import { useCreateKnowledgeBaseArticle } from '@/integrations/supabase';
+import { useCreateKnowledgeBaseArticle, useKnowledgeBase } from '@/integrations/supabase';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
-import { toast } from 'sonner';
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
+import { toast } from 'sonner';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
-import { Badge } from "@/components/ui/badge";
 import { X } from 'lucide-react';
 
 const articleSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255, 'Title must be 255 characters or less'),
   content: z.string().min(1, 'Content is required'),
   category: z.string().min(1, 'Category is required'),
+  summary: z.string().max(500, 'Summary must be 500 characters or less').optional(),
   tags: z.array(z.string()).max(5, 'Maximum 5 tags allowed'),
 });
-
-const categories = [
-  'Technology', 'Design', 'Business', 'Marketing', 'Development', 'Other'
-];
 
 const ArticleCreationForm = () => {
   const navigate = useNavigate();
@@ -34,6 +31,8 @@ const ArticleCreationForm = () => {
   const { session } = useSupabase();
   const [activeTab, setActiveTab] = useState('edit');
   const [tagInput, setTagInput] = useState('');
+  const [categories, setCategories] = useState([]);
+  const { data: existingArticles } = useKnowledgeBase();
 
   const form = useForm({
     resolver: zodResolver(articleSchema),
@@ -41,9 +40,17 @@ const ArticleCreationForm = () => {
       title: '',
       content: '',
       category: '',
+      summary: '',
       tags: [],
     },
   });
+
+  useEffect(() => {
+    if (existingArticles) {
+      const uniqueCategories = [...new Set(existingArticles.map(article => article.category))];
+      setCategories(uniqueCategories);
+    }
+  }, [existingArticles]);
 
   const onSubmit = async (data) => {
     if (!session?.user?.id) {
@@ -107,7 +114,7 @@ const ArticleCreationForm = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a category" />
@@ -115,10 +122,47 @@ const ArticleCreationForm = () => {
                       </FormControl>
                       <SelectContent>
                         {categories.map((category) => (
-                          <SelectItem key={category} value={category.toLowerCase()}>{category}</SelectItem>
+                          <SelectItem key={category} value={category}>{category}</SelectItem>
                         ))}
+                        <SelectItem value="new">+ Add New Category</SelectItem>
                       </SelectContent>
                     </Select>
+                    {field.value === 'new' && (
+                      <Input
+                        placeholder="Enter new category name"
+                        onChange={(e) => {
+                          const newCategory = e.target.value;
+                          setCategories([...categories, newCategory]);
+                          field.onChange(newCategory);
+                        }}
+                      />
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="summary"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Summary</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Enter a brief summary of the article" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="content"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Content</FormLabel>
+                    <FormControl>
+                      <ReactQuill theme="snow" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -160,19 +204,6 @@ const ArticleCreationForm = () => {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="content"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Content</FormLabel>
-                    <FormControl>
-                      <ReactQuill theme="snow" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
               <div className="flex justify-end space-x-4">
                 <Button type="button" variant="outline" onClick={() => navigate('/knowledge-base')}>
                   Cancel
@@ -194,6 +225,9 @@ const ArticleCreationForm = () => {
                   <Badge key={index} variant="outline">{tag}</Badge>
                 ))}
               </div>
+              {form.getValues('summary') && (
+                <p className="text-gray-600 mb-4">{form.getValues('summary')}</p>
+              )}
               <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: form.getValues('content') }} />
             </CardContent>
           </Card>
