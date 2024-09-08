@@ -16,11 +16,6 @@ import ExpressInterestButton from './ExpressInterestButton';
 import ImpactMetricForm from './ImpactMetricForm';
 import ECKTSlider from '../shared/ECKTSlider';
 import { format } from 'date-fns';
-import TasksTab from './ProjectDetailTabs/TasksTab';
-import TeamTab from './ProjectDetailTabs/TeamTab';
-import OverviewTab from './ProjectDetailTabs/OverviewTab';
-import ImpactTab from './ProjectDetailTabs/ImpactTab';
-import FeedbackTab from './ProjectDetailTabs/FeedbackTab';
 
 const ProjectDetailPage = () => {
   const { projectId } = useParams();
@@ -47,6 +42,134 @@ const ProjectDetailPage = () => {
       toast.error('Failed to delete project');
     }
   };
+
+  const OverviewTab = ({ project }) => (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <div>
+          <h3 className="text-xl font-semibold">Project Overview</h3>
+          <p className="text-gray-600">{project.description}</p>
+        </div>
+        <FaveScore score={project.fave_score || 0} />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="flex items-center">
+          <DollarSign className="mr-2 h-5 w-5 text-gray-500" />
+          <span>Budget: ${project.budget}</span>
+        </div>
+        <div className="flex items-center">
+          <Calendar className="mr-2 h-5 w-5 text-gray-500" />
+          <span>Start Date: {format(new Date(project.start_date), 'PP')}</span>
+        </div>
+        <div className="flex items-center">
+          <Calendar className="mr-2 h-5 w-5 text-gray-500" />
+          <span>End Date: {format(new Date(project.end_date), 'PP')}</span>
+        </div>
+        <div className="flex items-center">
+          <MapPin className="mr-2 h-5 w-5 text-gray-500" />
+          <span>Location: {project.location}</span>
+        </div>
+      </div>
+      <div>
+        <h4 className="font-semibold mb-2">Required Skills:</h4>
+        <div className="flex flex-wrap gap-2">
+          {project.required_skills.map((skill, index) => (
+            <Badge key={index} variant="secondary">{skill}</Badge>
+          ))}
+        </div>
+      </div>
+      <div>
+        <h4 className="font-semibold mb-2">Project Progress:</h4>
+        <Progress value={33} className="w-full" />
+      </div>
+    </div>
+  );
+
+  const TeamTab = ({ project, isOwner }) => (
+    <div className="space-y-4">
+      <h3 className="text-xl font-semibold">Team Members</h3>
+      {project.team_members && project.team_members.length > 0 ? (
+        project.team_members.map((member, index) => (
+          <Card key={index}>
+            <CardContent className="flex items-center justify-between p-4">
+              <div className="flex items-center">
+                <Avatar className="h-10 w-10 mr-4">
+                  <AvatarImage src={member.avatar_url} alt={member.name} />
+                  <AvatarFallback>{member.name[0]}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-semibold">{member.name}</p>
+                  <p className="text-sm text-gray-500">{member.role}</p>
+                </div>
+              </div>
+              {isOwner && (
+                <Button variant="outline" size="sm">Manage</Button>
+              )}
+            </CardContent>
+          </Card>
+        ))
+      ) : (
+        <p>No team members yet.</p>
+      )}
+      {isOwner && (
+        <Button>Add Team Member</Button>
+      )}
+    </div>
+  );
+
+  const TasksTab = ({ project, isOwner }) => (
+    <div className="space-y-4">
+      <h3 className="text-xl font-semibold">Project Tasks</h3>
+      {project.tasks && project.tasks.length > 0 ? (
+        project.tasks.map((task, index) => (
+          <Card key={index}>
+            <CardContent className="p-4">
+              <div className="flex justify-between items-center">
+                <h4 className="font-semibold">{task.title}</h4>
+                <Badge>{task.status}</Badge>
+              </div>
+              <p className="text-sm text-gray-600">{task.description}</p>
+              {isOwner && (
+                <Button variant="outline" size="sm" className="mt-2">Update Status</Button>
+              )}
+            </CardContent>
+          </Card>
+        ))
+      ) : (
+        <p>No tasks created yet.</p>
+      )}
+      {isOwner && (
+        <Button>Add New Task</Button>
+      )}
+    </div>
+  );
+
+  const ImpactTab = ({ project }) => (
+    <div className="space-y-4">
+      <h3 className="text-xl font-semibold">Impact Metrics</h3>
+      {project.impact_metrics && project.impact_metrics.length > 0 ? (
+        project.impact_metrics.map((metric, index) => (
+          <Card key={index}>
+            <CardContent className="p-4">
+              <h4 className="font-semibold">{metric.description}</h4>
+              <Progress value={metric.impact_score} className="mt-2" />
+              <p className="text-sm text-gray-600 mt-1">Impact Score: {metric.impact_score}%</p>
+            </CardContent>
+          </Card>
+        ))
+      ) : (
+        <p>No impact metrics recorded yet.</p>
+      )}
+      <ImpactMetricForm projectId={project.project_id} />
+    </div>
+  );
+
+  const FeedbackTab = ({ projectId }) => (
+    <div className="space-y-4">
+      <h3 className="text-xl font-semibold">Project Feedback</h3>
+      <ECKTSlider origin={`project_${projectId}`} />
+    </div>
+  );
 
   return (
     <div className="max-w-4xl mx-auto p-4">
