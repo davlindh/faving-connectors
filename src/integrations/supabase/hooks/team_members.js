@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../supabase';
 
-export const useProjectTeamMembers = (projectId) => useQuery({
-  queryKey: ['project_team_members', projectId],
+export const useTeamMembers = (projectId) => useQuery({
+  queryKey: ['team_members', projectId],
   queryFn: async () => {
     const { data, error } = await supabase
       .from('project_team_members')
@@ -14,7 +14,7 @@ export const useProjectTeamMembers = (projectId) => useQuery({
   enabled: !!projectId,
 });
 
-export const useAddProjectTeamMember = () => {
+export const useAddTeamMember = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ projectId, userId, role }) => {
@@ -27,12 +27,12 @@ export const useAddProjectTeamMember = () => {
       return data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['project_team_members', data.project_id]);
+      queryClient.invalidateQueries(['team_members', data.project_id]);
     },
   });
 };
 
-export const useUpdateProjectTeamMember = () => {
+export const useUpdateTeamMember = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, updates }) => {
@@ -46,12 +46,12 @@ export const useUpdateProjectTeamMember = () => {
       return data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['project_team_members', data.project_id]);
+      queryClient.invalidateQueries(['team_members', data.project_id]);
     },
   });
 };
 
-export const useRemoveProjectTeamMember = () => {
+export const useRemoveTeamMember = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, projectId }) => {
@@ -63,7 +63,7 @@ export const useRemoveProjectTeamMember = () => {
       return { id, projectId };
     },
     onSuccess: ({ projectId }) => {
-      queryClient.invalidateQueries(['project_team_members', projectId]);
+      queryClient.invalidateQueries(['team_members', projectId]);
     },
   });
 };
@@ -115,7 +115,7 @@ export const useUpdateTeamMemberRequest = () => {
     onSuccess: (data) => {
       queryClient.invalidateQueries(['team_member_requests', data.team_id]);
       if (data.status === 'approved') {
-        queryClient.invalidateQueries(['project_team_members', data.team_id]);
+        queryClient.invalidateQueries(['team_members', data.team_id]);
       }
     },
   });
