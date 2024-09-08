@@ -1,37 +1,30 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useKnowledgeBase, useProfile } from '@/integrations/supabase';
+import { useKnowledgeBase } from '@/integrations/supabase';
 import ArticleCard from './ArticleCard';
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { X, Search, Plus, Filter } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useInView } from 'react-intersection-observer';
 
 const ARTICLES_PER_PAGE = 9;
 
 const ArticleListPage = () => {
-  const [activeTab, setActiveTab] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     category: 'all',
-    readTime: [0, 60],
     tags: []
   });
   const [sortBy, setSortBy] = useState('latest');
   const [displayedArticles, setDisplayedArticles] = useState([]);
   const [page, setPage] = useState(1);
   const navigate = useNavigate();
-  const { session } = useSupabase();
 
-  const { data: allArticles, isLoading: articlesLoading, error: articlesError } = useKnowledgeBase();
-  const { data: userProfile, isLoading: profileLoading, error: profileError } = useProfile(session?.user?.id);
+  const { data: allArticles, isLoading, error } = useKnowledgeBase();
 
   const { ref, inView } = useInView({
     threshold: 0,
@@ -42,7 +35,6 @@ const ArticleListPage = () => {
       let filtered = allArticles.filter(article => 
         (searchTerm === '' || article.title.toLowerCase().includes(searchTerm.toLowerCase()) || article.content.toLowerCase().includes(searchTerm.toLowerCase())) &&
         (filters.category === 'all' || article.category === filters.category) &&
-        (article.read_time >= filters.readTime[0] && article.read_time <= filters.readTime[1]) &&
         (filters.tags.length === 0 || filters.tags.every(tag => article.tags?.includes(tag)))
       );
 
@@ -85,6 +77,18 @@ const ArticleListPage = () => {
       tags: filters.tags.filter(skill => skill !== skillToRemove)
     });
   };
+
+  const handleClearFilters = () => {
+    setSearchTerm('');
+    setFilters({
+      category: 'all',
+      tags: []
+    });
+    setSortBy('latest');
+  };
+
+  if (isLoading) return <div className="text-center py-8">Loading articles...</div>;
+  if (error) return <div className="text-center text-red-500 py-8">Error loading articles: {error.message}</div>;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -146,21 +150,6 @@ const ArticleListPage = () => {
                   </Select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Read Time (minutes)</label>
-                  <Slider
-                    min={0}
-                    max={60}
-                    step={5}
-                    value={filters.readTime}
-                    onValueChange={(value) => setFilters({ ...filters, readTime: value })}
-                    className="mb-2"
-                  />
-                  <div className="flex justify-between text-sm text-gray-500">
-                    <span>{filters.readTime[0]} min</span>
-                    <span>{filters.readTime[1]} min</span>
-                  </div>
-                </div>
-                <div>
                   <label className="block text-sm font-medium mb-1">Tags</label>
                   <Input
                     placeholder="Add tags (press Enter)"
@@ -186,25 +175,28 @@ const ArticleListPage = () => {
               </div>
             </PopoverContent>
           </Popover>
+          <Button variant="outline" onClick={handleClearFilters}>
+            Clear Filters
+          </Button>
         </div>
       </div>
 
-      {articlesLoading && <div className="text-center py-8">Loading articles...</div>}
-      {articlesError && <div className="text-center text-red-500 py-8">Error loading articles: {articlesError.message}</div>}
-      {!articlesLoading && !articlesError && displayedArticles.length > 0 ? (
+      {displayedArticles.length > 0 ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {displayedArticles.map((article) => (
             <ArticleCard key={article.article_id} article={article} />
           ))}
         </div>
       ) : (
-        <div className="text-center py-8">
-          <p className="text-xl font-semibold mb-2">No articles found</p>
-          <p className="text-gray-600">Try adjusting your search or filters to find what you're looking for.</p>
-          <Button className="mt-4" onClick={() => navigate('/knowledge-base/create')}>
-            Create New Article
-          </Button>
-        </div>
+        <Card className="text-center py-8">
+          <CardContent>
+            <p className="text-xl font-semibold mb-2">No articles found</p>
+            <p className="text-gray-600">Try adjusting your search or filters to find what you're looking for.</p>
+            <Button className="mt-4" onClick={() => navigate('/knowledge-base/create')}>
+              Create New Article
+            </Button>
+          </CardContent>
+        </Card>
       )}
 
       <div ref={ref} className="h-10" />
