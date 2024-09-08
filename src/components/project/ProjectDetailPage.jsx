@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar, DollarSign, MapPin, User, ArrowLeft, Edit, Trash, Star, FileText, MessageSquare, UserPlus, Users } from 'lucide-react';
+import { Calendar, DollarSign, MapPin, User, ArrowLeft, Edit, Trash, Star, FileText, MessageSquare, UserPlus, Users, CheckCircle, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
@@ -16,6 +16,19 @@ import ExpressInterestButton from './ExpressInterestButton';
 import ImpactMetricForm from './ImpactMetricForm';
 import ECKTSlider from '../shared/ECKTSlider';
 import { format } from 'date-fns';
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+
+const taskSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
+  status: z.enum(['todo', 'in_progress', 'completed']),
+  due_date: z.date(),
+});
 
 const ProjectDetailPage = () => {
   const { projectId } = useParams();
@@ -29,6 +42,17 @@ const ProjectDetailPage = () => {
   const addTeamMember = useAddProjectTeamMember();
   const updateTeamMember = useUpdateProjectTeamMember();
   const removeTeamMember = useRemoveProjectTeamMember();
+  const [isAddingTask, setIsAddingTask] = useState(false);
+
+  const taskForm = useForm({
+    resolver: zodResolver(taskSchema),
+    defaultValues: {
+      title: '',
+      description: '',
+      status: 'todo',
+      due_date: new Date(),
+    },
+  });
 
   if (isLoading) return <div className="text-center mt-8">Loading project details...</div>;
   if (error) return <div className="text-center mt-8 text-red-500">Error loading project: {error.message}</div>;
@@ -72,6 +96,41 @@ const ProjectDetailPage = () => {
     } catch (error) {
       toast.error('Failed to remove team member');
     }
+  };
+
+  const handleAddTask = async (data) => {
+    try {
+      const updatedTasks = [...(project.tasks || []), data];
+      await updateProject.mutateAsync({
+        projectId,
+        updates: { tasks: updatedTasks },
+      });
+      toast.success('Task added successfully');
+      setIsAddingTask(false);
+      taskForm.reset();
+    } catch (error) {
+      toast.error('Failed to add task');
+    }
+  };
+
+  const handleUpdateTask = async (taskIndex, updates) => {
+    try {
+      const updatedTasks = [...project.tasks];
+      updatedTasks[taskIndex] = { ...updatedTasks[taskIndex], ...updates };
+      await updateProject.mutateAsync({
+        projectId,
+        updates: { tasks: updatedTasks },
+      });
+      toast.success('Task updated successfully');
+    } catch (error) {
+      toast.error('Failed to update task');
+    }
+  };
+
+  const calculateProgress = () => {
+    if (!project.tasks || project.tasks.length === 0) return 0;
+    const completedTasks = project.tasks.filter(task => task.status === 'completed').length;
+    return (completedTasks / project.tasks.length) * 100;
   };
 
   return (
@@ -142,7 +201,15 @@ const ProjectDetailPage = () => {
               />
             </TabsContent>
             <TabsContent value="tasks">
-              <TasksTab project={project} />
+              <TasksTab
+                project={project}
+                isOwner={isOwner}
+                onAddTask={handleAddTask}
+                onUpdateTask={handleUpdateTask}
+                isAddingTask={isAddingTask}
+                setIsAddingTask={setIsAddingTask}
+                taskForm={taskForm}
+              />
             </TabsContent>
             <TabsContent value="impact">
               <ImpactTab project={project} />
@@ -202,6 +269,11 @@ const OverviewTab = ({ project }) => (
         </div>
       </div>
     )}
+    <div>
+      <h3 className="text-xl font-semibold mb-2">Project Progress</h3>
+      <Progress value={calculateProgress()} className="w-full" />
+      <p className="text-sm text-gray-500 mt-1">{calculateProgress().toFixed(0)}% Complete</p>
+    </div>
   </div>
 );
 
@@ -252,7 +324,7 @@ const TeamTab = ({ teamMembers, isLoading, isOwner, onAddMember, onUpdateMember,
   );
 };
 
-const TasksTab = ({ project }) => (
+const TasksTab = ({ project, isOwner, onAddTask, onUpdateTask, isAddingTask, setIsAddingTask, taskForm }) => (
   <div>
     <h3 className="text-xl font-semibold mb-4">Project Tasks</h3>
     {project.tasks && project.tasks.length > 0 ? (
@@ -260,10 +332,28 @@ const TasksTab = ({ project }) => (
         {project.tasks.map((task, index) => (
           <Card key={index}>
             <CardContent className="p-4">
-              <h4 className="font-semibold">{task.title}</h4>
-              <p className="text-sm text-gray-600">{task.description}</p>
+              <div className="flex justify-between items-start">
+                <div>
+                  <h4 className="font-semibold">{task.title}</h4>
+                  <p className="text-sm text-gray-600">{task.description}</p>
+                </div>
+                {isOwner && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onUpdateTask(index, { status: task.status === 'completed' ? 'in_progress' : 'completed' })}
+                  >
+                    {task.status === 'completed' ? <XCircle className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
+                  </Button>
+                )}
+              </div>
               <div className="flex justify-between items-center mt-2">
-                <Badge variant={task.status === 'completed' ? 'success' : 'secondary'}>{task.status}</Badge>
+                <Badge variant={
+                  task.status === 'completed' ? 'success' :
+                  task.status === 'in_progress' ? 'warning' : 'secondary'
+                }>
+                  {task.status}
+                </Badge>
                 <span className="text-sm text-gray-500">Due: {format(new Date(task.due_date), 'PP')}</span>
               </div>
             </CardContent>
@@ -272,6 +362,80 @@ const TasksTab = ({ project }) => (
       </div>
     ) : (
       <p>No tasks have been added to this project yet.</p>
+    )}
+    {isOwner && (
+      <div className="mt-4">
+        {isAddingTask ? (
+          <Form {...taskForm}>
+            <form onSubmit={taskForm.handleSubmit(onAddTask)} className="space-y-4">
+              <FormField
+                control={taskForm.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Task Title</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Enter task title" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={taskForm.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea {...field} placeholder="Enter task description" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={taskForm.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <FormControl>
+                      <select {...field} className="w-full p-2 border rounded">
+                        <option value="todo">To Do</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                      </select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={taskForm.control}
+                name="due_date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Due Date</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="date" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit">Add Task</Button>
+              <Button type="button" variant="outline" onClick={() => setIsAddingTask(false)} className="ml-2">
+                Cancel
+              </Button>
+            </form>
+          </Form>
+        ) : (
+          <Button onClick={() => setIsAddingTask(true)}>
+            <FileText className="mr-2 h-4 w-4" /> Add New Task
+          </Button>
+        )}
+      </div>
     )}
   </div>
 );
