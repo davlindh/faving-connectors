@@ -11,6 +11,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
 import { toast } from 'sonner';
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ArticleListPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -20,6 +23,8 @@ const ArticleListPage = () => {
   });
   const [sortBy, setSortBy] = useState('latest');
   const [displayedArticles, setDisplayedArticles] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [allTags, setAllTags] = useState([]);
   const navigate = useNavigate();
   const { session } = useSupabase();
 
@@ -27,10 +32,28 @@ const ArticleListPage = () => {
 
   useEffect(() => {
     if (articles) {
+      const uniqueCategories = [...new Set(articles.map(article => article.category))];
+      setCategories(['all', ...uniqueCategories]);
+
+      const tags = articles.reduce((acc, article) => {
+        if (article.tags) {
+          article.tags.forEach(tag => {
+            if (!acc[tag]) {
+              acc[tag] = { count: 1, articles: [article.article_id] };
+            } else {
+              acc[tag].count++;
+              acc[tag].articles.push(article.article_id);
+            }
+          });
+        }
+        return acc;
+      }, {});
+      setAllTags(tags);
+
       let filtered = articles.filter(article => 
         (searchTerm === '' || article.title.toLowerCase().includes(searchTerm.toLowerCase()) || article.content.toLowerCase().includes(searchTerm.toLowerCase())) &&
         (filters.category === 'all' || article.category === filters.category) &&
-        (filters.tags.length === 0 || filters.tags.every(tag => article.tags.includes(tag)))
+        (filters.tags.length === 0 || filters.tags.every(tag => article.tags?.includes(tag)))
       );
 
       const sorted = [...filtered].sort((a, b) => {
@@ -52,11 +75,14 @@ const ArticleListPage = () => {
     navigate('/knowledge-base/create');
   };
 
-  const categories = ['All', 'Technology', 'Design', 'Business', 'Marketing', 'Development'];
-  const tags = ['React', 'Node.js', 'Python', 'UI/UX', 'SEO', 'Project Management'];
-
-  if (isLoading) return <div className="text-center mt-8">Loading articles...</div>;
-  if (error) return <div className="text-center text-red-500 mt-8">Error loading articles: {error.message}</div>;
+  const handleTagFilter = (tag) => {
+    setFilters(prev => ({
+      ...prev,
+      tags: prev.tags.includes(tag)
+        ? prev.tags.filter(t => t !== tag)
+        : [...prev.tags, tag]
+    }));
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -109,28 +135,24 @@ const ArticleListPage = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {categories.map((category) => (
-                        <SelectItem key={category} value={category.toLowerCase()}>{category}</SelectItem>
+                        <SelectItem key={category} value={category}>{category}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Label className="text-sm font-medium mb-1">Tags</Label>
-                  <div className="space-y-2">
-                    {tags.map((tag) => (
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {Object.entries(allTags).map(([tag, { count }]) => (
                       <div key={tag} className="flex items-center">
                         <Checkbox
                           id={tag}
                           checked={filters.tags.includes(tag)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setFilters({ ...filters, tags: [...filters.tags, tag] });
-                            } else {
-                              setFilters({ ...filters, tags: filters.tags.filter(t => t !== tag) });
-                            }
-                          }}
+                          onCheckedChange={() => handleTagFilter(tag)}
                         />
-                        <label htmlFor={tag} className="ml-2 text-sm">{tag}</label>
+                        <label htmlFor={tag} className="ml-2 text-sm">
+                          {tag} ({count})
+                        </label>
                       </div>
                     ))}
                   </div>
@@ -141,13 +163,51 @@ const ArticleListPage = () => {
         </div>
       </div>
 
-      {displayedArticles.length > 0 ? (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {displayedArticles.map((article) => (
-            <ArticleCard key={article.article_id} article={article} />
-          ))}
-        </div>
-      ) : (
+      <div className="mb-4 flex flex-wrap gap-2">
+        {filters.tags.map(tag => (
+          <Badge key={tag} variant="secondary" className="cursor-pointer" onClick={() => handleTagFilter(tag)}>
+            {tag} <span className="ml-1">×</span>
+          </Badge>
+        ))}
+      </div>
+
+      <Tabs defaultValue="grid" className="mb-6">
+        <TabsList>
+          <TabsTrigger value="grid">Grid View</TabsTrigger>
+          <TabsTrigger value="list">List View</TabsTrigger>
+        </TabsList>
+        <TabsContent value="grid">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {displayedArticles.map((article) => (
+              <ArticleCard key={article.article_id} article={article} />
+            ))}
+          </div>
+        </TabsContent>
+        <TabsContent value="list">
+          <div className="space-y-4">
+            {displayedArticles.map((article) => (
+              <Card key={article.article_id}>
+                <CardContent className="p-4">
+                  <h3 className="text-lg font-semibold mb-2">{article.title}</h3>
+                  <p className="text-sm text-gray-500 mb-2">
+                    {new Date(article.published_at).toLocaleDateString()} | {article.category}
+                  </p>
+                  <p className="text-sm mb-2">{article.content.substring(0, 150)}...</p>
+                  <div className="flex flex-wrap gap-2">
+                    {article.tags?.map(tag => (
+                      <Badge key={tag} variant="outline">{tag}</Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {isLoading && <div className="text-center py-8">Loading articles...</div>}
+      {error && <div className="text-center text-red-500 py-8">Error loading articles: {error.message}</div>}
+      {displayedArticles.length === 0 && !isLoading && !error && (
         <div className="text-center py-8">No articles found matching your criteria.</div>
       )}
     </div>
