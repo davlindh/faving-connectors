@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useKnowledgeBaseArticle, useUpdateKnowledgeBaseArticle, useDeleteKnowledgeBaseArticle, useCreateComment, useArticleComments } from '@/integrations/supabase';
+import { useKnowledgeBaseArticle, useUpdateKnowledgeBaseArticle, useDeleteKnowledgeBaseArticle } from '@/integrations/supabase';
+import { useCreateComment, useArticleComments } from '@/integrations/supabase/hooks/feedback';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -46,7 +47,7 @@ const ArticleDetailPage = () => {
     },
   });
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (article) {
       setEditedContent(article.content);
       setLikes(article.likes || 0);
@@ -207,7 +208,7 @@ const ArticleDetailPage = () => {
                   <div>Loading comments...</div>
                 ) : comments && comments.length > 0 ? (
                   comments.map((comment) => (
-                    <Card key={comment.id}>
+                    <Card key={comment.feedback_id}>
                       <CardContent className="pt-4">
                         <div className="flex items-start space-x-4">
                           <Avatar>

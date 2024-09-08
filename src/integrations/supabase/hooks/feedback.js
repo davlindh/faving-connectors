@@ -63,3 +63,39 @@ export const useDeleteFeedback = () => {
     },
   });
 };
+
+export const useCreateComment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (newComment) => {
+      const { data, error } = await supabase
+        .from('feedback')
+        .insert([{
+          ...newComment,
+          type: 'comment',
+          origin: `article_${newComment.article_id}`,
+        }])
+        .select();
+      if (error) throw error;
+      return data[0];
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(['feedback', `article_${data.article_id}`]);
+    },
+  });
+};
+
+export const useArticleComments = (articleId) => useQuery({
+  queryKey: ['feedback', `article_${articleId}`, 'comments'],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from('feedback')
+      .select('*, user:users(*)')
+      .eq('origin', `article_${articleId}`)
+      .eq('type', 'comment')
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    return data;
+  },
+  enabled: !!articleId,
+});
