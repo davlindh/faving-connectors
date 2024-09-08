@@ -17,8 +17,7 @@ import ImpactMetricForm from './ImpactMetricForm';
 import ECKTSlider from '../shared/ECKTSlider';
 import { format } from 'date-fns';
 import TaskList from './TaskList';
-import MilestoneList from './MilestoneList';
-import TeamMemberList from './TeamMemberList';
+import TeamManagement from '../team/TeamManagement';
 
 const ProjectDetailPage = () => {
   const { projectId } = useParams();
@@ -44,6 +43,12 @@ const ProjectDetailPage = () => {
     } catch (error) {
       toast.error('Failed to delete project');
     }
+  };
+
+  const calculateProgress = () => {
+    if (!project.tasks || project.tasks.length === 0) return 0;
+    const completedTasks = project.tasks.filter(task => task.status === 'completed').length;
+    return (completedTasks / project.tasks.length) * 100;
   };
 
   const OverviewTab = ({ project }) => (
@@ -83,56 +88,9 @@ const ProjectDetailPage = () => {
       </div>
       <div>
         <h4 className="font-semibold mb-2">Project Progress:</h4>
-        <Progress value={project.progress || 0} className="w-full" />
+        <Progress value={calculateProgress()} className="w-full" />
+        <span className="text-sm text-gray-500 mt-1">{calculateProgress().toFixed(0)}% Complete</span>
       </div>
-    </div>
-  );
-
-  const TeamTab = ({ project, isOwner }) => (
-    <div className="space-y-4">
-      <h3 className="text-xl font-semibold">Team Members</h3>
-      <TeamMemberList project={project} isOwner={isOwner} />
-    </div>
-  );
-
-  const TasksTab = ({ project, isOwner }) => (
-    <div className="space-y-4">
-      <h3 className="text-xl font-semibold">Project Tasks</h3>
-      <TaskList project={project} isOwner={isOwner} />
-    </div>
-  );
-
-  const MilestonesTab = ({ project, isOwner }) => (
-    <div className="space-y-4">
-      <h3 className="text-xl font-semibold">Project Milestones</h3>
-      <MilestoneList project={project} isOwner={isOwner} />
-    </div>
-  );
-
-  const ImpactTab = ({ project }) => (
-    <div className="space-y-4">
-      <h3 className="text-xl font-semibold">Impact Metrics</h3>
-      {project.impact_metrics && project.impact_metrics.length > 0 ? (
-        project.impact_metrics.map((metric, index) => (
-          <Card key={index}>
-            <CardContent className="p-4">
-              <h4 className="font-semibold">{metric.description}</h4>
-              <Progress value={metric.impact_score} className="mt-2" />
-              <p className="text-sm text-gray-600 mt-1">Impact Score: {metric.impact_score}%</p>
-            </CardContent>
-          </Card>
-        ))
-      ) : (
-        <p>No impact metrics recorded yet.</p>
-      )}
-      <ImpactMetricForm projectId={project.project_id} />
-    </div>
-  );
-
-  const FeedbackTab = ({ projectId }) => (
-    <div className="space-y-4">
-      <h3 className="text-xl font-semibold">Project Feedback</h3>
-      <ECKTSlider origin={`project_${projectId}`} />
     </div>
   );
 
@@ -185,8 +143,8 @@ const ProjectDetailPage = () => {
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="team">Team</TabsTrigger>
               <TabsTrigger value="tasks">Tasks</TabsTrigger>
+              <TabsTrigger value="team">Team</TabsTrigger>
               <TabsTrigger value="milestones">Milestones</TabsTrigger>
               <TabsTrigger value="impact">Impact</TabsTrigger>
               <TabsTrigger value="feedback">Feedback</TabsTrigger>
@@ -194,20 +152,20 @@ const ProjectDetailPage = () => {
             <TabsContent value="overview">
               <OverviewTab project={project} />
             </TabsContent>
-            <TabsContent value="team">
-              <TeamTab project={project} isOwner={isOwner} />
-            </TabsContent>
             <TabsContent value="tasks">
-              <TasksTab project={project} isOwner={isOwner} />
+              <TaskList projectId={project.project_id} />
+            </TabsContent>
+            <TabsContent value="team">
+              <TeamManagement projectId={project.project_id} isOwner={isOwner} />
             </TabsContent>
             <TabsContent value="milestones">
-              <MilestonesTab project={project} isOwner={isOwner} />
+              <div>Milestone management to be implemented</div>
             </TabsContent>
             <TabsContent value="impact">
-              <ImpactTab project={project} />
+              <ImpactMetricForm projectId={project.project_id} />
             </TabsContent>
             <TabsContent value="feedback">
-              <FeedbackTab projectId={projectId} />
+              <ECKTSlider origin={`project_${projectId}`} />
             </TabsContent>
           </Tabs>
         </CardContent>
