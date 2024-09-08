@@ -1,32 +1,27 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../supabase';
-import { useSupabase } from '../SupabaseProvider';
 
-export const useProjects = (fetchUserProjects = false) => {
-  const { session } = useSupabase();
-  
-  return useQuery({
-    queryKey: ['projects', fetchUserProjects],
-    queryFn: async () => {
-      let query = supabase.from('projects').select(`
-        *,
-        creator:users!creator_id(*),
-        impact_metrics:project_impact_metrics(*),
-        tasks:project_tasks(*),
-        team_members:project_team_members(*)
-      `);
-      
-      if (fetchUserProjects && session?.user?.id) {
-        query = query.eq('creator_id', session.user.id);
-      }
-      
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
-    },
-    enabled: !fetchUserProjects || !!session?.user?.id,
-  });
-};
+export const useProjects = (userId = null) => useQuery({
+  queryKey: ['projects', userId],
+  queryFn: async () => {
+    let query = supabase.from('projects').select(`
+      *,
+      creator:users!creator_id(*),
+      impact_metrics:project_impact_metrics(*),
+      tasks:project_tasks(*),
+      team_members:project_team_members(*)
+    `);
+    
+    if (userId) {
+      query = query.eq('creator_id', userId);
+    }
+    
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
+  },
+  enabled: userId !== null,
+});
 
 export const useProject = (projectId) => useQuery({
   queryKey: ['projects', projectId],
