@@ -1,21 +1,23 @@
 import React, { useState } from 'react';
+import { useProfiles, useProjects } from '@/integrations/supabase';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { useProfiles } from '@/integrations/supabase';
-import { Link } from 'react-router-dom';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search } from 'lucide-react';
+import UserCard from './UserCard';
 
 const ProfileSearchPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const { data: profiles, isLoading, error } = useProfiles();
+  const { data: profiles, isLoading: profilesLoading, error: profilesError } = useProfiles();
+  const { data: projects, isLoading: projectsLoading, error: projectsError } = useProjects();
 
   const filteredProfiles = profiles?.filter(profile => 
     profile.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     profile.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     profile.location?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
+
+  const isLoading = profilesLoading || projectsLoading;
+  const error = profilesError || projectsError;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -35,31 +37,17 @@ const ProfileSearchPage = () => {
           Clear
         </Button>
       </div>
-      {isLoading && <p className="text-center py-4">Loading profiles...</p>}
-      {error && <p className="text-center text-red-500 py-4">Error: {error.message}</p>}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {filteredProfiles.map((profile) => (
-          <Card key={profile.user_id}>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <Avatar className="h-12 w-12 mr-4">
-                  <AvatarImage src={profile.avatar_url} alt={`${profile.first_name} ${profile.last_name}`} />
-                  <AvatarFallback>{profile.first_name?.[0]}{profile.last_name?.[0]}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <h2 className="font-semibold">{profile.first_name} {profile.last_name}</h2>
-                  <p className="text-sm text-gray-500 mb-2">{profile.location}</p>
-                  <Link to={`/profile/${profile.user_id}`} className="text-blue-500 hover:underline text-sm">
-                    View Profile
-                  </Link>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-      {filteredProfiles.length === 0 && (
-        <p className="text-center py-4">No profiles found matching your search criteria.</p>
+      {isLoading && <div className="text-center py-4">Loading profiles...</div>}
+      {error && <div className="text-center text-red-500 py-4">Error: {error.message}</div>}
+      {!isLoading && !error && (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {filteredProfiles.map((profile) => (
+            <UserCard key={profile.user_id} user={profile} projects={projects} />
+          ))}
+        </div>
+      )}
+      {filteredProfiles.length === 0 && !isLoading && (
+        <div className="text-center py-4">No profiles found matching your search criteria.</div>
       )}
     </div>
   );
