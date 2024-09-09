@@ -1,17 +1,16 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useNavigate } from 'react-router-dom';
 import { useCreateProfile, useCreateUser } from '@/integrations/supabase';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form } from "@/components/ui/form";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
-import { toast } from 'sonner';
+import { useFormSubmit } from '@/hooks/useFormSubmit';
+import { TextField, TextAreaField } from '@/components/shared/FormFields';
 
 const formSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
@@ -30,12 +29,10 @@ const formSchema = z.object({
 });
 
 const RegistrationForm = () => {
-  const [error, setError] = useState(null);
   const { signUp } = useSupabase();
   const createProfile = useCreateProfile();
   const createUser = useCreateUser();
   const navigate = useNavigate();
-  const [passwordStrength, setPasswordStrength] = useState(0);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -51,23 +48,11 @@ const RegistrationForm = () => {
     },
   });
 
-  const calculatePasswordStrength = (password) => {
-    let strength = 0;
-    if (password.length >= 8) strength += 25;
-    if (password.match(/[a-z]+/)) strength += 25;
-    if (password.match(/[A-Z]+/)) strength += 25;
-    if (password.match(/[0-9]+/)) strength += 25;
-    if (password.match(/[$@#&!]+/)) strength += 25;
-    return Math.min(100, strength);
-  };
-
-  const onSubmit = async (values) => {
-    setError(null);
-    try {
-      // Step 1: Register with Supabase Auth
+  const { onSubmit, isSubmitting } = useFormSubmit(
+    async (data) => {
       const { data: authData, error: authError } = await signUp({
-        email: values.email,
-        password: values.password,
+        email: data.email,
+        password: data.password,
       });
       if (authError) throw authError;
 
@@ -75,35 +60,31 @@ const RegistrationForm = () => {
         const userId = authData.user.id;
         const now = new Date().toISOString();
 
-        // Step 2: Create user record
         await createUser.mutateAsync({
           user_id: userId,
-          first_name: values.firstName,
-          last_name: values.lastName,
-          email: values.email,
+          first_name: data.firstName,
+          last_name: data.lastName,
+          email: data.email,
           created_at: now,
           updated_at: now,
         });
 
-        // Step 3: Create profile record
         await createProfile.mutateAsync({
           user_id: userId,
-          first_name: values.firstName,
-          last_name: values.lastName,
-          location: values.location,
-          bio: values.bio,
+          first_name: data.firstName,
+          last_name: data.lastName,
+          location: data.location,
+          bio: data.bio,
           created_at: now,
           updated_at: now,
         });
 
-        toast.success('Registration successful! Please check your email to verify your account.');
         navigate('/login');
       }
-    } catch (error) {
-      console.error('Registration error:', error);
-      setError(error.message || 'An error occurred during registration. Please try again.');
-    }
-  };
+    },
+    'Registration successful! Please check your email to verify your account.',
+    'An error occurred during registration. Please try again.'
+  );
 
   return (
     <Card className="w-[450px]">
@@ -115,111 +96,14 @@ const RegistrationForm = () => {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="firstName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>First Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="John" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="lastName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Last Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Doe" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <TextField name="firstName" label="First Name" control={form.control} placeholder="John" />
+              <TextField name="lastName" label="Last Name" control={form.control} placeholder="Doe" />
             </div>
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input type="email" placeholder="john.doe@example.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="password" 
-                      placeholder="Create a strong password" 
-                      {...field} 
-                      onChange={(e) => {
-                        field.onChange(e);
-                        setPasswordStrength(calculatePasswordStrength(e.target.value));
-                      }}
-                    />
-                  </FormControl>
-                  <Progress value={passwordStrength} className="h-1 mt-2" />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="confirmPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Confirm Password</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="password" 
-                      placeholder="Confirm your password" 
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="location"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Location (Optional)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="City, Country" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="bio"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Bio (Optional)</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Tell us about yourself" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <TextField name="email" label="Email" control={form.control} type="email" placeholder="john.doe@example.com" />
+            <TextField name="password" label="Password" control={form.control} type="password" placeholder="Create a strong password" />
+            <TextField name="confirmPassword" label="Confirm Password" control={form.control} type="password" placeholder="Confirm your password" />
+            <TextField name="location" label="Location (Optional)" control={form.control} placeholder="City, Country" />
+            <TextAreaField name="bio" label="Bio (Optional)" control={form.control} placeholder="Tell us about yourself" />
             <FormField
               control={form.control}
               name="termsAccepted"
@@ -239,8 +123,9 @@ const RegistrationForm = () => {
                 </FormItem>
               )}
             />
-            {error && <p className="text-red-500 text-sm">{error}</p>}
-            <Button type="submit" className="w-full">Register</Button>
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? 'Registering...' : 'Register'}
+            </Button>
           </form>
         </Form>
       </CardContent>
