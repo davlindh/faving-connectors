@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Sidebar from './Sidebar.jsx';
 import Footer from './Footer.jsx';
+import Breadcrumb from './Breadcrumb.jsx';
 import { Button } from "@/components/ui/button";
 import { Menu } from 'lucide-react';
 
@@ -20,7 +21,10 @@ const Layout = ({ children }) => {
         </header>
         <main className="flex-grow p-4 md:p-6 lg:p-8 overflow-auto">
           <div className="max-w-7xl mx-auto">
-            {children}
+            <Breadcrumb />
+            <div className="mt-4">
+              {children}
+            </div>
           </div>
         </main>
         <Footer />
