@@ -28,6 +28,7 @@ export const {
   useCreateProfile,
   useUpdateProfile,
   useDeleteProfile,
+  useUploadAvatar,
 } = profileHooks;
 
 export const {
