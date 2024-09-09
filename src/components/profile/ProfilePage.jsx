@@ -12,7 +12,6 @@ import ProfileForm from './ProfileForm';
 import SkillList from './SkillList';
 import ServiceList from './ServiceList';
 import ProjectCard from '../project/ProjectCard';
-import FaveScore from '../shared/FaveScore';
 import ECKTSlider from '../shared/ECKTSlider';
 
 const ProfilePage = () => {
@@ -138,8 +137,7 @@ const ProfilePage = () => {
           <div className="text-center sm:text-left flex-grow">
             <CardTitle className="text-2xl">{user.first_name} {user.last_name}</CardTitle>
             <p className="text-gray-500">{profile.location}</p>
-            <FaveScore score={user.score || 0} />
-          </div>
+           </div>
           {isOwnProfile && (
             <Button variant="outline" onClick={handleEditToggle}>
               {isEditing ? 'Cancel Edit' : 'Edit Profile'}

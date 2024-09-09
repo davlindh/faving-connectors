@@ -10,7 +10,6 @@ import { Calendar, DollarSign, MapPin, User, ArrowLeft, Edit, Trash, MessageSqua
 import { toast } from 'sonner';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
-import FaveScore from '../shared/FaveScore';
 import ExpressInterestButton from './ExpressInterestButton';
 import ImpactMetricForm from './ImpactMetricForm';
 import ECKTSlider from '../shared/ECKTSlider';
@@ -119,7 +118,6 @@ const ProjectDetailPage = () => {
                 <span>{project.location}</span>
               </div>
             </div>
-            <FaveScore score={project.fave_score || 0} />
           </div>
           {isOwner && (
             <div className="flex space-x-2 mt-4">
