@@ -3,9 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Star, Calendar } from 'lucide-react';
+import { MessageSquare, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { format } from 'date-fns';
 
 const UserCard = ({ user, projects }) => {
   const userProjects = projects?.filter(project => project.creator_id === user.user_id) || [];
@@ -29,10 +28,6 @@ const UserCard = ({ user, projects }) => {
           <div className="flex items-center">
             <Star className="w-4 h-4 mr-2 text-yellow-500" />
             <span className="text-sm font-medium">Fave Score: {user.score || 0}</span>
-          </div>
-          <div className="flex items-center">
-            <Calendar className="w-4 h-4 mr-2 text-blue-500" />
-            <span className="text-sm">Joined: {format(new Date(user.created_at), 'MMM yyyy')}</span>
           </div>
         </div>
         {user.skills && user.skills.length > 0 && (
