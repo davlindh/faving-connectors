@@ -1,5 +1,4 @@
 import React from 'react';
-import { Progress } from "@/components/ui/progress";
 import { Star } from "lucide-react";
 
 const FaveScore = ({ score }) => {
@@ -17,8 +16,6 @@ const FaveScore = ({ score }) => {
             />
           ))}
         </div>
-      </div>
-      <Progress value={score} className="w-full" />
       <span className="mt-1">{score}%</span>
     </div>
   );

@@ -5,7 +5,6 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar, DollarSign, MapPin, User, ArrowLeft, Edit, Trash, MessageSquare, CheckCircle, Clock } from 'lucide-react';
 import { toast } from 'sonner';
@@ -53,11 +52,6 @@ const ProjectDetailPage = () => {
     setActiveTab('overview');
   };
 
-  const calculateProgress = () => {
-    if (!project.tasks || project.tasks.length === 0) return 0;
-    const completedTasks = project.tasks.filter(task => task.status === 'completed').length;
-    return (completedTasks / project.tasks.length) * 100;
-  };
 
   const renderContent = () => {
     if (isEditing) {
@@ -209,11 +203,6 @@ const OverviewTab = ({ project }) => (
           <Badge key={index} variant="secondary">{skill}</Badge>
         ))}
       </div>
-    </div>
-    <div>
-      <h4 className="font-semibold mb-2">Project Progress:</h4>
-      <Progress value={calculateProgress()} className="w-full" />
-      <span className="text-sm text-gray-500 mt-1">{calculateProgress().toFixed(0)}% Complete</span>
     </div>
   </div>
 );
