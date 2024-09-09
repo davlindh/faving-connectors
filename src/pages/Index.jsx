@@ -1,12 +1,11 @@
 import React from 'react';
 import { useProjects, useProfiles, useKnowledgeBase } from '@/integrations/supabase';
 import ProjectCard from '@/components/project/ProjectCard';
+import UserCard from '@/components/profile/UserCard';
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Briefcase, Users, BookOpen, Star, MapPin, Calendar, Award } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
 const Index = () => {
   const { data: projects, isLoading: projectsLoading, error: projectsError } = useProjects();
@@ -54,7 +53,7 @@ const Index = () => {
         error={profilesError}
         emptyMessage="No featured users available at the moment."
         renderItem={(user) => (
-          <UserCard key={user.user_id} user={user} />
+          <UserCard key={user.user_id} user={user} projects={projects} />
         )}
         viewAllLink="/find-profiles"
         viewAllText="View All Users"
@@ -104,61 +103,6 @@ const FeaturedSection = ({ title, items, loading, error, emptyMessage, renderIte
       </Button>
     </div>
   </section>
-);
-
-const UserCard = ({ user }) => (
-  <Card className="hover:shadow-lg transition-shadow duration-300">
-    <CardContent className="p-6">
-      <div className="flex items-center mb-4">
-        <Avatar className="h-16 w-16">
-          <AvatarImage src={user.avatar_url} alt={`${user.first_name} ${user.last_name}`} />
-          <AvatarFallback>{user.first_name?.[0]}{user.last_name?.[0]}</AvatarFallback>
-        </Avatar>
-        <div className="ml-4">
-          <h3 className="font-semibold text-lg">{user.first_name} {user.last_name}</h3>
-          <p className="text-sm text-gray-500 flex items-center">
-            <MapPin className="h-4 w-4 mr-1" />
-            {user.location || 'Location not specified'}
-          </p>
-        </div>
-      </div>
-      <p className="text-sm text-gray-600 mb-4 line-clamp-2">{user.bio || 'No bio available'}</p>
-      <div className="mb-4">
-        <h4 className="text-sm font-semibold mb-2">Skills:</h4>
-        <div className="flex flex-wrap gap-2">
-          {user.skills?.slice(0, 3).map((skill, index) => (
-            <Badge key={index} variant="secondary">{skill}</Badge>
-          ))}
-          {user.skills?.length > 3 && (
-            <Badge variant="secondary">+{user.skills.length - 3} more</Badge>
-          )}
-        </div>
-      </div>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center">
-          <Star className="h-5 w-5 text-yellow-500 mr-1" />
-          <span className="font-medium">{user.score || 0} Fave Score</span>
-        </div>
-        <div className="flex items-center text-sm text-gray-500">
-          <Calendar className="h-4 w-4 mr-1" />
-          <span>Joined {new Date(user.created_at).toLocaleDateString()}</span>
-        </div>
-      </div>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center text-sm text-gray-500">
-          <Briefcase className="h-4 w-4 mr-1" />
-          <span>{user.completed_projects || 0} Projects</span>
-        </div>
-        <div className="flex items-center text-sm text-gray-500">
-          <Award className="h-4 w-4 mr-1" />
-          <span>{user.endorsements || 0} Endorsements</span>
-        </div>
-      </div>
-      <Button asChild variant="outline" size="sm" className="w-full mt-4">
-        <Link to={`/profile/${user.user_id}`}>View Full Profile</Link>
-      </Button>
-    </CardContent>
-  </Card>
 );
 
 const ArticleCard = ({ article }) => (
