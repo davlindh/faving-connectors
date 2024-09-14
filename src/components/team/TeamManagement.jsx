@@ -4,7 +4,6 @@ import { useProfiles } from '@/integrations/supabase/hooks/profiles';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
@@ -24,7 +23,7 @@ const teamMemberSchema = z.object({
 
 const TeamManagement = ({ projectId }) => {
   const { data: teamMembers, isLoading, error } = useTeamMembers(projectId);
-  const { data: profiles } = useProfiles();
+  const { data: profiles, isLoading: profilesLoading, error: profilesError } = useProfiles();
   const addTeamMember = useAddTeamMember();
   const updateTeamMember = useUpdateTeamMember();
   const removeTeamMember = useRemoveTeamMember();
@@ -70,8 +69,8 @@ const TeamManagement = ({ projectId }) => {
     }
   };
 
-  if (isLoading) return <div>Loading team members...</div>;
-  if (error) return <div>Error loading team members: {error.message}</div>;
+  if (isLoading || profilesLoading) return <div>Loading team members...</div>;
+  if (error || profilesError) return <div>Error loading team data: {error?.message || profilesError?.message}</div>;
 
   return (
     <Card>
@@ -167,16 +166,16 @@ const TeamManagement = ({ projectId }) => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {teamMembers?.length > 0 ? (
+        {teamMembers && teamMembers.length > 0 ? (
           teamMembers.map((member) => (
             <div key={member.id} className="flex items-center justify-between mb-4">
               <div className="flex items-center">
                 <Avatar className="h-10 w-10 mr-4">
-                  <AvatarImage src={member.user.avatar_url} alt={`${member.user.first_name} ${member.user.last_name}`} />
-                  <AvatarFallback>{member.user.first_name[0]}{member.user.last_name[0]}</AvatarFallback>
+                  <AvatarImage src={member.user?.avatar_url} alt={`${member.user?.first_name} ${member.user?.last_name}`} />
+                  <AvatarFallback>{member.user?.first_name?.[0]}{member.user?.last_name?.[0]}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-semibold">{member.user.first_name} {member.user.last_name}</p>
+                  <p className="font-semibold">{member.user?.first_name} {member.user?.last_name}</p>
                   <p className="text-sm text-gray-500">{member.role}</p>
                 </div>
               </div>
