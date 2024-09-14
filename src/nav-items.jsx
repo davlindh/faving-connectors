@@ -1,4 +1,4 @@
-import { HomeIcon, UserIcon, BriefcaseIcon, BookOpenIcon, MessageSquareIcon, LogInIcon, UserPlusIcon, SearchIcon, SettingsIcon, HelpCircleIcon, FileTextIcon, CalendarIcon, BarChartIcon } from "lucide-react";
+import { HomeIcon, UserIcon, BriefcaseIcon, BookOpenIcon, MessageSquareIcon, LogInIcon, UserPlusIcon, SearchIcon, SettingsIcon, HelpCircleIcon, FileTextIcon, CalendarIcon, BarChartIcon, UsersIcon } from "lucide-react";
 import Index from "./pages/Index";
 import ProfilePage from "./components/profile/ProfilePage";
 import ProjectListPage from "./components/project/ProjectListPage";
@@ -12,6 +12,7 @@ import HelpPage from "./components/help/HelpPage";
 import ContractsPage from "./components/contracts/ContractsPage";
 import CalendarPage from "./components/calendar/CalendarPage";
 import AnalyticsPage from "./components/analytics/AnalyticsPage";
+import TeamPage from "./components/team/TeamPage";
 
 export const navItems = [
   {
@@ -36,6 +37,12 @@ export const navItems = [
       { title: "My Projects", to: "/projects/my-projects" },
       { title: "Create Project", to: "/projects/create" },
     ],
+  },
+  {
+    title: "Team",
+    to: "/team",
+    icon: UsersIcon,
+    page: TeamPage,
   },
   {
     title: "Knowledge Base",
