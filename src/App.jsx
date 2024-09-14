@@ -21,9 +21,9 @@ const queryClient = new QueryClient();
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <SupabaseProvider>
-        <PerformanceProfiler>
-          <Router>
+      <Router>
+        <SupabaseProvider>
+          <PerformanceProfiler>
             <Layout>
               <Suspense fallback={<LoadingSpinner />}>
                 <Routes>
@@ -38,9 +38,9 @@ const App = () => {
                 </Routes>
               </Suspense>
             </Layout>
-          </Router>
-        </PerformanceProfiler>
-      </SupabaseProvider>
+          </PerformanceProfiler>
+        </SupabaseProvider>
+      </Router>
     </QueryClientProvider>
   );
 };
