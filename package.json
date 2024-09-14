@@ -64,6 +64,8 @@
     "react-quill": "^2.0.0",
     "react-resizable-panels": "^2.0.19",
     "react-router-dom": "^6.23.1",
+    "react-virtualized-auto-sizer": "^1.0.24",
+    "react-window": "^1.8.10",
     "recharts": "^2.12.7",
     "sonner": "^1.5.0",
     "tailwind-merge": "^2.2.1",
