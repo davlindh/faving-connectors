@@ -1,36 +1,23 @@
 import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { useTeam, useTeamProjects, useTeamMemberRequests, useUpdateTeamMemberRequest } from '@/integrations/supabase';
+import { useParams } from 'react-router-dom';
+import { useTeam, useTeamProjects, useTeamMemberRequests } from '@/integrations/supabase/hooks/teams';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import ProjectCard from '@/components/project/ProjectCard';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import TeamOverview from './TeamOverview';
 import TeamMembers from './TeamMembers';
 import TeamProjects from './TeamProjects';
 import TeamRequests from './TeamRequests';
+import TeamActions from './TeamActions';
 
 const TeamPage = () => {
   const { teamId } = useParams();
+  const { user } = useAuth();
   const { data: team, isLoading: teamLoading, error: teamError } = useTeam(teamId);
   const { data: projects, isLoading: projectsLoading, error: projectsError } = useTeamProjects(teamId);
   const { data: requests, isLoading: requestsLoading, error: requestsError } = useTeamMemberRequests(teamId);
-  const updateRequest = useUpdateTeamMemberRequest();
   const [activeTab, setActiveTab] = useState('overview');
-
-  const handleRequestAction = async (requestId, status) => {
-    try {
-      await updateRequest.mutateAsync({ requestId, status });
-      toast.success(`Request ${status} successfully`);
-    } catch (error) {
-      toast.error(`Failed to ${status} request: ${error.message}`);
-    }
-  };
 
   if (teamLoading || projectsLoading || requestsLoading) {
     return <LoadingState />;
@@ -40,14 +27,15 @@ const TeamPage = () => {
     return <ErrorState error={teamError || projectsError || requestsError} />;
   }
 
-  const pendingRequests = requests?.filter(request => request.status === 'pending') || [];
-  const teamMembers = team?.members || [];
+  const isTeamMember = team?.members?.some(member => member.user_id === user?.id);
+  const isTeamAdmin = team?.members?.some(member => member.user_id === user?.id && member.role === 'admin');
 
   return (
     <div className="container mx-auto p-4">
       <Card>
-        <CardHeader>
+        <CardHeader className="flex justify-between items-center">
           <CardTitle className="text-2xl">Team: {team?.name}</CardTitle>
+          <TeamActions team={team} isTeamMember={isTeamMember} isTeamAdmin={isTeamAdmin} />
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -55,20 +43,22 @@ const TeamPage = () => {
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="members">Members</TabsTrigger>
               <TabsTrigger value="projects">Projects</TabsTrigger>
-              <TabsTrigger value="requests">Join Requests</TabsTrigger>
+              {isTeamAdmin && <TabsTrigger value="requests">Join Requests</TabsTrigger>}
             </TabsList>
             <TabsContent value="overview">
               <TeamOverview team={team} />
             </TabsContent>
             <TabsContent value="members">
-              <TeamMembers members={teamMembers} />
+              <TeamMembers members={team?.members} isTeamAdmin={isTeamAdmin} />
             </TabsContent>
             <TabsContent value="projects">
               <TeamProjects projects={projects} />
             </TabsContent>
-            <TabsContent value="requests">
-              <TeamRequests requests={pendingRequests} onAction={handleRequestAction} />
-            </TabsContent>
+            {isTeamAdmin && (
+              <TabsContent value="requests">
+                <TeamRequests requests={requests} teamId={teamId} />
+              </TabsContent>
+            )}
           </Tabs>
         </CardContent>
       </Card>
