@@ -104,22 +104,20 @@ const MilestoneManagement = ({ projectId }) => {
     }
   };
 
-  if (isLoading) return <div>Loading milestones...</div>;
-  if (error) return <div>Error loading milestones: {error.message}</div>;
+  if (isLoading) return <div className="text-center py-4">Loading milestones...</div>;
+  if (error) return <div className="text-center text-red-500 py-4">Error loading milestones: {error.message}</div>;
 
   const completedMilestones = milestones.filter(m => m.is_completed).length;
   const totalMilestones = milestones.length;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex justify-between items-center">
-          Project Milestones
-          <Button onClick={() => { setEditingMilestone(null); setIsAddDialogOpen(true); }}>Add Milestone</Button>
-        </CardTitle>
+    <Card className="w-full max-w-3xl mx-auto">
+      <CardHeader className="flex flex-col sm:flex-row justify-between items-center">
+        <CardTitle className="mb-2 sm:mb-0">Project Milestones</CardTitle>
+        <Button onClick={() => { setEditingMilestone(null); setIsAddDialogOpen(true); }}>Add Milestone</Button>
       </CardHeader>
       <CardContent>
-        <ProjectProgress completed={completedMilestones} total={totalMilestones} />
+        <ProjectProgress projectId={projectId} completed={completedMilestones} total={totalMilestones} />
         <MilestoneList
           milestones={milestones}
           onEdit={setEditingMilestone}

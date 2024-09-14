@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useProject, useUpdateProject, useDeleteProject, useImpactMetrics } from '@/integrations/supabase';
+import { useProject, useUpdateProject, useDeleteProject } from '@/integrations/supabase';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, DollarSign, MapPin, ArrowLeft, Edit, Trash, MessageSquare } from 'lucide-react';
+import { Calendar, DollarSign, MapPin, ArrowLeft, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
@@ -23,12 +23,10 @@ const ProjectDetailPage = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const { data: project, isLoading, error } = useProject(projectId);
-  const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
   const { session } = useSupabase();
   const [activeTab, setActiveTab] = useState('overview');
   const [isEditing, setIsEditing] = useState(false);
-  const { data: impactMetrics } = useImpactMetrics(projectId);
 
   if (isLoading) return <div className="text-center mt-8">Loading project details...</div>;
   if (error) return <div className="text-center mt-8 text-red-500">Error loading project: {error.message}</div>;
@@ -68,7 +66,7 @@ const ProjectDetailPage = () => {
 
     return (
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-7">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="tasks">Tasks</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
@@ -109,55 +107,55 @@ const ProjectDetailPage = () => {
       </Link>
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-start">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
             <div>
               <Badge variant="secondary" className="mb-2">{project.category}</Badge>
-              <CardTitle className="text-3xl mb-2">{project.project_name}</CardTitle>
+              <CardTitle className="text-2xl sm:text-3xl mb-2">{project.project_name}</CardTitle>
               <div className="flex items-center text-sm text-gray-500">
                 <MapPin className="w-4 h-4 mr-1" />
                 <span>{project.location}</span>
               </div>
             </div>
+            {isOwner && (
+              <div className="flex space-x-2 mt-4 sm:mt-0">
+                <Button variant="outline" size="sm" onClick={handleEditToggle}>
+                  {isEditing ? 'Cancel Edit' : 'Edit Project'}
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="sm">
+                      Delete Project
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you sure you want to delete this project?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the project and all associated data.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            )}
           </div>
-          {isOwner && (
-            <div className="flex space-x-2 mt-4">
-              <Button variant="outline" size="sm" onClick={handleEditToggle}>
-                {isEditing ? 'Cancel Edit' : 'Edit Project'}
-              </Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm">
-                    <Trash className="mr-2 h-4 w-4" /> Delete Project
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure you want to delete this project?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete the project and all associated data.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          )}
         </CardHeader>
         <CardContent>
           <ProjectProgress projectId={project.project_id} completed={project.completed_milestones} total={project.total_milestones} />
           {renderContent()}
         </CardContent>
-        <CardFooter className="flex justify-between">
+        <CardFooter className="flex flex-col sm:flex-row justify-between items-center">
           {!isOwner && (
             <ExpressInterestButton
               projectId={project.project_id}
               hasExpressedInterest={hasExpressedInterest}
             />
           )}
-          <Button asChild>
+          <Button asChild className="mt-2 sm:mt-0">
             <Link to={`/messages?projectId=${project.project_id}`}>
               <MessageSquare className="mr-2 h-4 w-4" />
               Contact Project Owner
@@ -171,13 +169,13 @@ const ProjectDetailPage = () => {
 
 const OverviewTab = ({ project }) => (
   <div className="space-y-4">
-    <div className="flex justify-between items-center">
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
       <div>
         <h3 className="text-xl font-semibold">Project Overview</h3>
         <p className="text-gray-600">{project.description}</p>
       </div>
     </div>
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div className="flex items-center">
         <DollarSign className="mr-2 h-5 w-5 text-gray-500" />
         <span>Budget: ${project.budget}</span>
