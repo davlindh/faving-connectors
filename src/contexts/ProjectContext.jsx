@@ -1,44 +1,37 @@
-import React, { createContext, useContext, useState } from 'react';
-import { useProjects } from '@/integrations/supabase';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useProject, useProjectTasks, useProjectMilestones } from '@/integrations/supabase';
 
 const ProjectContext = createContext();
 
 export const useProjectContext = () => useContext(ProjectContext);
 
-export const ProjectProvider = ({ children }) => {
-  const { data: projects, isLoading, error } = useProjects();
-  const [filters, setFilters] = useState({
-    category: '',
-    minBudget: 0,
-    maxBudget: Infinity,
-    skills: [],
-  });
-  const [sortBy, setSortBy] = useState('latest');
+export const ProjectProvider = ({ children, projectId }) => {
+  const { data: project, isLoading: projectLoading, error: projectError } = useProject(projectId);
+  const { data: tasks, isLoading: tasksLoading, error: tasksError } = useProjectTasks(projectId);
+  const { data: milestones, isLoading: milestonesLoading, error: milestonesError } = useProjectMilestones(projectId);
 
-  const filteredProjects = projects?.filter(project => {
-    return (
-      (!filters.category || project.category === filters.category) &&
-      project.budget >= filters.minBudget &&
-      project.budget <= filters.maxBudget &&
-      (filters.skills.length === 0 || filters.skills.every(skill => project.required_skills.includes(skill)))
-    );
-  }) || [];
+  const [completedTasks, setCompletedTasks] = useState(0);
+  const [completedMilestones, setCompletedMilestones] = useState(0);
 
-  const sortedProjects = [...filteredProjects].sort((a, b) => {
-    if (sortBy === 'latest') return new Date(b.start_date) - new Date(a.start_date);
-    if (sortBy === 'budget-high-to-low') return b.budget - a.budget;
-    if (sortBy === 'budget-low-to-high') return a.budget - b.budget;
-    return 0;
-  });
+  useEffect(() => {
+    if (tasks) {
+      setCompletedTasks(tasks.filter(task => task.is_completed).length);
+    }
+    if (milestones) {
+      setCompletedMilestones(milestones.filter(milestone => milestone.is_completed).length);
+    }
+  }, [tasks, milestones]);
 
   const value = {
-    projects: sortedProjects,
-    isLoading,
-    error,
-    filters,
-    setFilters,
-    sortBy,
-    setSortBy,
+    project,
+    tasks,
+    milestones,
+    completedTasks,
+    totalTasks: tasks?.length || 0,
+    completedMilestones,
+    totalMilestones: milestones?.length || 0,
+    isLoading: projectLoading || tasksLoading || milestonesLoading,
+    error: projectError || tasksError || milestonesError,
   };
 
   return (

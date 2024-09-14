@@ -1,41 +1,35 @@
 import React from 'react';
-import { useImpactMetrics } from '@/integrations/supabase';
+import { useProjectContext } from '@/contexts/ProjectContext';
+import { Progress } from "@/components/ui/progress";
 
-const ProjectProgress = ({ projectId, completed, total }) => {
-  const { data: impactMetrics, isLoading, error } = useImpactMetrics(projectId);
+const ProjectProgress = () => {
+  const { completedTasks, totalTasks, completedMilestones, totalMilestones } = useProjectContext();
 
-  const percentage = total > 0 ? (completed / total) * 100 : 0;
-
-  if (isLoading) return <div className="text-center py-2">Loading project progress...</div>;
-  if (error) return <div className="text-center text-red-500 py-2">Error loading project progress: {error.message}</div>;
+  const taskPercentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+  const milestonePercentage = totalMilestones > 0 ? (completedMilestones / totalMilestones) * 100 : 0;
 
   return (
-    <div className="mb-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2">
-        <span className="text-sm font-medium mb-1 sm:mb-0">Project Progress</span>
-        <span className="text-sm font-medium">{percentage.toFixed(0)}%</span>
-      </div>
-      <div className="w-full bg-gray-200 rounded-full h-2.5">
-        <div
-          className="bg-blue-600 h-2.5 rounded-full"
-          style={{ width: `${percentage}%` }}
-        ></div>
-      </div>
-      <div className="text-xs text-gray-500 mt-1">
-        {completed} of {total} milestones completed
-      </div>
-      {impactMetrics && impactMetrics.length > 0 && (
-        <div className="mt-4">
-          <h4 className="text-sm font-medium mb-2">Impact Metrics:</h4>
-          <ul className="list-disc list-inside grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {impactMetrics.map((metric, index) => (
-              <li key={index} className="text-sm">
-                {metric.metric_name}: {metric.value} {metric.unit}
-              </li>
-            ))}
-          </ul>
+    <div className="space-y-4">
+      <div>
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-sm font-medium">Tasks Progress</span>
+          <span className="text-sm font-medium">{taskPercentage.toFixed(0)}%</span>
         </div>
-      )}
+        <Progress value={taskPercentage} className="w-full" />
+        <div className="text-xs text-gray-500 mt-1">
+          {completedTasks} of {totalTasks} tasks completed
+        </div>
+      </div>
+      <div>
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-sm font-medium">Milestones Progress</span>
+          <span className="text-sm font-medium">{milestonePercentage.toFixed(0)}%</span>
+        </div>
+        <Progress value={milestonePercentage} className="w-full" />
+        <div className="text-xs text-gray-500 mt-1">
+          {completedMilestones} of {totalMilestones} milestones completed
+        </div>
+      </div>
     </div>
   );
 };
