@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useProject, useUpdateProject, useDeleteProject } from '@/integrations/supabase';
+import { useProject, useUpdateProject, useDeleteProject, useImpactMetrics } from '@/integrations/supabase';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar, DollarSign, MapPin, User, ArrowLeft, Edit, Trash, MessageSquare, CheckCircle, Clock } from 'lucide-react';
+import { Calendar, DollarSign, MapPin, ArrowLeft, Edit, Trash, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
@@ -18,6 +17,7 @@ import TaskList from './TaskList';
 import TeamManagement from '../team/TeamManagement';
 import ProjectForm from './ProjectForm';
 import MilestoneManagement from './MilestoneManagement';
+import ProjectProgress from './ProjectProgress';
 
 const ProjectDetailPage = () => {
   const { projectId } = useParams();
@@ -28,6 +28,7 @@ const ProjectDetailPage = () => {
   const { session } = useSupabase();
   const [activeTab, setActiveTab] = useState('overview');
   const [isEditing, setIsEditing] = useState(false);
+  const { data: impactMetrics } = useImpactMetrics(projectId);
 
   if (isLoading) return <div className="text-center mt-8">Loading project details...</div>;
   if (error) return <div className="text-center mt-8 text-red-500">Error loading project: {error.message}</div>;
@@ -50,7 +51,6 @@ const ProjectDetailPage = () => {
     setIsEditing(!isEditing);
     setActiveTab('overview');
   };
-
 
   const renderContent = () => {
     if (isEditing) {
@@ -147,6 +147,7 @@ const ProjectDetailPage = () => {
           )}
         </CardHeader>
         <CardContent>
+          <ProjectProgress projectId={project.project_id} completed={project.completed_milestones} total={project.total_milestones} />
           {renderContent()}
         </CardContent>
         <CardFooter className="flex justify-between">

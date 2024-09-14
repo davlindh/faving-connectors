@@ -1,7 +1,13 @@
 import React from 'react';
+import { useImpactMetrics } from '@/integrations/supabase';
 
-const ProjectProgress = ({ completed, total }) => {
+const ProjectProgress = ({ projectId, completed, total }) => {
+  const { data: impactMetrics, isLoading, error } = useImpactMetrics(projectId);
+
   const percentage = total > 0 ? (completed / total) * 100 : 0;
+
+  if (isLoading) return <div>Loading project progress...</div>;
+  if (error) return <div>Error loading project progress: {error.message}</div>;
 
   return (
     <div className="mb-6">
@@ -18,6 +24,18 @@ const ProjectProgress = ({ completed, total }) => {
       <div className="text-xs text-gray-500 mt-1">
         {completed} of {total} milestones completed
       </div>
+      {impactMetrics && impactMetrics.length > 0 && (
+        <div className="mt-4">
+          <h4 className="text-sm font-medium mb-2">Impact Metrics:</h4>
+          <ul className="list-disc list-inside">
+            {impactMetrics.map((metric, index) => (
+              <li key={index} className="text-sm">
+                {metric.metric_name}: {metric.value} {metric.unit}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 };
