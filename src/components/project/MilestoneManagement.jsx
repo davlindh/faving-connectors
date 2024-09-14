@@ -16,6 +16,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import ProjectProgress from './ProjectProgress';
 
 const milestoneSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -30,7 +32,8 @@ const useProjectMilestones = (projectId) => useQuery({
     const { data, error } = await supabase
       .from('milestones')
       .select('*')
-      .eq('project_id', projectId);
+      .eq('project_id', projectId)
+      .order('order');
     if (error) throw error;
     return data;
   },
@@ -56,9 +59,10 @@ const MilestoneManagement = ({ projectId }) => {
     mutationFn: async (newMilestone) => {
       const { data, error } = await supabase
         .from('milestones')
-        .insert([{ ...newMilestone, project_id: projectId }]);
+        .insert([{ ...newMilestone, project_id: projectId, order: milestones.length }])
+        .select();
       if (error) throw error;
-      return data;
+      return data[0];
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['milestones', projectId]);
@@ -72,9 +76,10 @@ const MilestoneManagement = ({ projectId }) => {
       const { data, error } = await supabase
         .from('milestones')
         .update(updates)
-        .eq('id', milestoneId);
+        .eq('id', milestoneId)
+        .select();
       if (error) throw error;
-      return data;
+      return data[0];
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['milestones', projectId]);
@@ -97,6 +102,20 @@ const MilestoneManagement = ({ projectId }) => {
       toast.success('Milestone deleted successfully');
     },
     onError: () => toast.error('Failed to delete milestone'),
+  });
+
+  const reorderMilestones = useMutation({
+    mutationFn: async (updates) => {
+      const { data, error } = await supabase
+        .from('milestones')
+        .upsert(updates);
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['milestones', projectId]);
+    },
+    onError: () => toast.error('Failed to reorder milestones'),
   });
 
   const onSubmit = async (data) => {
@@ -133,8 +152,26 @@ const MilestoneManagement = ({ projectId }) => {
     }
   };
 
+  const onDragEnd = async (result) => {
+    if (!result.destination) return;
+
+    const items = Array.from(milestones);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    const updates = items.map((item, index) => ({
+      id: item.id,
+      order: index,
+    }));
+
+    await reorderMilestones.mutateAsync(updates);
+  };
+
   if (isLoading) return <div>Loading milestones...</div>;
   if (error) return <div>Error loading milestones: {error.message}</div>;
+
+  const completedMilestones = milestones.filter(m => m.is_completed).length;
+  const totalMilestones = milestones.length;
 
   return (
     <Card>
@@ -247,54 +284,69 @@ const MilestoneManagement = ({ projectId }) => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {milestones?.length > 0 ? (
-          milestones.map((milestone) => (
-            <div key={milestone.id} className="flex items-center justify-between mb-4 p-4 bg-gray-100 rounded-lg">
-              <div className="flex items-center">
-                <Checkbox
-                  checked={milestone.is_completed}
-                  onCheckedChange={() => handleToggleComplete(milestone)}
-                  className="mr-4"
-                />
-                <div>
-                  <h3 className={`font-semibold ${milestone.is_completed ? 'line-through text-gray-500' : ''}`}>
-                    {milestone.title}
-                  </h3>
-                  <p className="text-sm text-gray-600">{milestone.description}</p>
-                  <p className="text-xs text-gray-500">Due: {format(new Date(milestone.due_date), 'PPP')}</p>
-                </div>
+        <ProjectProgress completed={completedMilestones} total={totalMilestones} />
+        <DragDropContext onDragEnd={onDragEnd}>
+          <Droppable droppableId="milestones">
+            {(provided) => (
+              <div {...provided.droppableProps} ref={provided.innerRef}>
+                {milestones.map((milestone, index) => (
+                  <Draggable key={milestone.id} draggableId={milestone.id.toString()} index={index}>
+                    {(provided) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        className="flex items-center justify-between mb-4 p-4 bg-gray-100 rounded-lg"
+                      >
+                        <div className="flex items-center">
+                          <Checkbox
+                            checked={milestone.is_completed}
+                            onCheckedChange={() => handleToggleComplete(milestone)}
+                            className="mr-4"
+                          />
+                          <div>
+                            <h3 className={`font-semibold ${milestone.is_completed ? 'line-through text-gray-500' : ''}`}>
+                              {milestone.title}
+                            </h3>
+                            <p className="text-sm text-gray-600">{milestone.description}</p>
+                            <p className="text-xs text-gray-500">Due: {format(new Date(milestone.due_date), 'PPP')}</p>
+                          </div>
+                        </div>
+                        <div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="mr-2"
+                            onClick={() => {
+                              setEditingMilestone(milestone);
+                              form.reset({
+                                title: milestone.title,
+                                description: milestone.description,
+                                due_date: new Date(milestone.due_date),
+                                is_completed: milestone.is_completed,
+                              });
+                              setIsAddDialogOpen(true);
+                            }}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDelete(milestone.id)}
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
               </div>
-              <div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mr-2"
-                  onClick={() => {
-                    setEditingMilestone(milestone);
-                    form.reset({
-                      title: milestone.title,
-                      description: milestone.description,
-                      due_date: new Date(milestone.due_date),
-                      is_completed: milestone.is_completed,
-                    });
-                    setIsAddDialogOpen(true);
-                  }}
-                >
-                  Edit
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleDelete(milestone.id)}
-                >
-                  Delete
-                </Button>
-              </div>
-            </div>
-          ))
-        ) : (
-          <p>No milestones added yet.</p>
-        )}
+            )}
+          </Droppable>
+        </DragDropContext>
       </CardContent>
     </Card>
   );
