@@ -10,7 +10,7 @@ import ECKTSlider from '../shared/ECKTSlider';
 import ResourcesTab from './ResourcesTab';
 import ProjectForm from './ProjectForm';
 
-const ProjectTabs = ({ project, isEditing }) => {
+const ProjectTabs = ({ project, isEditing, isOwner, setIsEditing }) => {
   const [activeTab, setActiveTab] = useState('overview');
 
   if (isEditing) {
@@ -40,9 +40,9 @@ const ProjectTabs = ({ project, isEditing }) => {
           <TabsTrigger value="resources">Resources</TabsTrigger>
         </TabsList>
         <TabsContent value="overview"><ProjectOverview project={project} /></TabsContent>
-        <TabsContent value="tasks"><TaskList /></TabsContent>
+        <TabsContent value="tasks"><TaskList projectId={project.project_id} /></TabsContent>
         <TabsContent value="team"><TeamManagement projectId={project.project_id} isOwner={isOwner} /></TabsContent>
-        <TabsContent value="milestones"><MilestoneManagement /></TabsContent>
+        <TabsContent value="milestones"><MilestoneManagement projectId={project.project_id} isOwner={isOwner} /></TabsContent>
         <TabsContent value="impact"><ImpactMetricForm projectId={project.project_id} /></TabsContent>
         <TabsContent value="feedback"><ECKTSlider origin={`project_${project.project_id}`} /></TabsContent>
         <TabsContent value="resources"><ResourcesTab resources={project.resources} /></TabsContent>
