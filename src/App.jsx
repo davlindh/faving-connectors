@@ -1,18 +1,18 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/layout/Layout';
 import LoadingSpinner from './components/shared/LoadingSpinner';
 import PerformanceProfiler from './components/PerformanceProfiler';
 
 // Lazy load components
-const Index = React.lazy(() => import('./pages/Index'));
-const ProjectListPage = React.lazy(() => import('./components/project/ProjectListPage'));
-const ProjectCreationForm = React.lazy(() => import('./components/project/ProjectCreationForm'));
-const ProjectDetailPage = React.lazy(() => import('./components/project/ProjectDetailPage'));
-const ProfilePage = React.lazy(() => import('./components/profile/ProfilePage'));
-const ArticleListPage = React.lazy(() => import('./components/knowledgeBase/ArticleListPage'));
-const ArticleDetailPage = React.lazy(() => import('./components/knowledgeBase/ArticleDetailPage'));
-const ArticleCreationForm = React.lazy(() => import('./components/knowledgeBase/ArticleCreationForm'));
+const Index = lazy(() => import('./pages/Index'));
+const ProjectListPage = lazy(() => import('./components/project/ProjectListPage'));
+const ProjectCreationForm = lazy(() => import('./components/project/ProjectCreationForm'));
+const ProjectDetailPage = lazy(() => import('./components/project/ProjectDetailPage'));
+const ProfilePage = lazy(() => import('./components/profile/ProfilePage'));
+const ArticleListPage = lazy(() => import('./components/knowledgeBase/ArticleListPage'));
+const ArticleDetailPage = lazy(() => import('./components/knowledgeBase/ArticleDetailPage'));
+const ArticleCreationForm = lazy(() => import('./components/knowledgeBase/ArticleCreationForm'));
 
 const App = () => {
   return (
