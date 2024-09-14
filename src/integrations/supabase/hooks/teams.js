@@ -81,3 +81,39 @@ export const useDeleteTeam = () => {
     },
   });
 };
+
+export const useLeaveTeam = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (teamId) => {
+      const { error } = await supabase
+        .from('team_members')
+        .delete()
+        .eq('team_id', teamId)
+        .eq('user_id', supabase.auth.user().id);
+      if (error) throw error;
+    },
+    onSuccess: (_, teamId) => {
+      queryClient.invalidateQueries(['teams', teamId]);
+    },
+  });
+};
+
+export const useJoinTeam = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (teamId) => {
+      const { data, error } = await supabase
+        .from('team_members')
+        .insert([
+          { team_id: teamId, user_id: supabase.auth.user().id, role: 'member' }
+        ])
+        .select();
+      if (error) throw error;
+      return data[0];
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(['teams', data.team_id]);
+    },
+  });
+};
