@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useProjectMilestones, useCreateProjectMilestone, useUpdateProjectMilestone, useDeleteProjectMilestone } from '@/integrations/supabase';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/supabase';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,11 +24,21 @@ const milestoneSchema = z.object({
   is_completed: z.boolean().default(false),
 });
 
+const useProjectMilestones = (projectId) => useQuery({
+  queryKey: ['milestones', projectId],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from('milestones')
+      .select('*')
+      .eq('project_id', projectId);
+    if (error) throw error;
+    return data;
+  },
+});
+
 const MilestoneManagement = ({ projectId }) => {
+  const queryClient = useQueryClient();
   const { data: milestones, isLoading, error } = useProjectMilestones(projectId);
-  const createMilestone = useCreateProjectMilestone();
-  const updateMilestone = useUpdateProjectMilestone();
-  const deleteMilestone = useDeleteProjectMilestone();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingMilestone, setEditingMilestone] = useState(null);
 
@@ -41,29 +52,73 @@ const MilestoneManagement = ({ projectId }) => {
     },
   });
 
+  const createMilestone = useMutation({
+    mutationFn: async (newMilestone) => {
+      const { data, error } = await supabase
+        .from('milestones')
+        .insert([{ ...newMilestone, project_id: projectId }]);
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['milestones', projectId]);
+      toast.success('Milestone added successfully');
+    },
+    onError: () => toast.error('Failed to add milestone'),
+  });
+
+  const updateMilestone = useMutation({
+    mutationFn: async ({ milestoneId, updates }) => {
+      const { data, error } = await supabase
+        .from('milestones')
+        .update(updates)
+        .eq('id', milestoneId);
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['milestones', projectId]);
+      toast.success('Milestone updated successfully');
+    },
+    onError: () => toast.error('Failed to update milestone'),
+  });
+
+  const deleteMilestone = useMutation({
+    mutationFn: async (milestoneId) => {
+      const { data, error } = await supabase
+        .from('milestones')
+        .delete()
+        .eq('id', milestoneId);
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['milestones', projectId]);
+      toast.success('Milestone deleted successfully');
+    },
+    onError: () => toast.error('Failed to delete milestone'),
+  });
+
   const onSubmit = async (data) => {
     try {
       if (editingMilestone) {
         await updateMilestone.mutateAsync({ milestoneId: editingMilestone.id, updates: data });
-        toast.success('Milestone updated successfully');
       } else {
-        await createMilestone.mutateAsync({ projectId, ...data });
-        toast.success('Milestone added successfully');
+        await createMilestone.mutateAsync(data);
       }
       setIsAddDialogOpen(false);
       setEditingMilestone(null);
       form.reset();
     } catch (error) {
-      toast.error('Failed to manage milestone');
+      console.error('Milestone operation error:', error);
     }
   };
 
   const handleDelete = async (id) => {
     try {
       await deleteMilestone.mutateAsync(id);
-      toast.success('Milestone deleted successfully');
     } catch (error) {
-      toast.error('Failed to delete milestone');
+      console.error('Delete milestone error:', error);
     }
   };
 
@@ -73,9 +128,8 @@ const MilestoneManagement = ({ projectId }) => {
         milestoneId: milestone.id,
         updates: { is_completed: !milestone.is_completed },
       });
-      toast.success(`Milestone marked as ${milestone.is_completed ? 'incomplete' : 'complete'}`);
     } catch (error) {
-      toast.error('Failed to update milestone status');
+      console.error('Toggle milestone status error:', error);
     }
   };
 
