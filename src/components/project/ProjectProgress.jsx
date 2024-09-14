@@ -1,6 +1,6 @@
 import React from 'react';
 import { useProjectContext } from '../../contexts/ProjectContext';
-import { Progress } from "@/components/ui/progress";
+import { Progress } from "../ui/progress";
 
 const ProjectProgress = () => {
   const { completedTasks, totalTasks, completedMilestones, totalMilestones } = useProjectContext();
