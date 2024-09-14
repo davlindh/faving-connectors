@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useProject, useProjectTasks, useProjectMilestones } from '@/integrations/supabase';
+import { useProject, useProjectTasks } from '@/integrations/supabase';
 
 const ProjectContext = createContext();
 
@@ -8,7 +8,6 @@ export const useProjectContext = () => useContext(ProjectContext);
 export const ProjectProvider = ({ children, projectId }) => {
   const { data: project, isLoading: projectLoading, error: projectError } = useProject(projectId);
   const { data: tasks, isLoading: tasksLoading, error: tasksError } = useProjectTasks(projectId);
-  const { data: milestones, isLoading: milestonesLoading, error: milestonesError } = useProjectMilestones(projectId);
 
   const [completedTasks, setCompletedTasks] = useState(0);
   const [completedMilestones, setCompletedMilestones] = useState(0);
@@ -17,21 +16,23 @@ export const ProjectProvider = ({ children, projectId }) => {
     if (tasks) {
       setCompletedTasks(tasks.filter(task => task.is_completed).length);
     }
-    if (milestones) {
-      setCompletedMilestones(milestones.filter(milestone => milestone.is_completed).length);
+  }, [tasks]);
+
+  useEffect(() => {
+    if (project && project.milestones) {
+      setCompletedMilestones(project.milestones.filter(milestone => milestone.is_completed).length);
     }
-  }, [tasks, milestones]);
+  }, [project]);
 
   const value = {
     project,
     tasks,
-    milestones,
     completedTasks,
     totalTasks: tasks?.length || 0,
     completedMilestones,
-    totalMilestones: milestones?.length || 0,
-    isLoading: projectLoading || tasksLoading || milestonesLoading,
-    error: projectError || tasksError || milestonesError,
+    totalMilestones: project?.milestones?.length || 0,
+    isLoading: projectLoading || tasksLoading,
+    error: projectError || tasksError,
   };
 
   return (
