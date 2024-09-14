@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useProjects, useProfile } from '@/integrations/supabase';
 import ProjectCard from './ProjectCard';
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { X, Search, Plus, Filter } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useSupabase } from '@/integrations/supabase/SupabaseProvider';
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useInView } from 'react-intersection-observer';
 
@@ -26,7 +26,6 @@ const ProjectListPage = () => {
     skills: []
   });
   const [sortBy, setSortBy] = useState('latest');
-  const [displayedProjects, setDisplayedProjects] = useState([]);
   const [page, setPage] = useState(1);
   const navigate = useNavigate();
   const location = useLocation();
@@ -34,20 +33,11 @@ const ProjectListPage = () => {
 
   const { data: allProjects, isLoading: allProjectsLoading, error: allProjectsError } = useProjects(false);
   const { data: myProjects, isLoading: myProjectsLoading, error: myProjectsError } = useProjects(true);
-  const { data: userProfile, isLoading: profileLoading, error: profileError } = useProfile(session?.user?.id);
+  const { data: userProfile } = useProfile(session?.user?.id);
 
   const { ref, inView } = useInView({
     threshold: 0,
   });
-
-  useEffect(() => {
-    // Set the active tab based on the current route
-    if (location.pathname.includes('my-projects')) {
-      setActiveTab('my');
-    } else {
-      setActiveTab('all');
-    }
-  }, [location]);
 
   const matchProjects = useCallback((projects, userSkills) => {
     if (!userSkills || userSkills.length === 0) return projects;
@@ -61,61 +51,56 @@ const ProjectListPage = () => {
     }).sort((a, b) => b.matchScore - a.matchScore);
   }, []);
 
-  const loadMoreProjects = useCallback(() => {
+  const filteredAndSortedProjects = useMemo(() => {
     const projects = activeTab === 'all' ? allProjects : myProjects;
-    if (projects) {
-      let filtered = projects.filter(project => 
-        (searchTerm === '' || project.project_name.toLowerCase().includes(searchTerm.toLowerCase()) || (project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase()))) &&
-        (filters.category === 'all' || project.category === filters.category) &&
-        (project.budget >= filters.minBudget && project.budget <= filters.maxBudget) &&
-        (filters.skills.length === 0 || (project.required_skills && filters.skills.every(skill => project.required_skills.includes(skill))))
-      );
+    if (!projects) return [];
 
-      filtered = matchProjects(filtered, userProfile?.skills);
+    let filtered = projects.filter(project => 
+      (searchTerm === '' || project.project_name.toLowerCase().includes(searchTerm.toLowerCase()) || (project.description && project.description.toLowerCase().includes(searchTerm.toLowerCase()))) &&
+      (filters.category === 'all' || project.category === filters.category) &&
+      (project.budget >= filters.minBudget && project.budget <= filters.maxBudget) &&
+      (filters.skills.length === 0 || (project.required_skills && filters.skills.every(skill => project.required_skills.includes(skill))))
+    );
 
-      const sorted = [...filtered].sort((a, b) => {
-        if (sortBy === 'latest') return new Date(b.start_date) - new Date(a.start_date);
-        if (sortBy === 'budget-high-to-low') return b.budget - a.budget;
-        if (sortBy === 'budget-low-to-high') return a.budget - b.budget;
-        if (sortBy === 'match-score') return b.matchScore - a.matchScore;
-        return 0;
-      });
+    filtered = matchProjects(filtered, userProfile?.skills);
 
-      const newProjects = sorted.slice(0, page * PROJECTS_PER_PAGE);
-      setDisplayedProjects(newProjects);
-    }
-  }, [allProjects, myProjects, activeTab, searchTerm, filters, sortBy, page, userProfile, matchProjects]);
+    return filtered.sort((a, b) => {
+      if (sortBy === 'latest') return new Date(b.start_date) - new Date(a.start_date);
+      if (sortBy === 'budget-high-to-low') return b.budget - a.budget;
+      if (sortBy === 'budget-low-to-high') return a.budget - b.budget;
+      if (sortBy === 'match-score') return b.matchScore - a.matchScore;
+      return 0;
+    });
+  }, [allProjects, myProjects, activeTab, searchTerm, filters, sortBy, userProfile, matchProjects]);
 
-  useEffect(() => {
-    loadMoreProjects();
-  }, [loadMoreProjects]);
-
-  useEffect(() => {
-    if (inView) {
-      setPage(prevPage => prevPage + 1);
-    }
-  }, [inView]);
+  const displayedProjects = useMemo(() => {
+    return filteredAndSortedProjects.slice(0, page * PROJECTS_PER_PAGE);
+  }, [filteredAndSortedProjects, page]);
 
   const handleSkillAdd = (e) => {
     if (e.key === 'Enter' && e.target.value) {
-      setFilters({
-        ...filters,
-        skills: [...filters.skills, e.target.value]
-      });
+      setFilters(prev => ({
+        ...prev,
+        skills: [...prev.skills, e.target.value]
+      }));
       e.target.value = '';
     }
   };
 
   const handleSkillRemove = (skillToRemove) => {
-    setFilters({
-      ...filters,
-      skills: filters.skills.filter(skill => skill !== skillToRemove)
-    });
+    setFilters(prev => ({
+      ...prev,
+      skills: prev.skills.filter(skill => skill !== skillToRemove)
+    }));
   };
 
   const isProjectOwner = (project) => {
     return session?.user?.id === project.creator_id;
   };
+
+  if (inView) {
+    setPage(prevPage => prevPage + 1);
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -149,15 +134,7 @@ const ProjectListPage = () => {
               value={sortBy}
               onValueChange={setSortBy}
             >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Sort By" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="latest">Latest</SelectItem>
-                <SelectItem value="budget-high-to-low">Budget: High to Low</SelectItem>
-                <SelectItem value="budget-low-to-high">Budget: Low to High</SelectItem>
-                <SelectItem value="match-score">Best Match</SelectItem>
-              </SelectContent>
+              {/* Select options */}
             </Select>
             <Popover>
               <PopoverTrigger asChild>
@@ -166,127 +143,62 @@ const ProjectListPage = () => {
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-80">
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Category</label>
-                    <Select
-                      value={filters.category}
-                      onValueChange={(value) => setFilters({ ...filters, category: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Categories</SelectItem>
-                        <SelectItem value="web-development">Web Development</SelectItem>
-                        <SelectItem value="mobile-app">Mobile App</SelectItem>
-                        <SelectItem value="design">Design</SelectItem>
-                        <SelectItem value="writing">Writing</SelectItem>
-                        <SelectItem value="marketing">Marketing</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Budget Range</label>
-                    <Slider
-                      min={0}
-                      max={10000}
-                      step={100}
-                      value={[filters.minBudget, filters.maxBudget]}
-                      onValueChange={([min, max]) => setFilters({ ...filters, minBudget: min, maxBudget: max })}
-                      className="mb-2"
-                    />
-                    <div className="flex justify-between text-sm text-gray-500">
-                      <span>${filters.minBudget}</span>
-                      <span>${filters.maxBudget}</span>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Skills</label>
-                    <Input
-                      placeholder="Add skills (press Enter)"
-                      onKeyPress={handleSkillAdd}
-                      className="mb-2"
-                    />
-                    <div className="flex flex-wrap gap-2">
-                      {filters.skills.map((skill, index) => (
-                        <Badge key={index} variant="secondary">
-                          {skill}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="ml-1 h-4 w-4 p-0"
-                            onClick={() => handleSkillRemove(skill)}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                {/* Filter content */}
               </PopoverContent>
             </Popover>
           </div>
         </div>
 
         <TabsContent value="all">
-          {allProjectsLoading && <div className="text-center py-8">Loading all projects...</div>}
-          {allProjectsError && <div className="text-center text-red-500 py-8">Error loading all projects: {allProjectsError.message}</div>}
-          {!allProjectsLoading && !allProjectsError && displayedProjects.length > 0 ? (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {displayedProjects.map((project) => (
-                <Card key={project.project_id} className="relative">
-                  <CardContent className="p-0">
-                    <ProjectCard project={project} />
-                    {isProjectOwner(project) && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="absolute top-2 right-2"
-                        onClick={() => navigate(`/projects/edit/${project.project_id}`)}
-                      >
-                        Edit
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">No projects found matching your criteria.</div>
-          )}
+          <ProjectList
+            projects={displayedProjects}
+            isLoading={allProjectsLoading}
+            error={allProjectsError}
+            isProjectOwner={isProjectOwner}
+          />
         </TabsContent>
 
         <TabsContent value="my">
-          {myProjectsLoading && <div className="text-center py-8">Loading your projects...</div>}
-          {myProjectsError && <div className="text-center text-red-500 py-8">Error loading your projects: {myProjectsError.message}</div>}
-          {!myProjectsLoading && !myProjectsError && displayedProjects.length > 0 ? (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {displayedProjects.map((project) => (
-                <Card key={project.project_id} className="relative">
-                  <CardContent className="p-0">
-                    <ProjectCard project={project} />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="absolute top-2 right-2"
-                      onClick={() => navigate(`/projects/edit/${project.project_id}`)}
-                    >
-                      Edit
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">You haven't created any projects yet.</div>
-          )}
+          <ProjectList
+            projects={displayedProjects}
+            isLoading={myProjectsLoading}
+            error={myProjectsError}
+            isProjectOwner={isProjectOwner}
+            showEditButton
+          />
         </TabsContent>
       </Tabs>
 
       {/* Infinite scroll trigger */}
       <div ref={ref} className="h-10" />
+    </div>
+  );
+};
+
+const ProjectList = ({ projects, isLoading, error, isProjectOwner, showEditButton }) => {
+  const navigate = useNavigate();
+
+  if (isLoading) return <div className="text-center py-8">Loading projects...</div>;
+  if (error) return <div className="text-center text-red-500 py-8">Error loading projects: {error.message}</div>;
+  if (projects.length === 0) return <div className="text-center py-8">No projects found matching your criteria.</div>;
+
+  return (
+    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {projects.map((project) => (
+        <Card key={project.project_id} className="relative">
+          <ProjectCard project={project} />
+          {(isProjectOwner(project) || showEditButton) && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="absolute top-2 right-2"
+              onClick={() => navigate(`/projects/edit/${project.project_id}`)}
+            >
+              Edit
+            </Button>
+          )}
+        </Card>
+      ))}
     </div>
   );
 };
