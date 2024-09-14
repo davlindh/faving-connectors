@@ -28,6 +28,41 @@ export const useTeamProjects = (teamId) => useQuery({
   enabled: !!teamId,
 });
 
+export const useTeamMemberRequests = (teamId) => useQuery({
+  queryKey: ['team_member_requests', teamId],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from('team_member_requests')
+      .select('*, user:users(*)')
+      .eq('team_id', teamId)
+      .eq('status', 'pending');
+    if (error) throw error;
+    return data;
+  },
+  enabled: !!teamId,
+});
+
+export const useUpdateTeamMemberRequest = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ requestId, status }) => {
+      const { data, error } = await supabase
+        .from('team_member_requests')
+        .update({ status })
+        .eq('id', requestId)
+        .select();
+      if (error) throw error;
+      return data[0];
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(['team_member_requests', data.team_id]);
+      if (data.status === 'approved') {
+        queryClient.invalidateQueries(['teams', data.team_id]);
+      }
+    },
+  });
+};
+
 export const useCreateTeam = () => {
   const queryClient = useQueryClient();
   return useMutation({
