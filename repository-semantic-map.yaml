@@ -1,0 +1,15 @@
+version: 1
+repository: davlindh/faving-connectors
+purpose: Historical connector/integration reference for Faving; not canonical MVP implementation.
+status: reference-only
+canonical_parent: davlindh/faving-journey-shaper
+capabilities: [connectors, integrations, external-systems]
+vertical: platform-integration
+omniframez_role: adapter-reference
+evidence:
+  confidence: verified
+  sources: [README.md, davlindh/faving-journey-shaper/docs/mvp/product-spec.md]
+harvest_action: harvest-adapters-only
+relations:
+  - reference_for: Execution Bridge
+  - noncanonical_to: davlindh/faving-journey-shaper
